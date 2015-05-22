@@ -1,0 +1,7 @@
+The following have contributed to the Strongback Java codebase.
+
+Randall Hauch <rhauch@gmail.com>
+Zach Anderson <zach@speakinwebs.com>
+Nathan Brown <nathanbrown735@gmail.com>
+Adam Gausmann <adam.gausmann@gmail.com>
+Colin Hauch <colin.hauch@gmail.com>

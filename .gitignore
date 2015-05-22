@@ -1,0 +1,13 @@
+# Eclipse top-level resource files are excluded ...
+.metadata/
+
+# Some Eclipse project resource files should never be checked in ...
+.recommenders/
+.settings/
+
+# These are names of directories typically used for generated content, so are ignored ...
+build/
+deploy/
+target/
+
+.DS_Store
