@@ -16,7 +16,11 @@
 
 package org.strongback;
 
+import static org.fest.assertions.Assertions.assertThat;
+
 import java.util.concurrent.TimeUnit;
+
+import junit.framework.AssertionFailedError;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -51,20 +55,40 @@ public class ExecutableTimerTest {
 
     @Test
     public void shouldMeasureAndPrintTimingHistogramUsingBusyMode() throws InterruptedException {
-        Strongback.configure().useExecutionTimerMode(TimerMode.BUSY).useExecutionRate(4, TimeUnit.MILLISECONDS).initialize();
-        ExecutableTimer.measureTimingAndPrint(Strongback.executor(), 200 * 2).await(10, TimeUnit.SECONDS);
+        runTimer(TimerMode.BUSY, 4, 2000);
     }
 
     @Test
     public void shouldMeasureAndPrintTimingHistogramUsingParkMode() throws InterruptedException {
-        Strongback.configure().useExecutionTimerMode(TimerMode.PARK).useExecutionRate(5, TimeUnit.MILLISECONDS).initialize();
-        ExecutableTimer.measureTimingAndPrint(Strongback.executor(), 200 * 2).await(10, TimeUnit.SECONDS);
+        runTimer(TimerMode.PARK, 5, 2000);
     }
 
     @Test
     public void shouldMeasureAndPrintTimingHistogramUsingSleepMode() throws InterruptedException {
-        Strongback.configure().useExecutionTimerMode(TimerMode.SLEEP).useExecutionRate(5, TimeUnit.MILLISECONDS).initialize();
-        ExecutableTimer.measureTimingAndPrint(Strongback.executor(), 200 * 2).await(10, TimeUnit.SECONDS);
+        runTimer(TimerMode.SLEEP, 6, 2000);
     }
 
+    /**
+     * Time for the given duration the execution using the supplied mode and execution period.
+     *
+     * @param mode the execution wait mode; may not be null
+     * @param millisecondExecutionPeriod the execution period in milliseconds
+     * @param sampleTimeInMilliseconds the sample time in milliseconds
+     */
+    protected void runTimer(TimerMode mode, int millisecondExecutionPeriod, int sampleTimeInMilliseconds) {
+        try {
+            Strongback.configure()
+                      .useExecutionTimerMode(mode)
+                      .useExecutionPeriod(millisecondExecutionPeriod, TimeUnit.MILLISECONDS)
+                      .initialize();
+            assertThat(ExecutableTimer.measureTimingAndPrint(Strongback.executor(),
+                                                             mode.toString() + " for " + millisecondExecutionPeriod + " ms",
+                                                             sampleTimeInMilliseconds / millisecondExecutionPeriod)
+                                      .await(10, TimeUnit.SECONDS)
+                                      .isComplete());
+        } catch (InterruptedException e) {
+            Thread.interrupted();
+            throw new AssertionFailedError();
+        }
+    }
 }

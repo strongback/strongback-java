@@ -39,9 +39,11 @@ public class MockCurrentSensor implements CurrentSensor {
      * Set the current (in amps) {@link #getCurrent() returned} by this object.
      *
      * @param currentInAmps the new current reading
+     * @return this instance to enable chaining methods; never null
      */
-    public void setCurrent(double currentInAmps) {
+    public MockCurrentSensor setCurrent(double currentInAmps) {
         this.currentInAmps = currentInAmps;
+        return this;
     }
 
 }

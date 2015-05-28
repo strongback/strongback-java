@@ -38,7 +38,7 @@ public class TankDrive implements Requirable {
     public static final double DEFAULT_MINIMUM_SPEED = 0.02;
     public static final double DEFAULT_MAXIMUM_SPEED = 1.0;
     public static final DoubleToDoubleFunction DEFAULT_SPEED_LIMITER = Values.symmetricLimiter(DEFAULT_MINIMUM_SPEED,
-            DEFAULT_MAXIMUM_SPEED);
+                                                                                               DEFAULT_MAXIMUM_SPEED);
 
     private static final double SENSITIVITY_HIGH = 0.75;
     private static final double SENSITIVITY_LOW = 0.75;
@@ -56,8 +56,8 @@ public class TankDrive implements Requirable {
      * Creates a new DriveSystem subsystem that uses the supplied drive train and no shifter. The voltage send to the drive
      * train is limited to [-1.0,1.0].
      *
-     *
-     * @param driveTrain the drive train for the robot; may not be null
+     * @param left the left motor on the drive train for the robot; may not be null
+     * @param right the right motor on the drive train for the robot; may not be null
      */
     public TankDrive(Motor left, Motor right) {
         this(left, right, null, null);
@@ -67,8 +67,8 @@ public class TankDrive implements Requirable {
      * Creates a new DriveSystem subsystem that uses the supplied drive train and optional shifter. The voltage send to the
      * drive train is limited to [-1.0,1.0].
      *
-     *
-     * @param driveTrain the drive train for the robot; may not be null
+     * @param left the left motor on the drive train for the robot; may not be null
+     * @param right the right motor on the drive train for the robot; may not be null
      * @param shifter the optional shifter used to put the transmission into high gear; may be null if there is no shifter
      */
     public TankDrive(Motor left, Motor right, Relay shifter) {
@@ -79,7 +79,8 @@ public class TankDrive implements Requirable {
      * Creates a new DriveSystem subsystem that uses the supplied drive train and optional shifter. The voltage send to the
      * drive train is limited by the given function.
      *
-     * @param driveTrain the drive train for the robot; may not be null
+     * @param left the left motor on the drive train for the robot; may not be null
+     * @param right the right motor on the drive train for the robot; may not be null
      * @param shifter the optional shifter used to put the transmission into high gear; may be null
      * @param speedLimiter the function that limits the speed sent to the drive train; if null, then a default clamping function
      *        is used to limit to the range [-1.0,1.0]

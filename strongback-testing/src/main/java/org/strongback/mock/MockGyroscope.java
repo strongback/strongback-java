@@ -51,18 +51,22 @@ public class MockGyroscope extends MockZeroable implements Gyroscope {
      * Set the angle value {@link #getAngle() returned} by this object.
      *
      * @param angle the angle value
+     * @return this instance to enable chaining methods; never null
      */
-    public void setAngle(double angle) {
+    public MockGyroscope setAngle(double angle) {
         super.setValue(angle);
+        return this;
     }
 
     /**
      * Set the angular velocity {@link #getRate() returned} by this object.
      *
      * @param angularVelocity the angular velocity (or rate of turn) in degrees per second
+     * @return this instance to enable chaining methods; never null
      */
-    public void setRate(double angularVelocity) {
+    public MockGyroscope setRate(double angularVelocity) {
         this.rate = rate;
+        return this;
     }
 
 }

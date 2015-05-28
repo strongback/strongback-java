@@ -44,7 +44,6 @@ public interface Compass extends AngleSensor {
      * Create a angle sensor for the given function that returns the angle.
      *
      * @param angleSupplier the function that returns the angle; may not be null
-     * @param rateSupplier the function that returns the angular acceleration; may not be null
      * @return the angle sensor
      */
     public static Compass create(DoubleSupplier angleSupplier) {

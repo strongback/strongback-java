@@ -31,24 +31,27 @@ final class CommandRunner {
 
     static interface Context {
         Logger logger();
+
         CommandListener listener();
+
+        static Context with(CommandListener listener, Logger logger) {
+            return new Context() {
+                @Override
+                public CommandListener listener() {
+                    return listener;
+                }
+
+                @Override
+                public Logger logger() {
+                    return logger;
+                }
+            };
+        }
     }
 
-    private static final Context DEFAULT_CONTEXT = new Context() {
-        private final CommandListener listener = new CommandListener(){
-            @Override
-            public void record(Command command, CommandState state) {
-            }
-        };
-        @Override
-        public CommandListener listener() {
-            return listener;
-        }
-        @Override
-        public Logger logger() {
-            return Strongback.logger(CommandRunner.class.getName());
-        }
-    };
+    private static final CommandListener NO_OP_LISTENER = CommandListener.noOp();
+    private static final Context DEFAULT_CONTEXT = Context.with(NO_OP_LISTENER,
+                                                                Strongback.logger(CommandRunner.class.getName()));
 
     private boolean timed = false;
     private long timeoutInMillis;

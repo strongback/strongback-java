@@ -27,10 +27,12 @@ import org.strongback.Strongback;
  */
 public class Scheduler implements Executable {
 
-    private static CommandListener NO_OP = (command,state)->{};
+    private static CommandListener NO_OP = (command, state) -> {
+    };
 
     public static interface CommandListener {
-        public void record( Command command, CommandState state );
+        public void record(Command command, CommandState state);
+
         public static CommandListener noOp() {
             return NO_OP;
         }
@@ -39,20 +41,14 @@ public class Scheduler implements Executable {
     private final Commands commands = new Commands();
     private final CommandRunner.Context context;
 
-    public Scheduler( Logger logger, CommandListener listener ) {
-        this.context = new CommandRunner.Context() {
-            private final Logger log = logger != null ? logger : Logger.noOp();
-            private final CommandListener commandListener = listener != null ? listener : CommandListener.noOp();
-            @Override
-            public Logger logger() {
-                return log;
-            }
+    public Scheduler(Logger logger) {
+        this(logger, null);
+    }
 
-            @Override
-            public CommandListener listener() {
-                return commandListener;
-            }
-        };
+    public Scheduler(Logger logger, CommandListener listener) {
+        Logger log = logger != null ? logger : Logger.noOp();
+        CommandListener commandListener = listener != null ? listener : CommandListener.noOp();
+        this.context = CommandRunner.Context.with(commandListener, log);
     }
 
     /**
@@ -95,7 +91,7 @@ public class Scheduler implements Executable {
                     return new CommandRunner(context, last, crs);
                 case FORK:
                     assert commands.length == 1;
-                    return new CommandRunner(context,last, new CommandRunner(context,buildRunner(commands[0], null)));
+                    return new CommandRunner(context, last, new CommandRunner(context, buildRunner(commands[0], null)));
             }
             // This line should never happen, the switch will throw an exception first
             throw new IllegalStateException("Unexpected command type: " + cg.getType());
@@ -106,7 +102,7 @@ public class Scheduler implements Executable {
     /**
      * Steps once though all of the {@link Command}s in the {@link Scheduler}.
      *
-     * @param time the current system time in milliseconds
+     * @param timeInMillis the current system time in milliseconds
      */
     @Override
     public void execute(long timeInMillis) {

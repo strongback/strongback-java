@@ -43,8 +43,10 @@ public class MockCompass extends MockZeroable implements Compass {
      * Set the angle value {@link #getAngle() returned} by this object.
      *
      * @param angle the angle value
+     * @return this instance to enable chaining methods; never null
      */
-    public void setAngle(double angle) {
+    public MockCompass setAngle(double angle) {
         super.setValue(angle);
+        return this;
     }
 }

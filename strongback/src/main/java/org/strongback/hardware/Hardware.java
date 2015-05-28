@@ -89,7 +89,7 @@ public class Hardware {
     public static final class AngleSensors {
 
         /**
-         * Create a {@link HardwareGyroscope} on the specified channel.
+         * Create a {@link Gyroscope} that uses a WPILib {@link Gyro} on the specified channel.
          *
          * @param channel the channel the gyroscope is plugged into
          * @return a {@link Gyroscope} on the specified channel
@@ -100,7 +100,8 @@ public class Hardware {
         }
 
         /**
-         * Creates a new {@link AngleSensor} from an encoder using the specified channels with the specified distance per pulse.
+         * Creates a new {@link AngleSensor} from an {@link Encoder} using the specified channels with the specified distance
+         * per pulse.
          *
          * @param aChannel the a channel of the encoder
          * @param bChannel the b channel of the encoder
@@ -114,10 +115,10 @@ public class Hardware {
         }
 
         /**
-         * Create a new {@link AngleSensor} from a potentiometer using the specified channel and scaling. Since no offset is
-         * provided, the resulting angle sensor may often be used with a limit switch to know precisely where a mechanism might
-         * be located in space, and the angle sensor can be {@link AngleSensor#zero() zeroed} at that position. (See
-         * {@link #potentiometer(int, double, double)} when another switch is not used to help determine the location, and
+         * Create a new {@link AngleSensor} from an {@link AnalogPotentiometer} using the specified channel and scaling. Since
+         * no offset is provided, the resulting angle sensor may often be used with a limit switch to know precisely where a
+         * mechanism might be located in space, and the angle sensor can be {@link AngleSensor#zero() zeroed} at that position.
+         * (See {@link #potentiometer(int, double, double)} when another switch is not used to help determine the location, and
          * instead the zero point is pre-determined by the physical design of the mechanism.)
          * <p>
          * The scale factor multiplies the 0-1 ratiometric value to return the angle in degrees.
@@ -137,10 +138,10 @@ public class Hardware {
         }
 
         /**
-         * Create a new {@link AngleSensor} from a potentiometer using the specified channel, scaling, and offset. This method
-         * is often used when the offset can be hard-coded by measuring the value of the potentiometer at the mechanism's
-         * zero-point. On the other hand, if a limit switch is used to always determine the position of the mechanism upon
-         * startup, then see {@link #potentiometer(int, double)}.
+         * Create a new {@link AngleSensor} from an {@link AnalogPotentiometer} using the specified channel, scaling, and
+         * offset. This method is often used when the offset can be hard-coded by measuring the value of the potentiometer at
+         * the mechanism's zero-point. On the other hand, if a limit switch is used to always determine the position of the
+         * mechanism upon startup, then see {@link #potentiometer(int, double)}.
          * <p>
          * The scale factor multiplies the 0-1 ratiometric value to return the angle in degrees.
          * <p>
@@ -210,8 +211,10 @@ public class Hardware {
         }
 
         /**
-         * Create a new single-axis {@link Accelerometer} using the RoboRIO's built-in accelerometer.
+         * Create a new single-axis {@link Accelerometer} using the {@link AnalogAccelerometer} on the specified channel that
+         * has the given sensitivity and zero value.
          *
+         * @param channel the channel for the analog accelerometer
          * @param sensitivity the desired sensitivity in Volts per G (depends on actual hardware, such as 18mV/g or
          *        {@code 0.018} for ADXL193)
          * @param zeroValueInVolts the voltage that represents no acceleration (should be determine experimentally)
@@ -225,8 +228,11 @@ public class Hardware {
         }
 
         /**
-         * Create a new single-axis {@link Accelerometer} using the RoboRIO's built-in accelerometer.
+         * Create a new single-axis {@link Accelerometer} using two {@link AnalogAccelerometer}s on the specified channels that
+         * each have the given sensitivity and zero value.
          *
+         * @param xAxisChannel the channel for the X-axis analog accelerometer
+         * @param yAxisChannel the channel for the Y-axis analog accelerometer
          * @param sensitivity the desired sensitivity in Volts per G (depends on actual hardware, such as 18mV/g or
          *        {@code 0.018} for ADXL193)
          * @param zeroValueInVolts the voltage that represents no acceleration (should be determine experimentally)
@@ -355,8 +361,7 @@ public class Hardware {
      */
     public static final class DistanceSensors {
         /**
-         * Create a {@link HardwareDigitalUltrasonic} using the specified channels. See {@link HardwareDigitalUltrasonic} for
-         * explanation why.
+         * Create a digital ultrasonic {@link DistanceSensor} for an {@link Ultrasonic} sensor that uses the specified channels.
          *
          * @param pingChannel the digital output channel to use for sending pings
          * @param echoChannel the digital input channel to use for receiving echo responses
@@ -369,7 +374,7 @@ public class Hardware {
         }
 
         /**
-         * Create a {@link HardwareAnalogDistanceSensor} using the specified channel.
+         * Create an analog {@link DistanceSensor} for an {@link AnalogInput} sensor using the specified channel.
          *
          * @param channel the channel the sensor is connected to
          * @param voltsToInches the conversion from analog volts to inches
@@ -381,11 +386,11 @@ public class Hardware {
         }
 
         /**
-         * Create a new {@link DistanceSensor} from a potentiometer using the specified channel and scaling. Since no offset is
-         * provided, the resulting distance sensor may often be used with a limit switch to know precisely where a mechanism
-         * might be located in space, and the distance sensor can be {@link DistanceSensor#zero() zeroed} at that position. (See
-         * {@link #potentiometer(int, double, double)} when another switch is not used to help determine the location, and
-         * instead the zero point is pre-determined by the physical design of the mechanism.)
+         * Create a new {@link DistanceSensor} from an {@link AnalogPotentiometer} using the specified channel and scaling.
+         * Since no offset is provided, the resulting distance sensor may often be used with a limit switch to know precisely
+         * where a mechanism might be located in space, and the distance sensor can be {@link DistanceSensor#zero() zeroed} at
+         * that position. (See {@link #potentiometer(int, double, double)} when another switch is not used to help determine the
+         * location, and instead the zero point is pre-determined by the physical design of the mechanism.)
          * <p>
          * The scale factor multiplies the 0-1 ratiometric value to return useful units, and an offset to add after the scaling.
          * Generally, the most useful scale factor will be the angular or linear full scale of the potentiometer.
@@ -403,9 +408,9 @@ public class Hardware {
         }
 
         /**
-         * Create a new {@link DistanceSensor} from a potentiometer using the specified channel, scaling, and offset. This
-         * method is often used when the offset can be hard-coded by first measuring the value of the potentiometer at the
-         * mechanism's zero-point. On the other hand, if a limit switch is used to always determine the position of the
+         * Create a new {@link DistanceSensor} from an {@link AnalogPotentiometer} using the specified channel, scaling, and
+         * offset. This method is often used when the offset can be hard-coded by first measuring the value of the potentiometer
+         * at the mechanism's zero-point. On the other hand, if a limit switch is used to always determine the position of the
          * mechanism upon startup, then see {@link #potentiometer(int, double)}.
          * <p>
          * The scale factor multiplies the 0-1 ratiometric value to return useful units, and an offset to add after the scaling.
@@ -509,7 +514,6 @@ public class Hardware {
          * @param talon the already configured {@link CANTalon} instance; may not be null
          * @param pulsesPerDegree the number of encoder pulses per degree of revolution of the final shaft
          * @return a {@link TalonSRX} motor; never null
-         * @see #talonSRX(int, double)
          */
         public static TalonSRX talonSRX(CANTalon talon, double pulsesPerDegree) {
             if (talon == null) throw new IllegalArgumentException("The CANTalon reference may not be null");
@@ -572,11 +576,11 @@ public class Hardware {
         public static FlightStick logitechAttack3D(int port) {
             Joystick joystick = new Joystick(port);
             return FlightStick.create(joystick::getRawAxis, joystick::getRawButton, joystick::getPOV, joystick::getY, // pitch
-                    () -> joystick.getTwist() * -1, // yaw is reversed
-                    joystick::getX, // roll
-                    joystick::getThrottle, // throttle
-                    () -> joystick.getRawButton(1), // trigger
-                    () -> joystick.getRawButton(2)); // thumb
+                                      () -> joystick.getTwist() * -1, // yaw is reversed
+                                      joystick::getX, // roll
+                                      joystick::getThrottle, // throttle
+                                      () -> joystick.getRawButton(1), // trigger
+                                      () -> joystick.getRawButton(2)); // thumb
         }
 
         /**
@@ -587,13 +591,13 @@ public class Hardware {
          */
         public static FlightStick microsoftSideWinder(int port) {
             Joystick joystick = new Joystick(port);
-            return FlightStick.create(joystick::getRawAxis, joystick::getRawButton, joystick::getPOV,
-                    () -> joystick.getY() * -1, // pitch is reversed
-                    joystick::getTwist, // yaw
-                    joystick::getX, // roll
-                    joystick::getThrottle, // throttle
-                    () -> joystick.getRawButton(0), // trigger
-                    () -> joystick.getRawButton(1)); // thumb
+            return FlightStick.create(joystick::getRawAxis, joystick::getRawButton, joystick::getPOV, () -> joystick.getY()
+                    * -1, // pitch is reversed
+                                      joystick::getTwist, // yaw
+                                      joystick::getX, // roll
+                                      joystick::getThrottle, // throttle
+                                      () -> joystick.getRawButton(0), // trigger
+                                      () -> joystick.getRawButton(1)); // thumb
         }
 
         /**
@@ -604,13 +608,25 @@ public class Hardware {
          */
         public static Gamepad logitechDualAction(int port) {
             Joystick joystick = new Joystick(port);
-            return Gamepad.create(joystick::getRawAxis, joystick::getRawButton, joystick::getPOV, () -> joystick.getRawAxis(0),
-                    () -> joystick.getRawAxis(1) * -1, () -> joystick.getRawAxis(2), () -> joystick.getRawAxis(3) * -1,
-                    () -> joystick.getRawButton(6) ? 1.0 : 0.0, () -> joystick.getRawButton(7) ? 1.0 : 0.0,
-                    () -> joystick.getRawButton(4), () -> joystick.getRawButton(5), () -> joystick.getRawButton(1),
-                    () -> joystick.getRawButton(2), () -> joystick.getRawButton(0), () -> joystick.getRawButton(3),
-                    () -> joystick.getRawButton(9), () -> joystick.getRawButton(8), () -> joystick.getRawButton(10),
-                    () -> joystick.getRawButton(11));
+            return Gamepad.create(joystick::getRawAxis,
+                                  joystick::getRawButton,
+                                  joystick::getPOV,
+                                  () -> joystick.getRawAxis(0),
+                                  () -> joystick.getRawAxis(1) * -1,
+                                  () -> joystick.getRawAxis(2),
+                                  () -> joystick.getRawAxis(3) * -1,
+                                  () -> joystick.getRawButton(6) ? 1.0 : 0.0,
+                                  () -> joystick.getRawButton(7) ? 1.0 : 0.0,
+                                  () -> joystick.getRawButton(4),
+                                  () -> joystick.getRawButton(5),
+                                  () -> joystick.getRawButton(1),
+                                  () -> joystick.getRawButton(2),
+                                  () -> joystick.getRawButton(0),
+                                  () -> joystick.getRawButton(3),
+                                  () -> joystick.getRawButton(9),
+                                  () -> joystick.getRawButton(8),
+                                  () -> joystick.getRawButton(10),
+                                  () -> joystick.getRawButton(11));
         }
 
         /**
@@ -621,13 +637,25 @@ public class Hardware {
          */
         public static Gamepad logitechF310(int port) {
             Joystick joystick = new Joystick(port);
-            return Gamepad.create(joystick::getRawAxis, joystick::getRawButton, joystick::getPOV, () -> joystick.getRawAxis(0),
-                    () -> joystick.getRawAxis(1) * -1, () -> joystick.getRawAxis(4), () -> joystick.getRawAxis(5) * -1,
-                    () -> joystick.getRawAxis(2), () -> joystick.getRawAxis(3),
-                    () -> joystick.getRawButton(4), () -> joystick.getRawButton(5), () -> joystick.getRawButton(0),
-                    () -> joystick.getRawButton(1), () -> joystick.getRawButton(2), () -> joystick.getRawButton(3),
-                    () -> joystick.getRawButton(7), () -> joystick.getRawButton(6), () -> joystick.getRawButton(8),
-                    () -> joystick.getRawButton(9));
+            return Gamepad.create(joystick::getRawAxis,
+                                  joystick::getRawButton,
+                                  joystick::getPOV,
+                                  () -> joystick.getRawAxis(0),
+                                  () -> joystick.getRawAxis(1) * -1,
+                                  () -> joystick.getRawAxis(4),
+                                  () -> joystick.getRawAxis(5) * -1,
+                                  () -> joystick.getRawAxis(2),
+                                  () -> joystick.getRawAxis(3),
+                                  () -> joystick.getRawButton(4),
+                                  () -> joystick.getRawButton(5),
+                                  () -> joystick.getRawButton(0),
+                                  () -> joystick.getRawButton(1),
+                                  () -> joystick.getRawButton(2),
+                                  () -> joystick.getRawButton(3),
+                                  () -> joystick.getRawButton(7),
+                                  () -> joystick.getRawButton(6),
+                                  () -> joystick.getRawButton(8),
+                                  () -> joystick.getRawButton(9));
         }
     }
 }

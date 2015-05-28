@@ -31,7 +31,7 @@ import org.strongback.util.Values;
  * </ol>
  * </p>
  * <p>
- * and three possible {@link Direction directions}:
+ * and three possible {@link Motor.Direction directions}:
  * <ol>
  * <li> {@code FORWARD} - the underlying motor is moving to the high limit</li>
  * <li> {@code REVERSE} - the underlying motor is moving to the low limit</li>
@@ -156,7 +156,8 @@ public interface LimitedMotor extends Motor {
      *        there is no limit switch
      * @param reverseSwitch the {@link Switch} that signals the motor reached its limit in the reverse direction, or null if
      *        there is no limit switch
-     * @throws IllegalArgumentException if any of the parameters are null
+     * @return the limited motor; never null
+     * @throws IllegalArgumentException if the {@code motor} parameter is null
      */
     public static LimitedMotor create(Motor motor, Switch forwardSwitch, Switch reverseSwitch) {
         if (motor == null) throw new IllegalArgumentException("The motor may not be null");

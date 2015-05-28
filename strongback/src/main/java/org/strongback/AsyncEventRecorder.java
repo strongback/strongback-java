@@ -68,7 +68,7 @@ final class AsyncEventRecorder implements EventRecorder {
 
         /**
          * Record an event with the specified {@link EventType#typeNumber() event type number} and String value. Before this
-         * method is called, {@link #recordEventType(EventType)} will have been called for the given type of event
+         * method is called, {@link #recordEventType(long, EventType)} will have been called for the given type of event
          *
          * @param timeInMillis the time (in milliseconds) of the event
          * @param eventType the type of event
@@ -78,7 +78,7 @@ final class AsyncEventRecorder implements EventRecorder {
 
         /**
          * Record an event with the specified {@link EventType#typeNumber() event type number} and integer value. Before this
-         * method is called, {@link #recordEventType(EventType)} will have been called for the given type of event
+         * method is called, {@link #recordEventType(long, EventType)} will have been called for the given type of event
          *
          * @param timeInMillis the time (in milliseconds) of the event
          * @param eventType the type of event

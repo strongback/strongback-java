@@ -19,11 +19,10 @@ package org.strongback.component;
 import static org.fest.assertions.Assertions.assertThat;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.LongSupplier;
 
 import org.junit.Test;
 import org.strongback.components.Fuse;
+import org.strongback.mock.MockClock;
 
 /**
  * @author Randall Hauch
@@ -55,21 +54,20 @@ public class FuseTest {
 
     @Test
     public void shouldAutoResetWhenMoreTimeHasPastThanDelay() {
-        AtomicLong currentTime = new AtomicLong();
-        LongSupplier timeProvider = currentTime::get;
-        Fuse f = Fuse.autoResetting(10, TimeUnit.SECONDS, timeProvider, TimeUnit.SECONDS);
+        MockClock clock = new MockClock();
+        Fuse f = Fuse.autoResetting(10, TimeUnit.SECONDS, clock);
         assertNotTriggered(f);
         // advance time by more than delay, and should still not be triggered ...
-        currentTime.addAndGet(100);
+        clock.incrementBySeconds(100);
         assertNotTriggered(f);
         // Trigger ...
         f.trigger();
         assertTriggered(f);
         // advance time by exactly the delay, and should still be triggered ...
-        currentTime.addAndGet(10);
+        clock.incrementBySeconds(10);
         assertTriggered(f);
         // advance time beyond the delay, and it should not be triggered ...
-        currentTime.addAndGet(1);
+        clock.incrementBySeconds(1);
         assertNotTriggered(f);
     }
 }

@@ -46,7 +46,7 @@ public interface Metronome {
      * Create a new metronome that starts ticking immediately and that uses {@link Thread#sleep(long)} to wait.
      * <p>
      * Generally speaking, this is a simple but inaccurate approach for periods anywhere close to the precision of the supplied
-     * Clock (which for the {@link Clock#system() system clock is typically around 10-15 milliseconds for modern Linux and OS X
+     * Clock (which for the {@link Clock#system() system clock} is typically around 10-15 milliseconds for modern Linux and OS X
      * systems, and potentially worse on Windows and older Linux/Unix systems. And because this metronome uses
      * Thread#sleep(long), thread context switches are likely and will negatively affect the precision of the metronome's
      * period.
@@ -58,6 +58,7 @@ public interface Metronome {
      * @param period the period of time that the metronome ticks and for which {@link #pause()} waits
      * @param unit the unit of time; may not be null
      * @param timeSystem the time system that will provide the current time; may not be null
+     * @return the new metronome; never null
      */
     public static Metronome sleeper(long period, TimeUnit unit, Clock timeSystem) {
         long periodInMillis = unit.toMillis(period);
@@ -99,6 +100,7 @@ public interface Metronome {
      * @param period the period of time that the metronome ticks and for which {@link #pause()} waits
      * @param unit the unit of time; may not be null
      * @param timeSystem the time system that will provide the current time; may not be null
+     * @return the new metronome; never null
      */
     public static Metronome parker(long period, TimeUnit unit, Clock timeSystem) {
         long periodInNanos = unit.toNanos(period);
@@ -136,6 +138,7 @@ public interface Metronome {
      * @param period the period of time that the metronome ticks and for which {@link #pause()} waits
      * @param unit the unit of time; may not be null
      * @param timeSystem the time system that will provide the current time; may not be null
+     * @return the new metronome; never null
      */
     public static Metronome busy(long period, TimeUnit unit, Clock timeSystem) {
         long periodInNanos = unit.toNanos(period);

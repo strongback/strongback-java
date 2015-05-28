@@ -83,7 +83,7 @@ public interface ThreeAxisAccelerometer extends TwoAxisAccelerometer {
      * @param xAxis the accelerometer for the X-axis; may not be null
      * @param yAxis the accelerometer for the Y-axis; may not be null
      * @param zAxis the accelerometer for the Z-axis; may not be null
-     * @return
+     * @return the 3-axis accelerometer; never null
      */
     public static ThreeAxisAccelerometer create(Accelerometer xAxis, Accelerometer yAxis, Accelerometer zAxis) {
         return new ThreeAxisAccelerometer() {
@@ -109,7 +109,7 @@ public interface ThreeAxisAccelerometer extends TwoAxisAccelerometer {
      * Create a 3-axis accelerometer from a 2-D accelerometer and a separate accelerometer for the Z-axis.
      * @param xAndY the 2-D accelerometer for the X- and Y-axes; may not be null
      * @param zAxis the accelerometer for the Z-axis; may not be null
-     * @return
+     * @return the 3-axis accelerometer; never null
      */
     public static ThreeAxisAccelerometer create(TwoAxisAccelerometer xAndY, Accelerometer zAxis) {
         return new ThreeAxisAccelerometer() {

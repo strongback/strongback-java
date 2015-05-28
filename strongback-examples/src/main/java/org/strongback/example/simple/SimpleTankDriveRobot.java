@@ -70,7 +70,10 @@ public class SimpleTankDriveRobot extends IterativeRobot {
                   .register("Left motors", left)
                   .register("Right motors", right)
                   .register("Sensitivity", sensitivity.scaleAsInt(1000));
+    }
 
+    @Override
+    public void teleopInit() {
         // Start Strongback functions ...
         Strongback.start();
     }

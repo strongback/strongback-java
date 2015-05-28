@@ -20,6 +20,8 @@ import java.util.function.DoubleSupplier;
 import java.util.function.Function;
 import java.util.function.IntToDoubleFunction;
 
+import org.strongback.hardware.Hardware;
+
 /**
  * A simple abstraction for the Power Distribution Panel (PDP).
  */
@@ -101,15 +103,16 @@ public interface PowerPanel {
      * @param totalCurrent the function that returns total current; may not be null
      * @param voltage the function that returns voltage; may not be null
      * @param temperature the function that returns temperature; may not be null
-     * @return
+     * @return the power panel; never null
+     * @see Hardware#powerPanel()
      */
-    public static PowerPanel create(IntToDoubleFunction currentForChannel, DoubleSupplier totalCurrent,
-            DoubleSupplier voltage, DoubleSupplier temperature) {
+    public static PowerPanel create(IntToDoubleFunction currentForChannel, DoubleSupplier totalCurrent, DoubleSupplier voltage,
+            DoubleSupplier temperature) {
         return new PowerPanel() {
 
             @Override
             public CurrentSensor getCurrentSensor(int channel) {
-                return ()->currentForChannel.applyAsDouble(channel);
+                return () -> currentForChannel.applyAsDouble(channel);
             }
 
             @Override
@@ -132,11 +135,12 @@ public interface PowerPanel {
     /**
      * Create a new PowerPanel from functions that supply the current for each channel, total current, voltage, and temperature.
      *
-     * @param currentForChannel the function that returns the current sensor for a given channel; may not be null
+     * @param currentSensorForChannel the function that returns the current sensor for a given channel; may not be null
      * @param totalCurrent the total current sensor; may not be null
      * @param voltage the voltage sensor; may not be null
      * @param temperature the temperature sensor; may not be null
-     * @return
+     * @return the power panel; never null
+     * @see Hardware#powerPanel()
      */
     public static PowerPanel create(Function<Integer, CurrentSensor> currentSensorForChannel, CurrentSensor totalCurrent,
             VoltageSensor voltage, TemperatureSensor temperature) {

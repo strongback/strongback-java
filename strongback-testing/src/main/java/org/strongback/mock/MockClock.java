@@ -21,39 +21,47 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.strongback.components.Clock;
 
 /**
- * A very simple mock {@link Clock} implementation that advances only when manually {@link #increment() incremented}.
+ * A very simple mock {@link Clock} implementation that advances only when manually {@link #incrementBySeconds incremented}.
+ *
  * @author Randall Hauch
  */
 public class MockClock implements Clock {
 
-    private final AtomicLong ticker = new AtomicLong(1000*1000*20); // 2 seconds
+    private final AtomicLong ticker = new AtomicLong(1000 * 1000 * 20); // 2 seconds
 
     public MockClock() {
     }
 
     /**
      * Increment the clock by the specified number of seconds.
-     * @param miliseconds the number of seconds; must be positive
+     *
+     * @param seconds the number of seconds; must be positive
+     * @return this instance to enable chaining methods; never null
      */
-    public void incrementBySeconds( long seconds ) {
-        incrementByMicroseconds(1000*1000*seconds);
+    public MockClock incrementBySeconds(long seconds) {
+        return incrementByMicroseconds(1000 * 1000 * seconds);
     }
 
     /**
      * Increment the clock by the specified number of milliseconds.
+     *
      * @param miliseconds the number of milliseconds; must be positive
+     * @return this instance to enable chaining methods; never null
      */
-    public void incrementByMilliseconds( long miliseconds ) {
-        incrementByMicroseconds(1000*miliseconds);
+    public MockClock incrementByMilliseconds(long miliseconds) {
+        return incrementByMicroseconds(1000 * miliseconds);
     }
 
     /**
      * Increment the clock by the specified number of microseconds.
+     *
      * @param incrementInMicros the number of microseconds to add to the clock; must be positive
+     * @return this instance to enable chaining methods; never null
      */
-    public void incrementByMicroseconds( long incrementInMicros ) {
-        if ( incrementInMicros < 1 ) throw new IllegalArgumentException("The clock increment must be positive");
-        ticker.accumulateAndGet(incrementInMicros, (a,b)->a+b);
+    public MockClock incrementByMicroseconds(long incrementInMicros) {
+        if (incrementInMicros < 1) throw new IllegalArgumentException("The clock increment must be positive");
+        ticker.accumulateAndGet(incrementInMicros, (a, b) -> a + b);
+        return this;
     }
 
     @Override

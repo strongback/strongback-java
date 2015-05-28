@@ -34,7 +34,6 @@ public interface DataRecorder {
      * @param supplier the {@link IntSupplier} of the value to be logged
      * @return this instance so methods can be chained together; never null
      * @throws IllegalArgumentException if the {@code supplier} parameter is null
-     * @throws IllegalStateException if the data logger is already {@link #start() started}
      */
     public DataRecorder register(String name, IntSupplier supplier);
 
@@ -46,7 +45,6 @@ public interface DataRecorder {
      * @param swtch the {@link Switch} to be logged
      * @return this instance so methods can be chained together; never null
      * @throws IllegalArgumentException if the {@code swtch} parameter is null
-     * @throws IllegalStateException if the data logger is already {@link #start() started}
      */
     public DataRecorder register(String name, Switch swtch);
 
@@ -58,7 +56,6 @@ public interface DataRecorder {
      * @param motor the {@link Motor} to be logged
      * @return this instance so methods can be chained together; never null
      * @throws IllegalArgumentException if the {@code motor} parameter is null
-     * @throws IllegalStateException if the data logger is already {@link #start() started}
      */
     public DataRecorder register(String name, Motor motor);
 }

@@ -157,7 +157,7 @@ public final class Strongback {
          * Log messages to custom {@link Logger} implementations based upon the supplied function that maps the string contexts
          * to custom loggers.
          *
-         * @param logger the custom function that produces a logger for a context; may not be null
+         * @param loggers the custom function that produces a logger for a context; may not be null
          * @return this configurator so that methods can be chained together; never null
          */
         public Configurator useCustomLogger(Function<String, Logger> loggers) {
@@ -335,7 +335,7 @@ public final class Strongback {
          * @see #useExecutionTimerMode(TimerMode)
          * @throws IllegalArgumentException if {@code unit} is {@link TimeUnit#MICROSECONDS} or {@link TimeUnit#NANOSECONDS}
          */
-        public Configurator useExecutionRate(long interval, TimeUnit unit) {
+        public Configurator useExecutionPeriod(long interval, TimeUnit unit) {
             if (interval <= 0) throw new IllegalArgumentException("The execution interval must be positive");
             if (unit == null) throw new IllegalArgumentException("The time unit may not be null");
             if (TimeUnit.MILLISECONDS.toNanos(1) > unit.toNanos(interval)) {
@@ -372,6 +372,10 @@ public final class Strongback {
         return CONFIG;
     }
 
+    /**
+     * Start the Strongback functions, including the {@link #executor() Executor}, {@link #submit(Command) command scheduler},
+     * and the {@link #dataRecorder() data recorder}.
+     */
     public static void start() {
         INSTANCE.doStart();
     }
@@ -399,11 +403,11 @@ public final class Strongback {
      * efficiently for all asynchronous processing.
      * <p>
      * However, care must be taken to prevent overloading the executor. Specifically, the executor must be able to perform all
-     * work for all registered {@link Executable}s during the {@link Configurator#useExecutionRate(long, TimeUnit) configured
+     * work for all registered {@link Executable}s during the {@link Configurator#useExecutionPeriod(long, TimeUnit) configured
      * execution interval}. If too much work is added, the executor may fall behind.
      *
      * @return Strongback's executor; never null
-     * @see Configurator#useExecutionRate(long, TimeUnit)
+     * @see Configurator#useExecutionPeriod(long, TimeUnit)
      * @see Configurator#useExecutionTimerMode(org.strongback.Strongback.Configurator.TimerMode)
      */
     public static Executor executor() {
@@ -423,6 +427,7 @@ public final class Strongback {
     /**
      * Get Strongback's global {@link Logger} implementation.
      *
+     * @param context the context of the logger
      * @return Strongback's logger instance; never null
      * @see Configurator#useSystemLogger(org.strongback.Logger.Level)
      */
@@ -446,7 +451,7 @@ public final class Strongback {
      * Submit a {@link Command} to be executed by Strongback's internal scheduler.
      *
      * @param command the command to be submitted
-     * @see Configurator#useExecutionRate(long, TimeUnit)
+     * @see Configurator#useExecutionPeriod(long, TimeUnit)
      * @see Configurator#useExecutionTimerMode(org.strongback.Strongback.Configurator.TimerMode)
      */
     public static void submit(Command command) {
@@ -465,7 +470,7 @@ public final class Strongback {
      *
      * @return the switch reactor; never null
      * @see SwitchReactor
-     * @see Configurator#useExecutionRate(long, TimeUnit)
+     * @see Configurator#useExecutionPeriod(long, TimeUnit)
      */
     public static SwitchReactor switchReactor() {
         return INSTANCE.switchReactor;
@@ -473,11 +478,11 @@ public final class Strongback {
 
     /**
      * Get Strongback's {@link DataRecorder} that can be used to register switches, motors, and other functions that provide
-     * recordable data. Once data providers have been registered, the data recorder can be {@link DataRecorder#start() started}
-     * to begin recording data. The data recorder is added to the {@link #executor() executor}, so it repeatedly polls the data
-     * providers and writes out the information to its log. At a later time (perhaps when the robot exits teleoperated mode or
-     * when a button is pressed on a driver station input device), the data recorder can be {@link DataRecorder#stop() stopped}
-     * to flush all records that have not yet been written.
+     * recordable data. Once data providers have been registered, Strongback will only begin recording data after Strongback is
+     * {@link #start() started}, at which time the data recorder will automatically and repeatedly poll the data providers and
+     * write out the information to its log. Strongback should be {@link #disable() disabled} when the robot is disabled to
+     * flush any unwritten data and prevent recording data while in disabled mode. When the robot is enabled, it should again be
+     * started.
      *
      * @return the data recorder; never null
      * @see DataRecorder
@@ -521,7 +526,9 @@ public final class Strongback {
     private final AtomicBoolean started = new AtomicBoolean(false);
 
     private Strongback(Configurator config, Strongback previousInstance) {
+        boolean start = false;
         if (previousInstance != null) {
+            start = previousInstance.started.get();
             // Terminates all currently-scheduled commands and stops the executor's thread (if running) ...
             previousInstance.doShutdown();
             executables = previousInstance.executables;
@@ -572,7 +579,7 @@ public final class Strongback {
         executables.register(dataRecorderDriver);
 
         // Start this if the previous was already started ...
-        if ( previousInstance != null && previousInstance.started.get() ) {
+        if (previousInstance != null && start) {
             doStart();
         }
     }
@@ -598,11 +605,20 @@ public final class Strongback {
 
     private void killCommandsAndFlush() {
         try {
-            // Kill any remaining commands ...
-            scheduler.killAll();
+            // First stop executing immediately; at this point, no executables will run ...
+            executorDriver.stop();
         } finally {
-            // Finally flush the data recorder ...
-            dataRecorderDriver.flush();
+            try {
+                // Kill any remaining commands ...
+                scheduler.killAll();
+            } finally {
+                try {
+                    // Finally flush the data recorder ...
+                    dataRecorderDriver.flush();
+                } finally {
+                    started.set(false);
+                }
+            }
         }
     }
 
@@ -615,8 +631,12 @@ public final class Strongback {
                 // Kill any remaining commands ...
                 scheduler.killAll();
             } finally {
-                // Finally flush the data recorder ...
-                dataRecorderDriver.stop();
+                try {
+                    // Finally flush the data recorder ...
+                    dataRecorderDriver.stop();
+                } finally {
+                    started.set(false);
+                }
             }
         }
     }

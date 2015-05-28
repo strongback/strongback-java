@@ -37,6 +37,7 @@ public interface Counter extends Zeroable {
 
     /**
      * Increment the counter.
+     *
      * @return this object to allow chaining of methods; never null
      */
     public Counter increment();
@@ -61,7 +62,7 @@ public interface Counter extends Zeroable {
      * @param initial the initial value for the counter; must be 0 or positive
      * @return the new counter; never null
      */
-    public static Counter unlimited( int initial ) {
+    public static Counter unlimited(int initial) {
         return circular(initial, 1, Integer.MAX_VALUE);
     }
 
@@ -69,10 +70,11 @@ public interface Counter extends Zeroable {
      * Create a new counter that will increment by 1 and that upon reaching the supplied maximum value will upon the next
      * {@link #increment()} call automatically reset to 0.
      *
+     * @param maximum the maximum value for the counter before it resets to 0; this must be positive
      * @return the new counter; never null
      */
     public static Counter circular(int maximum) {
-        return circular(0,1,maximum);
+        return circular(0, 1, maximum);
     }
 
     /**

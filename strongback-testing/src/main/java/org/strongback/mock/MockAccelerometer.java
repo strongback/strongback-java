@@ -39,9 +39,11 @@ public class MockAccelerometer implements Accelerometer {
      * Set the acceleration value {@link #getAcceleration() returned} by this object.
      *
      * @param accel the acceleration value
+     * @return this instance to enable chaining methods; never null
      */
-    public void setAcceleration(double accel) {
+    public MockAccelerometer setAcceleration(double accel) {
         this.accel = accel;
+        return this;
     }
 
 }

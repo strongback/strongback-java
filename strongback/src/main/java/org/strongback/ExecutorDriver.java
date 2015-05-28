@@ -49,8 +49,8 @@ final class ExecutorDriver implements Stoppable {
     }
 
     /**
-     * Start the execution of this {@link ExecutorDriver} in a separate thread. During each execution, all
-     * {@link #register(Executable) registered} {@link Executable}s will be called in the order they were registered.
+     * Start the execution of this {@link ExecutorDriver} in a separate thread. During each execution, all registered
+     * {@link Executable}s will be called in the order they were registered.
      * <p>
      * Calling this method when already started has no effect.
      *
