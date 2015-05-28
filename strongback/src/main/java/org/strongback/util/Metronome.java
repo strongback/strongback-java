@@ -25,10 +25,12 @@ import org.strongback.components.Clock;
  * A class that can be used to perform an action at a regular interval. To use, set up a {@code Metronome} instance and perform
  * a repeated event (perhaps using a loop), calling {@link #pause()} before each event.
  * <p>
- * This class should perform pretty reliably for millisecond-precision periods on the RoboRIO, although strictly speaking it
- * depends on the particular JVM. Internally, the class uses {@link LockSupport#parkNanos(long) concurrent utilities} that
- * should perform well on Linux kernel 2.6+, which means it should perform well on the RoboRIO (which for 2015 used <a
- * ref="http://khengineering.github.io/RoboRio/faq/roborio/">kernel 3.2.35</a>). It also appears to work well on OS X 10.9.
+ * There are several implementations provided by this class, and each varies in the precision of the interval based upon the
+ * supplied {@link Clock}, interval, and the technique used to pause. Among these implementations, the
+ * {@link #busy(long, TimeUnit, Clock)} method produces the most accurate, precise, and consistent pause intervals down to 1
+ * millisecond on most platforms (especially modern Linux and OS X).
+ *
+ * @author Randall Hauch
  */
 @FunctionalInterface
 public interface Metronome {
@@ -41,8 +43,17 @@ public interface Metronome {
     public boolean pause();
 
     /**
-     * Create a new metronome that starts ticking immediately and that uses {@link Thread#sleep(long)} to wait, which in general
-     * is an inaccurate but simple approach.
+     * Create a new metronome that starts ticking immediately and that uses {@link Thread#sleep(long)} to wait.
+     * <p>
+     * Generally speaking, this is a simple but inaccurate approach for periods anywhere close to the precision of the supplied
+     * Clock (which for the {@link Clock#system() system clock is typically around 10-15 milliseconds for modern Linux and OS X
+     * systems, and potentially worse on Windows and older Linux/Unix systems. And because this metronome uses
+     * Thread#sleep(long), thread context switches are likely and will negatively affect the precision of the metronome's
+     * period.
+     * <p>
+     * Although the method seemingly supports taking {@link TimeUnit#MICROSECONDS} and {@link TimeUnit#NANOSECONDS}, it is
+     * likely that the JVM and operating system do not support such fine-grained precision. And as mentioned above, care should
+     * be used when specifying a {@code period} of 20 milliseconds or smaller.
      *
      * @param period the period of time that the metronome ticks and for which {@link #pause()} waits
      * @param unit the unit of time; may not be null
@@ -66,12 +77,24 @@ public interface Metronome {
                 next = next + periodInMillis;
                 return true;
             }
+
+            @Override
+            public String toString() {
+                return "Metronome (sleep for " + periodInMillis + " ms)";
+            }
         };
     }
 
     /**
-     * Create a new metronome that starts ticking immediately and that uses {@link LockSupport#parkNanos(long)} to wait, which
-     * generally works on many Linux platforms.
+     * Create a new metronome that starts ticking immediately and that uses {@link LockSupport#parkNanos(long)} to wait.
+     * <p>
+     * {@link LockSupport#parkNanos(long)} uses the underlying platform-specific timed wait mechanism, which may be more
+     * accurate for smaller periods than {@link #sleeper(long, TimeUnit, Clock)}. However, like
+     * {@link #sleeper(long, TimeUnit, Clock)}, the resulting Metronome may result in (expensive) thread context switches.
+     * <p>
+     * Although the method seemingly supports taking {@link TimeUnit#MICROSECONDS} and {@link TimeUnit#NANOSECONDS}, it is
+     * likely that the JVM and operating system do not support such fine-grained precision. And as mentioned above, care should
+     * be used when specifying a {@code period} of 10-15 milliseconds or smaller.
      *
      * @param period the period of time that the metronome ticks and for which {@link #pause()} waits
      * @param unit the unit of time; may not be null
@@ -90,13 +113,25 @@ public interface Metronome {
                 next = next + periodInNanos;
                 return true;
             }
+
+            @Override
+            public String toString() {
+                return "Metronome (park for " + TimeUnit.NANOSECONDS.toMillis(periodInNanos) + " ms)";
+            }
         };
     }
 
     /**
      * Create a new metronome that starts ticking immediately and that uses a busy loop to keep the thread active and works on
-     * every platform. This is very accurate and reliable since it does not use thread context changes, but it is not terribly
-     * efficient since the thread does not yield while waiting.
+     * every platform.
+     * <p>
+     * Theoretically this is the most accurate Metronome since it prevents thread context switches in the JVM and because it
+     * relies upon the supplied {@link Clock}'s {@link Clock#currentTimeInNanos() relative time} that is likely accurate to a
+     * small number of microseconds.
+     * <p>
+     * Although the method seemingly supports taking {@link TimeUnit#MICROSECONDS} and {@link TimeUnit#NANOSECONDS}, it is
+     * likely that the JVM and operating system do not support such fine-grained precision. And as mentioned above, care should
+     * be used when specifying a {@code period} of 10-15 milliseconds or smaller.
      *
      * @param period the period of time that the metronome ticks and for which {@link #pause()} waits
      * @param unit the unit of time; may not be null
@@ -109,9 +144,15 @@ public interface Metronome {
 
             @Override
             public boolean pause() {
-                while (next > timeSystem.currentTimeInNanos()) {}
+                while (next - timeSystem.currentTimeInNanos() > 0) {
+                }
                 next = next + periodInNanos;
                 return true;
+            }
+
+            @Override
+            public String toString() {
+                return "Metronome (busy wait for " + TimeUnit.NANOSECONDS.toMillis(periodInNanos) + " ms)";
             }
         };
     }

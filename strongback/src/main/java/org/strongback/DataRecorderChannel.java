@@ -24,14 +24,34 @@ import org.strongback.annotation.Immutable;
 public final class DataRecorderChannel {
     private final String name;
     private final IntSupplier supplier;
-    public DataRecorderChannel( String name, IntSupplier supplier ) {
-        this.name =name;
+
+    public DataRecorderChannel(String name, IntSupplier supplier) {
+        assert name != null;
+        assert supplier != null;
+        this.name = name;
         this.supplier = supplier;
     }
+
     public String getName() {
         return name;
     }
+
     public IntSupplier getSupplier() {
         return supplier;
+    }
+
+    @Override
+    public int hashCode() {
+        return name.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) return true;
+        if (obj instanceof DataRecorderChannel) {
+            DataRecorderChannel that = (DataRecorderChannel) obj;
+            return this.name.equals(that.name);
+        }
+        return false;
     }
 }

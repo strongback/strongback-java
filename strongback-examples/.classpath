@@ -11,6 +11,5 @@
 	<classpathentry kind="lib" path="/libs/test/hamcrest-core-1.3.jar" sourcepath="/libs/test/hamcrest-core-1.3-sources.jar"/>
 	<classpathentry kind="var" path="networktables" sourcepath="networktables.sources"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/strongback"/>
-	<classpathentry kind="lib" path="/libs/test/metrics-core-3.1.0.jar" sourcepath="/libs/test/metrics-core-3.1.0-sources.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

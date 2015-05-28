@@ -26,17 +26,17 @@ import org.strongback.function.IntToIntFunction;
  * A type of input device similar to an Xbox controller.
  */
 public interface Gamepad extends InputDevice {
-    public abstract AnalogAxis getLeftX();
+    public abstract ContinuousRange getLeftX();
 
-    public abstract AnalogAxis getLeftY();
+    public abstract ContinuousRange getLeftY();
 
-    public abstract AnalogAxis getRightX();
+    public abstract ContinuousRange getRightX();
 
-    public abstract AnalogAxis getRightY();
+    public abstract ContinuousRange getRightY();
 
-    public abstract AnalogAxis getLeftTrigger();
+    public abstract ContinuousRange getLeftTrigger();
 
-    public abstract AnalogAxis getRightTrigger();
+    public abstract ContinuousRange getRightTrigger();
 
     public abstract Switch getLeftBumper();
 
@@ -59,13 +59,13 @@ public interface Gamepad extends InputDevice {
     public abstract Switch getRightStick();
 
     public static Gamepad create(IntToDoubleFunction axisToValue, IntToBooleanFunction buttonNumberToSwitch,
-            IntToIntFunction dPad, AnalogAxis leftX, AnalogAxis leftY, AnalogAxis rightX, AnalogAxis rightY,
-            AnalogAxis leftTrigger, AnalogAxis rightTrigger, Switch leftBumper, Switch rightBumper, Switch buttonA,
+            IntToIntFunction dPad, ContinuousRange leftX, ContinuousRange leftY, ContinuousRange rightX, ContinuousRange rightY,
+            ContinuousRange leftTrigger, ContinuousRange rightTrigger, Switch leftBumper, Switch rightBumper, Switch buttonA,
             Switch buttonB, Switch buttonX, Switch buttonY, Switch startButton, Switch selectButton, Switch leftStick,
             Switch rightStick) {
         return new Gamepad() {
             @Override
-            public AnalogAxis getAxis(int axis) {
+            public ContinuousRange getAxis(int axis) {
                 return () -> axisToValue.applyAsDouble(axis);
             }
 
@@ -80,32 +80,32 @@ public interface Gamepad extends InputDevice {
             }
 
             @Override
-            public AnalogAxis getLeftX() {
+            public ContinuousRange getLeftX() {
                 return leftX;
             }
 
             @Override
-            public AnalogAxis getLeftY() {
+            public ContinuousRange getLeftY() {
                 return leftY;
             }
 
             @Override
-            public AnalogAxis getRightX() {
+            public ContinuousRange getRightX() {
                 return rightX;
             }
 
             @Override
-            public AnalogAxis getRightY() {
+            public ContinuousRange getRightY() {
                 return rightY;
             }
 
             @Override
-            public AnalogAxis getLeftTrigger() {
+            public ContinuousRange getLeftTrigger() {
                 return leftTrigger;
             }
 
             @Override
-            public AnalogAxis getRightTrigger() {
+            public ContinuousRange getRightTrigger() {
                 return rightTrigger;
             }
 

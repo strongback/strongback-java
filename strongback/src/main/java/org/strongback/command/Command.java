@@ -196,6 +196,19 @@ public abstract class Command {
             return true;
         },()->"Command (one-time) " + executeFunction);
     }
+    /**
+     * Create a new command that runs once by executing the supplied function. The resulting command will have no
+     * {@link Requirable}s.
+     *
+     * @param executeFunction the function to be called during execution; may not be null
+     * @return the new command; never null
+     */
+    public static Command create(double durationInSeconds, Runnable executeFunction) {
+        return create(durationInSeconds, () -> {
+            executeFunction.run();
+            return false;
+        },()->"Command (one-time, duration=" + durationInSeconds + " sec) " + executeFunction);
+    }
 
     /**
      * Create a new command that runs one or more times by executing the supplied function. The resulting command will have no

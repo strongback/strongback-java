@@ -18,16 +18,19 @@ package org.strongback;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.strongback.AsyncEventRecorder.EventWriter;
-import org.strongback.annotation.Experimental;
+import org.strongback.Logger.Level;
+import org.strongback.annotation.NotImplemented;
 import org.strongback.annotation.ThreadSafe;
 import org.strongback.command.Command;
 import org.strongback.command.CommandState;
 import org.strongback.command.Scheduler;
+import org.strongback.command.Scheduler.CommandListener;
 import org.strongback.components.Clock;
 import org.strongback.components.Counter;
 import org.strongback.components.Switch;
@@ -58,9 +61,12 @@ import org.strongback.util.Metronome;
  *
  * <pre>
  * Strongback.configure()
- *         // begin to configure Strongback
- *         .useSystemLogger(Logger.Level.INFO).useFpgaTime().useExecutionPeriod(5, TimeUnit.MILLISECONDS)
- *         .useExecutionWaitMode(WaitMode.BUSY).initialize();
+ * // begin to configure Strongback
+ *           .useSystemLogger(Logger.Level.INFO)
+ *           .useFpgaTime()
+ *           .useExecutionPeriod(5, TimeUnit.MILLISECONDS)
+ *           .useExecutionWaitMode(WaitMode.BUSY)
+ *           .initialize();
  * // Strongback is ready to use ...
  * </pre>
  *
@@ -71,29 +77,30 @@ public final class Strongback {
 
     public static final class Configurator {
 
-        public static enum WaitMode {
+        public static enum TimerMode {
             /**
              * The thread uses a busy loop to prevent context switching to accurately wait for the prescribed amount of time.
-             * This is a very accurate approach, but the thread remains busy the entire time.
+             * This is a very accurate approach, but the thread remains busy the entire time. See
+             * {@link Metronome#busy(long, TimeUnit, Clock)} for details.
              */
             BUSY,
             /**
              * The thread uses {@link Thread#sleep(long)} to wait for the prescribed amount of time. This may not be very
-             * accurate, but it is efficient since the thread will pause so that other work can be done by other threads.
+             * accurate, but it is efficient since the thread will pause so that other work can be done by other threads. See
+             * {@link Metronome#sleeper(long, TimeUnit, Clock)} for details.
              */
             SLEEP,
             /**
              * The thread uses {@link LockSupport#parkNanos(long)} to wait for the prescribed amount of time. The accuracy of
-             * this approach will depend a great deal upon the hardware and operating system. For example, this tends to work
-             * well on some Linux and OS X operating systems, while parks tend to be more coarse-grained and inaccurate on
-             * Windows and some other operating systems.
+             * this approach will depend a great deal upon the hardware and operating system. See
+             * {@link Metronome#parker(long, TimeUnit, Clock)} for details.
              */
             PARK;
         }
 
-        private Supplier<Function<String, Logger>> loggersSupplier = () -> str -> new SystemLogger();
+        private Supplier<Function<String, Logger>> loggersSupplier = () -> str -> new SystemLogger().enable(Level.INFO);
         private Supplier<Clock> timeSystemSupplier = Clock::fpgaOrSystem;
-        private WaitMode executionWaitMode = WaitMode.BUSY;
+        private TimerMode executionWaitMode = TimerMode.BUSY;
         private long executionPeriodInNanos = TimeUnit.MILLISECONDS.toNanos(5);
         private volatile boolean initialized = false;
         private String dataRecorderFilenameRoot = "strongback";
@@ -101,7 +108,7 @@ public final class Strongback {
         private int estimatedRecordDurationInSeconds = 180; // 3 minutes by default
         private long eventRecordFileSizeInBytes = 1024 * 1024 * 2; // 2 MB by default
         private boolean recordCommandStateChanges = true;
-        private Function<List<DataRecorderChannel>, DataWriter> dataWriterFactory = this::createFileDataWriter;
+        private Function<Iterable<DataRecorderChannel>, DataWriter> dataWriterFactory = this::createFileDataWriter;
         private Supplier<EventWriter> eventWriterFactory = this::createFileEventWriter;
         private Supplier<String> dataRecorderFilenameGenerator = new Supplier<String>() {
             private Counter counter = Counter.unlimited(1);
@@ -120,8 +127,8 @@ public final class Strongback {
             }
         };
 
-        protected DataWriter createFileDataWriter(List<DataRecorderChannel> channels) {
-            int writesPerSecond = (int) (executionPeriodInNanos / 1000000000.0);
+        protected DataWriter createFileDataWriter(Iterable<DataRecorderChannel> channels) {
+            int writesPerSecond = (int) (((double) TimeUnit.SECONDS.toNanos(1)) / executionPeriodInNanos);
             return new FileDataWriter(channels, dataRecorderFilenameGenerator, writesPerSecond,
                     estimatedRecordDurationInSeconds);
         }
@@ -142,8 +149,7 @@ public final class Strongback {
          */
         public Configurator useSystemLogger(Logger.Level level) {
             if (level == null) throw new IllegalArgumentException("The system logging level may not be null");
-            Logger logger = new SystemLogger().enable(level);
-            loggersSupplier = () -> (context) -> logger;
+            loggersSupplier = () -> (context) -> new SystemLogger().enable(level);
             return this;
         }
 
@@ -161,12 +167,13 @@ public final class Strongback {
         }
 
         /**
-         * Determine the time using the RoboRIO's FPGA's hardware.
+         * Determine the time using the RoboRIO's FPGA's hardware if available, or the system time if FPGA hardware is not
+         * available.
          *
          * @return this configurator so that methods can be chained together; never null
          */
         public Configurator useFpgaTime() {
-            timeSystemSupplier = Clock::fpga;
+            timeSystemSupplier = Clock::fpgaOrSystem;
             return this;
         }
 
@@ -220,10 +227,11 @@ public final class Strongback {
          *
          * @return this configurator so that methods can be chained together; never null
          */
-        @Experimental
+        @NotImplemented
         public Configurator recordDataToNetworkTables() {
-            dataWriterFactory = this::createNetworkDataWriter;
-            return this;
+            throw new UnsupportedOperationException("Network data writer is not yet implemented");
+            // dataWriterFactory = this::createNetworkDataWriter;
+            // return this;
         }
 
         /**
@@ -232,7 +240,7 @@ public final class Strongback {
          * @param customWriterFactory the factory for the {@link DataWriter} instance; may not be null
          * @return this configurator so that methods can be chained together; never null
          */
-        public Configurator recordDataTo(Function<List<DataRecorderChannel>, DataWriter> customWriterFactory) {
+        public Configurator recordDataTo(Function<Iterable<DataRecorderChannel>, DataWriter> customWriterFactory) {
             if (customWriterFactory == null) throw new IllegalArgumentException("The custom writer factory cannot be null");
             dataWriterFactory = customWriterFactory;
             return this;
@@ -306,23 +314,33 @@ public final class Strongback {
          * @return this configurator so that methods can be chained together; never null
          * @see #useExecutionPeriod(long, TimeUnit)
          */
-        public Configurator useExecutionWaitMode(WaitMode mode) {
-            if (mode == null) throw new IllegalArgumentException("The execution wait mode may not be null");
+        public Configurator useExecutionTimerMode(TimerMode mode) {
+            if (mode == null) throw new IllegalArgumentException("The execution timer mode may not be null");
             executionWaitMode = mode;
             return this;
         }
 
         /**
-         * Use the specified execution rate for Strongback's {@link Strongback#executor() executor}.
+         * Use the specified execution rate for Strongback's {@link Strongback#executor() executor}. The default execution rate
+         * is 5 milliseconds.
+         * <p>
+         * The clock that Strongback is configured to use will also affect the precision of the execution rate: the
+         * {@link #useFpgaTime() FPGA clock} will likely support rates down to around a few milliseconds, whereas the
+         * {@link #useSystemTime() system clock} may only support rates of 10-15 milliseconds. Therefore, this method does not
+         * currently allow sub-microsecond intervals.
          *
          * @param interval the interval for calling all registered {@link Executable}s; must be positive
          * @param unit the time unit for the interval; may not be null
          * @return this configurator so that methods can be chained together; never null
-         * @see #useExecutionWaitMode(WaitMode)
+         * @see #useExecutionTimerMode(TimerMode)
+         * @throws IllegalArgumentException if {@code unit} is {@link TimeUnit#MICROSECONDS} or {@link TimeUnit#NANOSECONDS}
          */
         public Configurator useExecutionRate(long interval, TimeUnit unit) {
             if (interval <= 0) throw new IllegalArgumentException("The execution interval must be positive");
             if (unit == null) throw new IllegalArgumentException("The time unit may not be null");
+            if (TimeUnit.MILLISECONDS.toNanos(1) > unit.toNanos(interval)) {
+                throw new IllegalArgumentException("The interval must be at least 1 millisecond");
+            }
             executionPeriodInNanos = unit.toNanos(interval);
             return this;
         }
@@ -332,19 +350,17 @@ public final class Strongback {
          */
         public synchronized void initialize() {
             if (initialized) {
-                loggersSupplier
-                        .get()
-                        .apply("")
-                        .error("Strongback has already been initialized. Make sure you configure and initialize Strongback only once");
-                return;
+                loggersSupplier.get()
+                               .apply("")
+                               .warn("Strongback has already been initialized. Make sure you configure and initialize Strongback only once");
             }
             initialized = true;
-            Strongback.INSTANCE = new Strongback(this, Strongback.INSTANCE);
+            INSTANCE = new Strongback(this, Strongback.INSTANCE);
         }
     }
 
     private static final Configurator CONFIG = new Configurator();
-    private static Strongback INSTANCE = new Strongback(CONFIG, null);
+    private static volatile Strongback INSTANCE = new Strongback(CONFIG, null);
 
     /**
      * Get the Strongback library configurator. Any configuration changes will take effect only after the
@@ -354,6 +370,22 @@ public final class Strongback {
      */
     public static Configurator configure() {
         return CONFIG;
+    }
+
+    public static void start() {
+        INSTANCE.doStart();
+    }
+
+    /**
+     * Stop all currently-scheduled activity and flush all recorders. This is typically called by robot code when when the robot
+     * becomes disabled. Should the robot re-enable, all aspects of Strongback will continue to work as before it was disabled.
+     */
+    public static void disable() {
+        INSTANCE.killCommandsAndFlush();
+    }
+
+    public static void shutdown() {
+        INSTANCE.doShutdown();
     }
 
     /**
@@ -372,10 +404,10 @@ public final class Strongback {
      *
      * @return Strongback's executor; never null
      * @see Configurator#useExecutionRate(long, TimeUnit)
-     * @see Configurator#useExecutionWaitMode(org.strongback.Strongback.Configurator.WaitMode)
+     * @see Configurator#useExecutionTimerMode(org.strongback.Strongback.Configurator.TimerMode)
      */
     public static Executor executor() {
-        return INSTANCE.executor;
+        return INSTANCE.executables;
     }
 
     /**
@@ -415,7 +447,7 @@ public final class Strongback {
      *
      * @param command the command to be submitted
      * @see Configurator#useExecutionRate(long, TimeUnit)
-     * @see Configurator#useExecutionWaitMode(org.strongback.Strongback.Configurator.WaitMode)
+     * @see Configurator#useExecutionTimerMode(org.strongback.Strongback.Configurator.TimerMode)
      */
     public static void submit(Command command) {
         if (command != null) INSTANCE.scheduler.submit(command);
@@ -456,7 +488,7 @@ public final class Strongback {
      * @see Configurator#recordNoData()
      */
     public static DataRecorder dataRecorder() {
-        return INSTANCE.dataRecorder;
+        return INSTANCE.dataRecorderChannels;
     }
 
     /**
@@ -477,16 +509,33 @@ public final class Strongback {
     }
 
     private final Function<String, Logger> loggers;
-    private final Executor executor;
+    private final Executables executables;
+    private final ExecutorDriver executorDriver;
     private final Clock clock;
     private final Metronome metronome;
     private final Scheduler scheduler;
     private final AsyncSwitchReactor switchReactor;
-    private final DataRecorder dataRecorder;
+    private final DataRecorderChannels dataRecorderChannels;
+    private final DataRecorderDriver dataRecorderDriver;
     private final EventRecorder eventRecorder;
+    private final AtomicBoolean started = new AtomicBoolean(false);
 
     private Strongback(Configurator config, Strongback previousInstance) {
-        if (previousInstance != null) previousInstance.shutdown();
+        if (previousInstance != null) {
+            // Terminates all currently-scheduled commands and stops the executor's thread (if running) ...
+            previousInstance.doShutdown();
+            executables = previousInstance.executables;
+            switchReactor = previousInstance.switchReactor;
+            executables.unregister(previousInstance.dataRecorderDriver);
+            executables.unregister(previousInstance.eventRecorder);
+            executables.unregister(previousInstance.scheduler);
+            dataRecorderChannels = previousInstance.dataRecorderChannels;
+        } else {
+            executables = new Executables();
+            switchReactor = new AsyncSwitchReactor();
+            executables.register(switchReactor);
+            dataRecorderChannels = new DataRecorderChannels();
+        }
         loggers = config.loggersSupplier.get();
         clock = config.timeSystemSupplier.get();
         switch (config.executionWaitMode) {
@@ -501,29 +550,30 @@ public final class Strongback {
                 metronome = Metronome.busy(config.executionPeriodInNanos, TimeUnit.NANOSECONDS, clock);
                 break;
         }
-        // Create a new executor ...
-        executor = new Executor("Strongback Executor", clock, metronome, loggers.apply("executor"));
+        // Create a new executor driver ...
+        executorDriver = new ExecutorDriver("Strongback Executor", executables, clock, metronome, loggers.apply("executor"));
+
         // Create a new event recorder ...
-        EventWriter eventWriter = null;
         if (config.eventWriterFactory != null) {
-            eventRecorder = new AsyncEventRecorder(eventWriter, clock);
-            executor.register((AsyncEventRecorder) eventRecorder);
+            eventRecorder = new AsyncEventRecorder(config.eventWriterFactory.get(), clock);
+            executables.register(eventRecorder);
         } else {
             eventRecorder = EventRecorder.noOp();
         }
-        // Create a new scheduler that optionally records command state transitions ...
-        scheduler = new Scheduler(loggers.apply("scheduler"), config.recordCommandStateChanges ? this::recordCommand
-                : this::recordNoCommands);
-        executor.register(scheduler);
-        // Reuse the existing switch reactor if there is one, since it might already have registered listener functions ...
-        switchReactor = previousInstance != null ? previousInstance.switchReactor : new AsyncSwitchReactor();
-        executor.register(switchReactor);
-        // Create a new data recorder ...
-        if (config.dataWriterFactory != null) {
-            dataRecorder = new DataRecorderWriter(config.dataWriterFactory);
-            executor.register((DataRecorderWriter) dataRecorder);
-        } else {
-            dataRecorder = DataRecorder.noOp();
+
+        // Create a new scheduler that optionally records command state transitions. Note that we ignore everything in
+        // the previous instance's scheduler, since all commands would have been terminated (as intended) ...
+        CommandListener commandListener = config.recordCommandStateChanges ? this::recordCommand : this::recordNoCommands;
+        scheduler = new Scheduler(loggers.apply("scheduler"), commandListener);
+        executables.register(scheduler);
+
+        // Create a new data recorder driver ...
+        dataRecorderDriver = new DataRecorderDriver(dataRecorderChannels, config.dataWriterFactory);
+        executables.register(dataRecorderDriver);
+
+        // Start this if the previous was already started ...
+        if ( previousInstance != null && previousInstance.started.get() ) {
+            doStart();
         }
     }
 
@@ -534,14 +584,39 @@ public final class Strongback {
     private void recordNoCommands(Command command, CommandState state) {
     }
 
-    private void shutdown() {
+    private void doStart() {
         try {
-            scheduler.killAll();
+            dataRecorderDriver.start();
         } finally {
             try {
-                executor.unregisterAll();
+                executorDriver.start();
             } finally {
-                executor.stop();
+                started.set(true);
+            }
+        }
+    }
+
+    private void killCommandsAndFlush() {
+        try {
+            // Kill any remaining commands ...
+            scheduler.killAll();
+        } finally {
+            // Finally flush the data recorder ...
+            dataRecorderDriver.flush();
+        }
+    }
+
+    private void doShutdown() {
+        try {
+            // First stop executing immediately; at this point, no executables will run ...
+            executorDriver.stop();
+        } finally {
+            try {
+                // Kill any remaining commands ...
+                scheduler.killAll();
+            } finally {
+                // Finally flush the data recorder ...
+                dataRecorderDriver.stop();
             }
         }
     }

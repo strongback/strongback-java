@@ -28,13 +28,13 @@ import java.util.function.Supplier;
 final class FileDataWriter implements DataWriter {
 
     private final Supplier<String> filenameGenerator;
-    private final List<DataRecorderChannel> channels;
+    private final Iterable<DataRecorderChannel> channels;
     private final List<IntSupplier> suppliers = new ArrayList<>();
     private MappedFileDataWriter writer;
     private long recordLength;
     private final long fileSize;
 
-    public FileDataWriter(List<DataRecorderChannel> channels, Supplier<String> filenameGenerator, int writesPerSecond,
+    public FileDataWriter(Iterable<DataRecorderChannel> channels, Supplier<String> filenameGenerator, int writesPerSecond,
             int runningTimeInSeconds) {
         this.filenameGenerator = filenameGenerator;
         this.channels = channels;

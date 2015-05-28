@@ -26,24 +26,24 @@ import org.strongback.function.IntToIntFunction;
  * A type of input device consisting of a joystick with twist and throttle.
  */
 public interface FlightStick extends InputDevice {
-    public AnalogAxis getPitch();
+    public ContinuousRange getPitch();
 
-    public AnalogAxis getYaw();
+    public ContinuousRange getYaw();
 
-    public AnalogAxis getRoll();
+    public ContinuousRange getRoll();
 
-    public AnalogAxis getThrottle();
+    public ContinuousRange getThrottle();
 
     public Switch getTrigger();
 
     public Switch getThumb();
 
     public static FlightStick create(IntToDoubleFunction axisToValue, IntToBooleanFunction buttonNumberToSwitch,
-            IntToIntFunction padToValue, AnalogAxis pitch, AnalogAxis yaw, AnalogAxis roll,
-            AnalogAxis throttle, Switch trigger, Switch thumb) {
+            IntToIntFunction padToValue, ContinuousRange pitch, ContinuousRange yaw, ContinuousRange roll,
+            ContinuousRange throttle, Switch trigger, Switch thumb) {
         return new FlightStick() {
             @Override
-            public AnalogAxis getAxis(int axis) {
+            public ContinuousRange getAxis(int axis) {
                 return () -> axisToValue.applyAsDouble(axis);
             }
 
@@ -58,22 +58,22 @@ public interface FlightStick extends InputDevice {
             }
 
             @Override
-            public AnalogAxis getPitch() {
+            public ContinuousRange getPitch() {
                 return pitch;
             }
 
             @Override
-            public AnalogAxis getYaw() {
+            public ContinuousRange getYaw() {
                 return yaw;
             }
 
             @Override
-            public AnalogAxis getRoll() {
+            public ContinuousRange getRoll() {
                 return roll;
             }
 
             @Override
-            public AnalogAxis getThrottle() {
+            public ContinuousRange getThrottle() {
                 return throttle;
             }
 

@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-package org.strongback.components.ui;
+package org.strongback.annotation;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Defines an axis that expresses values in the range [-1.0, 1.0] inclusive.
- *
- * @author Zach Anderson
+ * This annotation documents that annotated method or class has not yet been implemented.
  */
-@FunctionalInterface
-public interface AnalogAxis {
-    /**
-     * Read the value of the analog axis.
-     * @return the value in the range [-1.0, 1.0] inclusive.
-     */
-    public double read();
+@Documented
+@Target({ ElementType.TYPE, ElementType.METHOD })
+@Retention(RetentionPolicy.CLASS)
+public @interface NotImplemented {
 }

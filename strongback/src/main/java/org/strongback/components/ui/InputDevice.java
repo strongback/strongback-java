@@ -31,14 +31,14 @@ public interface InputDevice {
      * @param axis the axis number
      * @return the analog axis
      */
-    public AnalogAxis getAxis(int axis);
+    public ContinuousRange getAxis(int axis);
     public Switch getButton(int button);
     public DirectionalAxis getDPad(int pad);
 
     public static InputDevice create( IntToDoubleFunction axisToValue, IntToBooleanFunction buttonNumberToSwitch, IntToIntFunction padToValue ) {
         return new InputDevice() {
             @Override
-            public AnalogAxis getAxis(int axis) {
+            public ContinuousRange getAxis(int axis) {
                 return ()->axisToValue.applyAsDouble(axis);
             }
             @Override

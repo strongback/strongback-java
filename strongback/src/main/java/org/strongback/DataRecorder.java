@@ -27,68 +27,38 @@ import org.strongback.components.Switch;
  */
 public interface DataRecorder {
     /**
-     * Registers the value of the specified {@link IntSupplier} to be logged
-     * @param name the name of this data point
+     * Registers the value of the specified {@link IntSupplier} to be logged. This method will remove any previously-registered
+     * supplier, switch, or motor with the same name.
+     *
+     * @param name the name of this data supplier
      * @param supplier the {@link IntSupplier} of the value to be logged
+     * @return this instance so methods can be chained together; never null
      * @throws IllegalArgumentException if the {@code supplier} parameter is null
      * @throws IllegalStateException if the data logger is already {@link #start() started}
      */
-    public void register(String name, IntSupplier supplier);
+    public DataRecorder register(String name, IntSupplier supplier);
 
     /**
-     * Registers a {@link Switch} to be logged.
+     * Registers a {@link Switch} to be logged. This method will remove any previously-registered supplier, switch, or motor
+     * with the same name.
+     *
      * @param name the name of the {@link Switch}
      * @param swtch the {@link Switch} to be logged
+     * @return this instance so methods can be chained together; never null
      * @throws IllegalArgumentException if the {@code swtch} parameter is null
      * @throws IllegalStateException if the data logger is already {@link #start() started}
      */
-    public void registerSwitch(String name, Switch swtch);
+    public DataRecorder register(String name, Switch swtch);
 
     /**
-     * Registers a {@link Motor} to be logged.
+     * Registers a {@link Motor} to be logged. This method will remove any previously-registered supplier, switch, or motor with
+     * the same name.
+     *
      * @param name the name of the {@link Motor}
      * @param motor the {@link Motor} to be logged
+     * @return this instance so methods can be chained together; never null
      * @throws IllegalArgumentException if the {@code motor} parameter is null
      * @throws IllegalStateException if the data logger is already {@link #start() started}
      */
-    public void registerMotor(String name, Motor motor);
-
-    /**
-     * Start the data capture of all registered devices and inputs.
-     */
-    public void start();
-
-    /**
-     * Flush all existing writes to the data log.
-     */
-    public void flush();
-
-    /**
-     * Return an {@link DataRecorder} implementation that does nothing.
-     * @return the no-operation data recorder; never null
-     */
-    public static DataRecorder noOp() {
-        return new DataRecorder() {
-            @Override
-            public void register(String name, IntSupplier supplier) {
-            }
-
-            @Override
-            public void registerMotor(String name, Motor motor) {
-            }
-
-            @Override
-            public void registerSwitch(String name, Switch swtch) {
-            }
-
-            @Override
-            public void start() {
-            }
-
-            @Override
-            public void flush() {
-            }
-        };
-    }
-
+    public DataRecorder register(String name, Motor motor);
 }

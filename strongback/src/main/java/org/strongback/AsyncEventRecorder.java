@@ -34,7 +34,7 @@ import org.strongback.components.Clock;
  * @author Randall Hauch
  */
 @ThreadSafe
-final class AsyncEventRecorder implements EventRecorder, Executable {
+final class AsyncEventRecorder implements EventRecorder {
 
     private static final AtomicInteger TYPE_NUMBER_GENERATOR = new AtomicInteger(0);
     private static final EventType NEW_EVENT_TYPE = new EventType("NewEventType");

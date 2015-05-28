@@ -58,6 +58,14 @@ public interface Motor extends SpeedSensor, SpeedController, Stoppable {
     }
 
     /**
+     * Create a new motor that inverts this motor.
+     * @return the new inverted motor; never null
+     */
+    default Motor invert() {
+        return Motor.invert(this);
+    }
+
+    /**
      * Gets the current {@link Direction} of this {@link Motor}, can be {@code FORWARD}, {@code REVERSE}, or {@code STOPPED}.
      *
      * @return the {@link Direction} of this {@link Motor}
