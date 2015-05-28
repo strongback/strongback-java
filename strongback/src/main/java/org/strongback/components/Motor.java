@@ -17,6 +17,7 @@
 package org.strongback.components;
 
 import org.strongback.annotation.ThreadSafe;
+import org.strongback.drive.TankDrive;
 import org.strongback.util.Values;
 
 /**
@@ -59,6 +60,7 @@ public interface Motor extends SpeedSensor, SpeedController, Stoppable {
 
     /**
      * Create a new motor that inverts this motor.
+     *
      * @return the new inverted motor; never null
      */
     default Motor invert() {
@@ -82,7 +84,7 @@ public interface Motor extends SpeedSensor, SpeedController, Stoppable {
 
     /**
      * Create a new {@link Motor} instance that is actually composed of two other motors that will be controlled identically.
-     * This is useful when multiple motors are controlled in the same way, such as on one side of a {@link DriveTrain}.
+     * This is useful when multiple motors are controlled in the same way, such as on one side of a {@link TankDrive}.
      *
      * @param motor1 the first motor, and the motor from which the speed is read; may not be null
      * @param motor2 the second motor; may not be null
@@ -106,7 +108,7 @@ public interface Motor extends SpeedSensor, SpeedController, Stoppable {
 
     /**
      * Create a new {@link Motor} instance that is actually composed of three other motors that will be controlled identically.
-     * This is useful when multiple motors are controlled in the same way, such as on one side of a {@link DriveTrain}.
+     * This is useful when multiple motors are controlled in the same way, such as on one side of a {@link TankDrive}.
      *
      * @param motor1 the first motor, and the motor from which the speed is read; may not be null
      * @param motor2 the second motor; may not be null
@@ -132,12 +134,12 @@ public interface Motor extends SpeedSensor, SpeedController, Stoppable {
 
     /**
      * Create a new {@link Motor} instance that inverts the speed sent to and read from another motor. This is useful on
-     * {@link DriveTrain}, where all motors on one side are physically inverted compared to the motors on the other side.
+     * {@link TankDrive}, where all motors on one side are physically inverted compared to the motors on the other side.
      * <p>
      * For example: <code>
      *   Motor left = ...
      *   Motor right = ...
-     *   DriveTrain drive = DriveTrain.create(left, Motor.invert(right));
+     *   DriveTrain drive = TankDrive.create(left, Motor.invert(right));
      * </code> or <code>
      *   Motor leftFront = ...
      *   Motor leftRear = ...
@@ -145,7 +147,7 @@ public interface Motor extends SpeedSensor, SpeedController, Stoppable {
      *   Motor rightRear = ...
      *   Motor left = Motor.compose(leftFront,leftRear);
      *   Motor right = Motor.compose(rightFront,rightRear);
-     *   DriveTrain drive = DriveTrain.create(left, Motor.invert(right));
+     *   DriveTrain drive = TankDrive.create(left, Motor.invert(right));
      * </code>
      *
      * @param motor the motor to invert; may not be null

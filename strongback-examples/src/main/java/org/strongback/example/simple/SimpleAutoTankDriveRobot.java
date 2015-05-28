@@ -77,13 +77,19 @@ public class SimpleAutoTankDriveRobot extends IterativeRobot {
                   .register("Right motors", right)
                   .register("Sensitivity", sensitivity.scaleAsInt(1000));
 
-        // Start Strongback functions ...
-        Strongback.start();
     }
 
     @Override
     public void autonomousInit() {
+        // Start Strongback functions ...
+        Strongback.start();
         Strongback.submit(autonomousCommand);
+    }
+
+    @Override
+    public void teleopInit() {
+        // Start Strongback functions ...
+        Strongback.start();
     }
 
     @Override
@@ -93,8 +99,7 @@ public class SimpleAutoTankDriveRobot extends IterativeRobot {
 
     @Override
     public void disabledInit() {
-        // Tell Strongback that the robot is disabled so it can flush and kill commands. We do not need to tell Strongback
-        // when the robot is re-enabled ...
+        // Tell Strongback that the robot is disabled so it can flush and kill commands.
         Strongback.disable();
     }
 

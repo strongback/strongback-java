@@ -27,7 +27,7 @@ import org.strongback.util.Values;
 
 /**
  * Control logic for a {@link MecanumDrive mecanum drive system}. This controller provides
- * {@link #cartesian(double, double, double, double) cartesian} and {@link #polar(double, double, double) polar} inputs.
+ * {@link #cartesian(double, double, double) cartesian} and {@link #polar(double, double, double) polar} inputs.
  * <p>
  * This drive train will work for these configurations:
  * <ul>
@@ -50,7 +50,7 @@ public class MecanumDrive implements Stoppable, Requirable {
     public static final double DEFAULT_MINIMUM_SPEED = 0.02;
     public static final double DEFAULT_MAXIMUM_SPEED = 1.0;
     public static final DoubleToDoubleFunction DEFAULT_SPEED_LIMITER = Values.symmetricLimiter(DEFAULT_MINIMUM_SPEED,
-            DEFAULT_MAXIMUM_SPEED);
+                                                                                               DEFAULT_MAXIMUM_SPEED);
 
     private static final double SQRT_OF_TWO = Math.sqrt(2.0);
     private static final int NUMBER_OF_MOTORS = 4;
@@ -71,9 +71,12 @@ public class MecanumDrive implements Stoppable, Requirable {
      * Creates a new DriveSystem subsystem that uses the supplied drive train and no shifter. The voltage send to the drive
      * train is limited to [-1.0,1.0].
      *
-     * @param driveTrain the drive train for the robot; may not be null
-     * @param gyroscope the gyroscope that will be used to determine the robot's direction for field-orientated controls; may
-     *        not be null
+     * @param leftFront the left front motor on the drive train for the robot; may not be null
+     * @param leftRear the left rear motor on the drive train for the robot; may not be null
+     * @param rightFront the right front motor on the drive train for the robot; may not be null
+     * @param rightRear the right rear motor on the drive train for the robot; may not be null
+     * @param gyro the gyroscope that will be used to determine the robot's direction for field-orientated controls; may not be
+     *        null
      */
     public MecanumDrive(Motor leftFront, Motor leftRear, Motor rightFront, Motor rightRear, AngleSensor gyro) {
         this(leftFront, leftRear, rightFront, rightRear, gyro, null);
@@ -83,9 +86,12 @@ public class MecanumDrive implements Stoppable, Requirable {
      * Creates a new DriveSystem subsystem that uses the supplied drive train and optional shifter. The voltage send to the
      * drive train is limited by the given function.
      *
-     * @param driveTrain the drive train for the robot; may not be null
-     * @param gyroscope the gyroscope that will be used to determine the robot's direction for field-orientated controls; may
-     *        not be null
+     * @param leftFront the left front motor on the drive train for the robot; may not be null
+     * @param leftRear the left rear motor on the drive train for the robot; may not be null
+     * @param rightFront the right front motor on the drive train for the robot; may not be null
+     * @param rightRear the right rear motor on the drive train for the robot; may not be null
+     * @param gyro the gyroscope that will be used to determine the robot's direction for field-orientated controls; may not be
+     *        null
      * @param speedLimiter the function that limits the speed sent to the drive train; if null, then a default clamping function
      *        is used to limit to the range [-1.0,1.0]
      */

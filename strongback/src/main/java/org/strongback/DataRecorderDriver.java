@@ -16,7 +16,6 @@
 
 package org.strongback;
 
-import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 

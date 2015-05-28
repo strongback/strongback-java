@@ -25,8 +25,7 @@ import org.strongback.annotation.ThreadSafe;
 public interface Executor {
 
     /**
-     * Register an {@link Executable} task to be called repeatedly. This can be called before or after this Executor has been
-     * {@link #start() started} or if this Executor has been {@link #stop() stopped}.
+     * Register an {@link Executable} task to be called repeatedly.
      *
      * @param r the executable task
      * @return true if the executable task was registered, or false if it was null or was already registered with this executor
@@ -34,8 +33,7 @@ public interface Executor {
     public boolean register(Executable r);
 
     /**
-     * Unregister an {@link Executable} task to no longer be called. This can be called before or after this Executor has been
-     * {@link #start() started} or if this Executor has been {@link #stop() stopped}.
+     * Unregister an {@link Executable} task to no longer be called.
      *
      * @param r the executable task
      * @return true if the executable task was unregistered, or false if it was null or not registered with this executor
@@ -43,8 +41,7 @@ public interface Executor {
     public boolean unregister(Executable r);
 
     /**
-     * Unregister all {@link Executable} tasks. This can be called before or after this Executor has been {@link #start()
-     * started} or if this Executor has been {@link #stop() stopped}.
+     * Unregister all {@link Executable} tasks.
      */
     public void unregisterAll();
 }

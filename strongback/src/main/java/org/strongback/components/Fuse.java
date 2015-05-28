@@ -17,7 +17,6 @@
 package org.strongback.components;
 
 import java.util.concurrent.TimeUnit;
-import java.util.function.LongSupplier;
 
 import org.strongback.annotation.ThreadSafe;
 
@@ -28,37 +27,44 @@ import org.strongback.annotation.ThreadSafe;
 public interface Fuse extends Switch {
     /**
      * Trigger the fuse. Once this method is called, the {@link #isTriggered()} switches but then will never change.
+     *
      * @return this object to allow for chaining methods together; never null
      */
     public Fuse trigger();
 
     /**
      * Reset the fuse so it is no longer triggered.
+     *
      * @return this object to allow for chaining methods together; never null
      */
     public Fuse reset();
 
     /**
-     * Create a simple fuse.
-     * @return
+     * Create a simple fuse that is manually {@link #trigger() triggered} and manually {@link #reset()}.
+     *
+     * @return the fuse; never null
      */
     public static Fuse create() {
         return new Fuse() {
             private boolean triggered = false;
+
             @Override
             public boolean isTriggered() {
                 return triggered;
             }
+
             @Override
             public Fuse trigger() {
                 triggered = true;
                 return this;
             }
+
             @Override
             public Fuse reset() {
                 triggered = false;
                 return this;
             }
+
             @Override
             public String toString() {
                 return triggered ? "triggered" : "notTriggered";
@@ -67,40 +73,40 @@ public interface Fuse extends Switch {
     }
 
     /**
-     * Create a fuse that will automatically reset after the given delay
+     * Create a fuse that can be manually {@link #reset()} but that will automatically reset after the given delay.
+     *
      * @param delay the time after the fuse is triggered that it should automatically reset; must be positive
      * @param unit the time units for the delay; may not be null
-     * @param timeProvider the provider of the current time in milliseconds; may be null if the {@link System#currentTimeMillis() system time} is to be used
-     * @param timeProviderUnit the time unit of the provider
-     * @return
+     * @param clock the clock that the fuse should use; if null, the system clock will be used
+     * @return the auto-resetting fuse; never null
      */
-    public static Fuse autoResetting( long delay, TimeUnit unit, LongSupplier timeProvider, TimeUnit timeProviderUnit ) {
-        if ( timeProvider == null ) {
-            timeProvider = System::currentTimeMillis;
-            timeProviderUnit = TimeUnit.MILLISECONDS;
-        }
-        if ( timeProviderUnit == null ) throw new IllegalArgumentException("The time provider unit may not be null");
-        LongSupplier currentTime = timeProvider;
-        long delayTime = timeProviderUnit.convert(delay, unit);
+    public static Fuse autoResetting(long delay, TimeUnit unit, Clock clock) {
+        Clock theClock = clock != null ? clock : Clock.system();
+        if (unit == null) throw new IllegalArgumentException("The time unit may not be null");
+        long delayTimeInMillis = unit.toMillis(delay);
         return new Fuse() {
             private boolean triggered = false;
             private volatile long resetTime = 0L;
+
             @Override
             public synchronized boolean isTriggered() {
-                if ( triggered && currentTime.getAsLong() > resetTime ) triggered = false;
+                if (triggered && theClock.currentTimeInMillis() > resetTime) triggered = false;
                 return triggered;
             }
+
             @Override
             public synchronized Fuse trigger() {
                 triggered = true;
-                resetTime = currentTime.getAsLong() + delayTime;
+                resetTime = theClock.currentTimeInMillis() + delayTimeInMillis;
                 return this;
             }
+
             @Override
             public synchronized Fuse reset() {
                 triggered = false;
                 return this;
             }
+
             @Override
             public String toString() {
                 return triggered ? "triggered" : "notTriggered";

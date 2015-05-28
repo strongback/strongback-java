@@ -153,11 +153,11 @@ public abstract class Command {
      * objects. When this command is {@link Strongback#submit(Command) submitted}, it will preempt any running (or scheduled)
      * command that also requires any of the supplied {@link Requirable}s.
      *
-     * @param requirements the {@link Requirable}s for which any currently-running commands should be cancelled.
+     * @param requirables the {@link Requirable}s for which any currently-running commands should be cancelled.
      * @return the new command; never null
      */
     public static Command cancel(Requirable... requirables) {
-        return create(0.0,() -> true,()->"Cancel (requires " + requirables + ")", requirables);
+        return create(0.0, () -> true, () -> "Cancel (requires " + requirables + ")", requirables);
     }
 
     /**
@@ -169,7 +169,9 @@ public abstract class Command {
      * @return the new command; never null
      */
     public static Command pause(long pauseTime, TimeUnit unit) {
-        return create(unit.toNanos(pauseTime)/1000000000.0, () -> false,()->"PauseCommand (" + unit.toMillis(pauseTime) + " milliseconds)");
+        double durationInSeconds = (double)unit.toNanos(pauseTime) / (double)TimeUnit.SECONDS.toNanos(1);
+        return create(durationInSeconds, () -> false, () -> "PauseCommand (" + unit.toMillis(pauseTime)
+                + " milliseconds)");
     }
 
     /**
@@ -180,7 +182,7 @@ public abstract class Command {
      * @return the new command; never null
      */
     public static Command pause(double pauseTimeInSeconds) {
-        return create(pauseTimeInSeconds, () -> false,()->"PauseCommand (" + pauseTimeInSeconds + " sec)");
+        return create(pauseTimeInSeconds, () -> false, () -> "PauseCommand (" + pauseTimeInSeconds + " sec)");
     }
 
     /**
@@ -194,12 +196,14 @@ public abstract class Command {
         return create(0.0, () -> {
             executeFunction.run();
             return true;
-        },()->"Command (one-time) " + executeFunction);
+        }, () -> "Command (one-time) " + executeFunction);
     }
+
     /**
      * Create a new command that runs once by executing the supplied function. The resulting command will have no
      * {@link Requirable}s.
      *
+     * @param durationInSeconds the maximum duration in seconds that the command should execute; must be positive
      * @param executeFunction the function to be called during execution; may not be null
      * @return the new command; never null
      */
@@ -207,7 +211,7 @@ public abstract class Command {
         return create(durationInSeconds, () -> {
             executeFunction.run();
             return false;
-        },()->"Command (one-time, duration=" + durationInSeconds + " sec) " + executeFunction);
+        }, () -> "Command (one-time, duration=" + durationInSeconds + " sec) " + executeFunction);
     }
 
     /**
@@ -218,7 +222,7 @@ public abstract class Command {
      * @return the new command; never null
      */
     public static Command create(BooleanSupplier executeFunction) {
-        return create(0.0, executeFunction, ()->"Command " + executeFunction);
+        return create(0.0, executeFunction, () -> "Command " + executeFunction);
     }
 
     /**
@@ -230,7 +234,8 @@ public abstract class Command {
      * @return the new command; never null
      */
     public static Command create(double timeoutInSeconds, BooleanSupplier executeFunction) {
-        return create(timeoutInSeconds,executeFunction,()->"Command (timeout=" + timeoutInSeconds + " sec,repeatable) " + executeFunction);
+        return create(timeoutInSeconds, executeFunction, () -> "Command (timeout=" + timeoutInSeconds + " sec,repeatable) "
+                + executeFunction);
     }
 
     /**
@@ -243,12 +248,14 @@ public abstract class Command {
      * @param requirements the {@link Requirable}s for the command
      * @return the new command; never null
      */
-    protected static Command create(double timeoutInSeconds, BooleanSupplier executeFunction, Supplier<String> toString, Requirable... requirements) {
+    protected static Command create(double timeoutInSeconds, BooleanSupplier executeFunction, Supplier<String> toString,
+            Requirable... requirements) {
         return new Command(timeoutInSeconds, requirements) {
             @Override
             public boolean execute() {
                 return executeFunction.getAsBoolean();
             }
+
             @Override
             public String toString() {
                 return toString.get();

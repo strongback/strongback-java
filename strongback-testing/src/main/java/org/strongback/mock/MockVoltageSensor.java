@@ -36,13 +36,14 @@ public class MockVoltageSensor implements VoltageSensor {
     }
 
     /**
-     * Set the voltage value {@link #getTemperature() returned} by this object.
+     * Set the voltage value {@link #getVoltage() returned} by this object.
      *
      * @param voltage the voltage
      * @return this object to allow chaining of methods; never null
      */
-    public void setVoltage(double voltage) {
+    public MockVoltageSensor setVoltage(double voltage) {
         this.voltage = voltage;
+        return this;
     }
 
 }

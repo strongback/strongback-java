@@ -43,20 +43,23 @@ public class MockDistanceSensor extends MockZeroable implements DistanceSensor {
      * Set the distance in inches {@link #getDistance() returned} by this object.
      *
      * @param distance the new distance in inches
+     * @return this instance to enable chaining methods; never null
      * @see #setDistanceInFeet(double)
      */
-    public void setDistanceInInches(double distance) {
+    public MockDistanceSensor setDistanceInInches(double distance) {
         super.setValue(distance);
+        return this;
     }
 
     /**
      * Set the distance in feet {@link #getDistance() returned} by this object.
      *
      * @param distance the new distance in feet
+     * @return this instance to enable chaining methods; never null
      * @see #setDistanceInInches(double)
      */
-    public void setDistanceInFeet(double distance) {
-        setDistanceInInches(distance * 12.0);
+    public MockDistanceSensor setDistanceInFeet(double distance) {
+        return setDistanceInInches(distance * 12.0);
     }
 
 }

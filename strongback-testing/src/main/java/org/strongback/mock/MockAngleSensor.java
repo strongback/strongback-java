@@ -43,9 +43,11 @@ public class MockAngleSensor extends MockZeroable implements AngleSensor {
      * Set the angle value {@link #getAngle() returned} by this object.
      *
      * @param angle the angle value
+     * @return this instance to enable chaining methods; never null
      */
-    public void setAngle(double angle) {
+    public MockAngleSensor setAngle(double angle) {
         super.setValue(angle);
+        return this;
     }
 
 }

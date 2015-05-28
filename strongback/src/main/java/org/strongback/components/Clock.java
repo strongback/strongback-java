@@ -57,6 +57,7 @@ public interface Clock {
      * Create a new time system that uses the FPGA clock. At this time, the precision of the resulting clock has not been
      * verified or tested.
      *
+     * @return the FPGA-based clock; never null
      * @throws StrongbackRequirementException if the FPGA hardware is not available
      */
     public static Clock fpga() {
@@ -64,13 +65,15 @@ public interface Clock {
             Utility.getFPGATime();
             // If we're here, then the method did not throw an exception and there is FPGA hardware on this platform ...
             return Utility::getFPGATime;
-        } catch (UnsatisfiedLinkError|NoClassDefFoundError e) {
+        } catch (UnsatisfiedLinkError | NoClassDefFoundError e) {
             throw new StrongbackRequirementException("Missing FPGA hardware or software", e);
         }
     }
 
     /**
      * Create a new time system that uses the FPGA clock if it is available, or the {@link #system() JRE's time system} if not.
+     *
+     * @return the FPGA-based clock or (if that is not available) the system clock; never null
      */
     public static Clock fpgaOrSystem() {
         try {
@@ -91,6 +94,8 @@ public interface Clock {
      * Additionally, care must be taken when using relative time on multi-core systems. Because relative time often uses the
      * CPU's clock, relative time obtained from different CPUs might not be comparable. This is possible even if using a single
      * thread, since the same thread might be scheduled on a different CPU after switching thread contexts.
+     *
+     * @return the system clock; never null
      */
     public static Clock system() {
         return new Clock() {

@@ -29,7 +29,7 @@ import com.codahale.metrics.Snapshot;
 import com.codahale.metrics.UniformReservoir;
 
 /**
- * A command that measures the {@link Strongback.Configurator#useExecutionRate(long, java.util.concurrent.TimeUnit) execution
+ * A command that measures the {@link Strongback.Configurator#useExecutionPeriod(long, java.util.concurrent.TimeUnit) execution
  * rate} of the Strongback {@link Executor}. This is purely for test purposes.
  * <p>
  *
@@ -44,7 +44,7 @@ public final class ExecutableTimer implements Executable {
      * unregister itself.
      * <p>
      * This method can be used to print a histogram of {@link Strongback#executor() Strongback's executor}. The following
-     * example uses 1000 samples, which corresponds to 5 seconds if the {@link Configurator#useExecutionRate(long, TimeUnit)
+     * example uses 1000 samples, which corresponds to 5 seconds if the {@link Configurator#useExecutionPeriod(long, TimeUnit)
      * execution rate} is 5 milliseconds:
      *
      * <pre>
@@ -54,12 +54,13 @@ public final class ExecutableTimer implements Executable {
      * The result would be something like the following:
      *
      * @param executor the Executor to measure; may not be null
+     * @param desc the description
      * @param numberOfSamples the number of samples to measure
      * @return the executable timer
      */
-    public static ExecutableTimer measureTimingAndPrint(Executor executor, int numberOfSamples) {
+    public static ExecutableTimer measureTimingAndPrint(Executor executor, String desc, int numberOfSamples) {
         return measureTiming(executor, numberOfSamples, snapshot -> {
-            System.out.println("Execution timing statistics:");
+            System.out.println("Execution timing statistics" + (desc != null ? " (" + desc + ")" : ""));
             System.out.println("  Size of histogram:      " + snapshot.getValues().length);
             System.out.println("  Minimum (ms):           " + snapshot.getMin());
             System.out.println("  Maximum (ms):           " + snapshot.getMax());
@@ -120,7 +121,7 @@ public final class ExecutableTimer implements Executable {
     }
 
     public boolean isComplete() {
-        return latch.getCount() == 0;
+        return latch.getCount() == -1 && histogram.getCount() > 0;
     }
 
     public ExecutableTimer await(long timeout, TimeUnit unit) throws InterruptedException {

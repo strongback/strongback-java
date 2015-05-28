@@ -21,13 +21,20 @@ package org.strongback.command;
  *
  * <pre>
  *   UNINITIALIZED ----> RUNNING ----> FINISHED ----> FINALIZED
+ *        |                 |             |
+ *        |                 |             |
+ *        +-----------------+-------------+----> INTERRUPTED
+ * </pre>
  *
- *  <li>{@link #UNINITIALIZED} - The {@link Command} has not been initialized
- * or executed yet. <li>{@link #INITIALIZED} - The {@link Command} has been initialized but has not been executed yet. <li>
- * {@link #RUNNING} - The {@link Command} has been initialized and executed at least once. <li>{@link #INTERUPTED} - The
- * {@link Command} has been interrupted, but it has not been processed. <li>{@link #FINISHED} - The {@link Command} has
- * finished but has not been finalized.
- * <li>{@link #FINALIZED} - The {@link Command} has finished and been cleaned up.
+ * However, a command in any state state may transition to INTERRUPTED.
+ *
+ * <ol>
+ * <li>{@link #UNINITIALIZED} - The {@link Command} has not been initialized or executed yet.</li>
+ * <li>{@link #RUNNING} - The {@link Command} has been initialized and executed at least once.</li>
+ * <li>{@link #INTERUPTED} - The {@link Command} has been interrupted, but it has not been processed.</li>
+ * <li>{@link #FINISHED} - The {@link Command} has finished but has not been finalized.</li>
+ * <li>{@link #FINALIZED} - The {@link Command} has finished and been cleaned up.</li>
+ * </ol>
  */
 public enum CommandState {
     /**
@@ -35,8 +42,7 @@ public enum CommandState {
      */
     UNINITIALIZED,
     /**
-     * The {@link Command} has been {@link Command#initialize() initialized} and is ready to {@link Command#execute()
-     * executed}.
+     * The {@link Command} has been {@link Command#initialize() initialized} and is ready to {@link Command#execute() executed}.
      */
     RUNNING,
     /**

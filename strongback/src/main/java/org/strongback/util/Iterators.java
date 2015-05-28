@@ -31,6 +31,7 @@ public final class Iterators {
      *
      * @param iterable the iterable object
      * @return an immutable iterator, or an {@link #empty() empty} iterator if {@code iterable} is null
+     * @param <T> the type of element to iterate over
      */
     public static <T> Iterator<T> immutable(Iterable<T> iterable) {
         return iterable != null ? immutable(iterable.iterator()) : empty();
@@ -39,8 +40,9 @@ public final class Iterators {
     /**
      * Create an immutable iterator around the supplied {@link Iterator}.
      *
-     * @param iterable the existing iterator
+     * @param iterator the existing iterator
      * @return an immutable iterator, or an {@link #empty() empty} iterator if {@code iterable} is null
+     * @param <T> the type of element to iterate over
      */
     public static <T> Iterator<T> immutable(Iterator<T> iterator) {
         return iterator == null ? empty() : new Iterator<T>() {
@@ -60,6 +62,7 @@ public final class Iterators {
      * Create an empty iterator.
      *
      * @return the empty iterator; never null
+     * @param <T> the type of element to iterate over
      */
     public static <T> Iterator<T> empty() {
         return new Iterator<T>() {
