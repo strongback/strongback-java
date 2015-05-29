@@ -85,8 +85,7 @@ public class SimpleTankDriveRobot extends IterativeRobot {
 
     @Override
     public void disabledInit() {
-        // Tell Strongback that the robot is disabled so it can flush and kill commands. We do not need to tell Strongback
-        // when the robot is re-enabled ...
+        // Tell Strongback that the robot is disabled so it can flush and kill commands.
         Strongback.disable();
     }
 
