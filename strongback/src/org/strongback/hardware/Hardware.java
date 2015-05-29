@@ -568,7 +568,7 @@ public class Hardware {
         }
 
         /**
-         * Create a Logitech 3D flight stick controlled by the Driver Station.
+         * Create a Logitech Attack 3D flight stick controlled by the Driver Station.
          *
          * @param port the port on the driver station that the flight stick is plugged into
          * @return the input device; never null
