@@ -16,10 +16,10 @@
 
 package org.strongback.command;
 
-import static org.fest.assertions.Assertions.assertThat;
-
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import junit.framework.AssertionFailedError;
 
 /**
  * @author Randall Hauch
@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class WatchedCommand extends Command {
 
-    public static WatchedCommand watch( Command command ) {
+    public static WatchedCommand watch(Command command) {
         return new WatchedCommand(command);
     }
 
@@ -38,7 +38,7 @@ public class WatchedCommand extends Command {
     private final Command delegate;
 
     public WatchedCommand(Command delegate) {
-        super(delegate.getTimeoutInSeconds(),delegate.getRequirements());
+        super(delegate.getTimeoutInSeconds(), delegate.getRequirements());
         this.delegate = delegate;
     }
 
@@ -47,7 +47,8 @@ public class WatchedCommand extends Command {
         try {
             delegate.initialize();
         } finally {
-            assertThat(initialized.compareAndSet(false, true)).isTrue();
+            if (!initialized.compareAndSet(false, true)) throw new AssertionFailedError(
+                    "initialize() called more than once on the command: " + delegate);
         }
     }
 
@@ -65,7 +66,8 @@ public class WatchedCommand extends Command {
         try {
             delegate.end();
         } finally {
-            assertThat(ended.compareAndSet(false, true)).isTrue();
+            if (!ended.compareAndSet(false, true)) throw new AssertionFailedError(
+                    "end() called more than once on the command: " + delegate);
         }
     }
 
@@ -74,7 +76,8 @@ public class WatchedCommand extends Command {
         try {
             delegate.interrupted();
         } finally {
-            assertThat(interrupted.compareAndSet(false, true)).isTrue();
+            if (!interrupted.compareAndSet(false, true)) throw new AssertionFailedError(
+                    "interrupted() called more than once on the command: " + delegate);
         }
     }
 
@@ -86,7 +89,7 @@ public class WatchedCommand extends Command {
         return isExecutedAtLeast(1);
     }
 
-    public boolean isExecutedAtLeast( int minimum ) {
+    public boolean isExecutedAtLeast(int minimum) {
         return executed.get() >= minimum;
     }
 
