@@ -6,8 +6,10 @@
 .settings/
 
 # These are names of directories typically used for generated content, so are ignored ...
-build/
-deploy/
-target/
+bin
+build
+deploy
+target
+*.class
 
 .DS_Store
