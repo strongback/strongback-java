@@ -1,6 +1,6 @@
 # Introducing Strongback
 
-Strongback is a new open source software library that makes your robot code lighter and stronger. You use it along with the WPILib library on your FIRST Robotics Competition robot's RoboRIO, but Strongback's APIs and functionality mean you need less code to do more. Plus, Strongback makes it easier for you to test your code without robot hardware and can record real-time data while you operate your robot for later post-processing.
+Strongback is a new open source software library that makes your robot code lighter and stronger. You use it along with the [WPILib library](https://wpilib.screenstepslive.com/s/4485/m/13809) on your [FIRST Robotics Competition](http://www.usfirst.org/roboticsprograms/frc) robot's RoboRIO, but Strongback's APIs and functionality mean you need less code to do more. Plus, Strongback makes it easier for you to test your code without robot hardware and can record real-time data while you operate your robot for later post-processing.
 
 * **Testable** - Test more of your robot code on development machines without requiring any real robot hardware.
 * **Simple API** - Uses powerful language features of Java 8 to reduce and simplify code while retaining flexibility.
@@ -11,4 +11,4 @@ Strongback is a new open source software library that makes your robot code ligh
 * **Logging** - Simple extendable framework to log messages at different levels.
 * **Uses WPILib** - Uses the WPILib classes underneath for safety and consistency.
 
-We're just getting started, so stay tuned. See [our wiki](https://github.com/strongback/strongback-java/wiki) for more details.
+We're just getting started, so stay tuned. See [our wiki](https://github.com/strongback/strongback-java/wiki) for more details, including how you can help out!
