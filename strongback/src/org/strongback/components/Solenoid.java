@@ -17,6 +17,7 @@
 package org.strongback.components;
 
 import org.strongback.annotation.ThreadSafe;
+import org.strongback.command.Requirable;
 
 /**
  * A solenoid is a device that can be extended and retracted.
@@ -24,7 +25,7 @@ import org.strongback.annotation.ThreadSafe;
  * @author Zach Anderson
  */
 @ThreadSafe
-public interface Solenoid {
+public interface Solenoid extends Requirable {
 
     /**
      * The direction of the solenoid.
