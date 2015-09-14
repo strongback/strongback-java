@@ -92,7 +92,7 @@ public class Hardware {
          * Create a {@link Gyroscope} that uses a WPILib {@link Gyro} on the specified channel.
          *
          * @param channel the channel the gyroscope is plugged into
-         * @return a {@link Gyroscope} on the specified channel
+         * @return the gyroscope; never null
          */
         public static Gyroscope gyroscope(int channel) {
             Gyro gyro = new Gyro(channel);
@@ -106,7 +106,7 @@ public class Hardware {
          * @param aChannel the a channel of the encoder
          * @param bChannel the b channel of the encoder
          * @param distancePerPulse the distance the end shaft spins per pulse
-         * @return an {@link AngleSensor}
+         * @return the angle sensor; never null
          */
         public static AngleSensor encoder(int aChannel, int bChannel, double distancePerPulse) {
             Encoder encoder = new Encoder(aChannel, bChannel);
@@ -211,7 +211,7 @@ public class Hardware {
         }
 
         /**
-         * Create a new single-axis {@link Accelerometer} using the {@link AnalogAccelerometer} on the specified channel that
+         * Create a new single-axis {@link Accelerometer} using the {@link AnalogAccelerometer} on the specified channel, with
          * has the given sensitivity and zero value.
          *
          * @param channel the channel for the analog accelerometer
@@ -228,7 +228,7 @@ public class Hardware {
         }
 
         /**
-         * Create a new single-axis {@link Accelerometer} using two {@link AnalogAccelerometer}s on the specified channels that
+         * Create a new single-axis {@link Accelerometer} using two {@link AnalogAccelerometer}s on the specified channels, with
          * each have the given sensitivity and zero value.
          *
          * @param xAxisChannel the channel for the X-axis analog accelerometer
@@ -297,14 +297,12 @@ public class Hardware {
              * use of this filter is to reject data points which errantly (due to averaging or sampling) appear within the
              * window when detecting transitions using the Rising Edge and Falling Edge functionality of the analog trigger
              */
-            FILTERED,
-            /**
-             * The analog output is averaged and over sampled.
-             */
-            AVERAGED,
-            /**
-             * No filtering or averaging is to be used.
-             */
+            FILTERED, /**
+                       * The analog output is averaged and over sampled.
+                       */
+            AVERAGED, /**
+                       * No filtering or averaging is to be used.
+                       */
             NONE;
         }
 
@@ -318,11 +316,10 @@ public class Hardware {
              * The switch is triggered only when the analog value is inside the range, and not triggered if it is outside (above
              * or below)
              */
-            IN_WINDOW,
-            /**
-             * The switch is triggered only when the value is above the upper limit, and not triggered if it is below the lower
-             * limit and maintains the previous state if in between (hysteresis)
-             */
+            IN_WINDOW, /**
+                        * The switch is triggered only when the value is above the upper limit, and not triggered if it is below
+                        * the lower limit and maintains the previous state if in between (hysteresis)
+                        */
             AVERAGED;
         }
 
@@ -337,7 +334,8 @@ public class Hardware {
          * @param mode the trigger mode; may not be null
          * @return the analog switch; never null
          */
-        public static Switch analog(int channel, double lowerVoltage, double upperVoltage, AnalogOption option, TriggerMode mode) {
+        public static Switch analog(int channel, double lowerVoltage, double upperVoltage, AnalogOption option,
+                TriggerMode mode) {
             if (option == null) throw new IllegalArgumentException("The analog option must be specified");
             if (mode == null) throw new IllegalArgumentException("The analog mode must be specified");
             AnalogTrigger trigger = new AnalogTrigger(channel);
@@ -392,8 +390,8 @@ public class Hardware {
          * that position. (See {@link #potentiometer(int, double, double)} when another switch is not used to help determine the
          * location, and instead the zero point is pre-determined by the physical design of the mechanism.)
          * <p>
-         * The scale factor multiplies the 0-1 ratiometric value to return useful units, and an offset to add after the scaling.
-         * Generally, the most useful scale factor will be the angular or linear full scale of the potentiometer.
+         * The scale factor multiplies the 0-1 ratiometric value to return useful units. Generally, the most useful scale factor
+         * will be the angular or linear full scale of the potentiometer.
          * <p>
          * For example, let's say you have an ideal single-turn linear potentiometer attached to a robot arm. This pot will turn
          * 270 degrees over the 0V-5V range while the end of the arm travels 20 inches. Therefore, the
@@ -422,8 +420,8 @@ public class Hardware {
          * <p>
          * To prevent the potentiometer from breaking due to minor shifting in alignment of the mechanism, the potentiometer may
          * be installed with the "zero-point" of the mechanism (e.g., arm in this case) a little ways into the potentiometer's
-         * range (for example 10 degrees). In this case, the {@code offset} value is determined from the mechanical design and
-         * can be specified automatically remove the 10 degrees from the potentiometer output.
+         * range (for example 10 degrees). In this case, the {@code offset} value is measured from the physical mechanical
+         * design and can be specified to automatically remove the 10 degrees from the potentiometer output.
          *
          * @param channel The analog channel this potentiometer is plugged into.
          * @param fullVoltageRangeToInches The scaling factor multiplied by the analog voltage value to obtain inches.
@@ -437,6 +435,9 @@ public class Hardware {
         }
     }
 
+    /**
+     * Factory method for different kinds of motors.
+     */
     public static final class Motors {
 
         private static final DoubleToDoubleFunction SPEED_LIMITER = Values.limiter(-1.0, 1.0);
@@ -453,7 +454,7 @@ public class Hardware {
         }
 
         /**
-         * Create a motor driven by a Talon speed controller on the specified channel.
+         * Create a motor driven by a Talon speed controller on the specified channel, with a custom speed limiting function.
          *
          * @param channel the channel the controller is connected to
          * @param speedLimiter function that will be used to limit the speed; may not be null
@@ -475,7 +476,7 @@ public class Hardware {
         }
 
         /**
-         * Create a motor driven by a Jaguar speed controller on the specified channel.
+         * Create a motor driven by a Jaguar speed controller on the specified channel, with a custom speed limiting function
          *
          * @param channel the channel the controller is connected to
          * @param speedLimiter function that will be used to limit the speed; may not be null
@@ -497,7 +498,7 @@ public class Hardware {
         }
 
         /**
-         * Create a motor driven by a Victor speed controller on the specified channel.
+         * Create a motor driven by a Victor speed controller on the specified channel, with a custom speed limiting function
          *
          * @param channel the channel the controller is connected to
          * @param speedLimiter function that will be used to limit the speed (input voltage); may not be null
@@ -575,7 +576,10 @@ public class Hardware {
          */
         public static FlightStick logitechAttack3D(int port) {
             Joystick joystick = new Joystick(port);
-            return FlightStick.create(joystick::getRawAxis, joystick::getRawButton, joystick::getPOV, joystick::getY, // pitch
+            return FlightStick.create(joystick::getRawAxis,
+                                      joystick::getRawButton,
+                                      joystick::getPOV,
+                                      joystick::getY, // pitch
                                       () -> joystick.getTwist() * -1, // yaw is reversed
                                       joystick::getX, // roll
                                       joystick::getThrottle, // throttle
@@ -591,8 +595,10 @@ public class Hardware {
          */
         public static FlightStick microsoftSideWinder(int port) {
             Joystick joystick = new Joystick(port);
-            return FlightStick.create(joystick::getRawAxis, joystick::getRawButton, joystick::getPOV, () -> joystick.getY()
-                    * -1, // pitch is reversed
+            return FlightStick.create(joystick::getRawAxis,
+                                      joystick::getRawButton,
+                                      joystick::getPOV,
+                                      () -> joystick.getY() * -1, // pitch is reversed
                                       joystick::getTwist, // yaw
                                       joystick::getX, // roll
                                       joystick::getThrottle, // throttle

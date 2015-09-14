@@ -16,8 +16,6 @@
 
 package org.strongback.components;
 
-import org.strongback.annotation.Immutable;
-
 /**
  * An accelerometer is a device capable of sensing acceleration. By performing two integrations, an accelerometer can also find
  * velocity and displacement.
@@ -60,39 +58,12 @@ public interface TwoAxisAccelerometer {
      *
      * @return the acceleration values for 2 axes; never null
      */
-    default public TwoDimensionalTuple getAcceleration() {
-        return new TwoDimensionalTuple(getXDirection().getAcceleration(), getYDirection().getAcceleration());
+    default public TwoAxisAcceleration getAcceleration() {
+        return new TwoAxisAcceleration(getXDirection().getAcceleration(), getYDirection().getAcceleration());
     }
 
     /**
-     * A pair of immutable acceleration values, one for each axis.
-     */
-    @Immutable
-    public class TwoDimensionalTuple {
-        private final double x;
-        private final double y;
-
-        public TwoDimensionalTuple(double x, double y) {
-            this.x = x;
-            this.y = y;
-        }
-
-        public double getX() {
-            return x;
-        }
-
-        public double getY() {
-            return y;
-        }
-
-        @Override
-        public String toString() {
-            return "[" + x + ',' + y + "]";
-        }
-    }
-
-    /**
-     * Create a 2-axis accelerometer from the three individual accelerometers.
+     * Create a 2-axis accelerometer from the two individual accelerometers.
      *
      * @param xAxis the accelerometer for the X-axis; may not be null
      * @param yAxis the accelerometer for the Y-axis; may not be null

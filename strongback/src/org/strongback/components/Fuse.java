@@ -26,7 +26,8 @@ import org.strongback.annotation.ThreadSafe;
 @ThreadSafe
 public interface Fuse extends Switch {
     /**
-     * Trigger the fuse. Once this method is called, the {@link #isTriggered()} switches but then will never change.
+     * Trigger the fuse. Once this method is called, the {@link #isTriggered()} switches but then will never change
+     * until it is {@link #reset()}.
      *
      * @return this object to allow for chaining methods together; never null
      */

@@ -32,7 +32,6 @@ import org.strongback.components.Clock;
  *
  * @author Randall Hauch
  */
-@FunctionalInterface
 public interface Metronome {
 
     /**

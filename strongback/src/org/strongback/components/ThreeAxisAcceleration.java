@@ -16,26 +16,24 @@
 
 package org.strongback.components;
 
-import org.strongback.annotation.ThreadSafe;
+import org.strongback.annotation.Immutable;
 
 /**
- * A sensor the reports the temperature.
+ * A set of three immutable acceleration values, one for each axis.
  */
-@ThreadSafe
-@FunctionalInterface
-public interface TemperatureSensor {
-    /**
-     * Gets the current temperature in degrees Celsius.
-     *
-     * @return the current temperature in Celsius
-     */
-    public double getTemperatureInCelsius();
-    /**
-     * Gets the current temperature in degrees Fahrenheit.
-     *
-     * @return the current temperature in Fahrenheit
-     */
-    default public double getTemperatureInFahrenheit() {
-        return getTemperatureInCelsius() * 9.0/5.0 + 32.0;
+@Immutable
+public final class ThreeAxisAcceleration extends TwoAxisAcceleration {
+    private final double z;
+
+    protected ThreeAxisAcceleration(double x, double y, double z) {
+        super(x,y);
+        this.z = z;
+    }
+    public double getZ() {
+        return z;
+    }
+    @Override
+    public String toString() {
+        return "[" + getX() + ',' + getY() + ',' + getZ() + "]";
     }
 }

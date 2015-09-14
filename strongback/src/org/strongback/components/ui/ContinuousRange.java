@@ -75,7 +75,7 @@ public interface ContinuousRange {
     }
 
     /**
-     * Create a new {@link IntSupplier} that scales the values of this instance and casts to an integer.
+     * Create a new {@link IntSupplier} that scales the values of this instance and rounds to an integer.
      *
      * @param scale the scaling factor
      * @return the new scaled IntSupplier; never null

@@ -23,7 +23,7 @@ import org.strongback.function.IntToBooleanFunction;
 import org.strongback.function.IntToIntFunction;
 
 /**
- * A type of input device consisting of a joystick with twist and throttle.
+ * A type of input device consisting of a joystick with twist and throttle and multiple buttons.
  */
 public interface FlightStick extends InputDevice {
     public ContinuousRange getPitch();

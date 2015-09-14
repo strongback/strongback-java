@@ -35,9 +35,29 @@ public interface AngleSensor extends Zeroable {
      */
     public double getAngle();
 
+    /**
+     * Change the output so that the current angle is considered to be 0.
+     *
+     * @return this object to allow chaining of methods; never null
+     */
     @Override
     default public AngleSensor zero() {
         return this;
+    }
+
+    /**
+     * Compute the change in angle between the {@link #getAngle() current angle} and the target angle, using the given tolerance
+     * for the difference. The result is the angle that this sensor must rotate to reach the target angle, and may be positive
+     * or negative
+     *
+     * @param targetAngle the target angle
+     * @param tolerance the allowed tolerance in degrees between the two angles
+     * @return the positive or negative angular displacement required for this sensor to reach the target angle, or 0.0d if the
+     *         two angles are already within the specified {@code tolerance}
+     */
+    default public double computeAngleChangeTo(double targetAngle, double tolerance) {
+        double diff = targetAngle - this.getAngle();
+        return Math.abs(diff) <= Math.abs(tolerance) ? 0.0 : diff;
     }
 
     /**
@@ -76,6 +96,7 @@ public interface AngleSensor extends Zeroable {
                 double angle = sensor.getAngle();
                 return angle == 0.0 ? 0.0 : -angle;
             }
+
             @Override
             public AngleSensor zero() {
                 return sensor.zero();

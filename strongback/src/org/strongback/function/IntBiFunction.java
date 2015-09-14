@@ -14,28 +14,28 @@
  * limitations under the License.
  */
 
-package org.strongback.components;
+package org.strongback.function;
 
-import org.strongback.annotation.ThreadSafe;
+import java.util.function.Function;
 
 /**
- * A sensor the reports the temperature.
+ * Represents a function that accepts two a integer-valued arguments and produces a integer-valued result. This is the
+ * {@code integer} primitive specialization for {@link Function BiFunction<Integer,Integer,Integer>}.
+ * <p>
+ * This is a functional interface whose functional method is {@link #applyAsInt(int,int)}.
+ *
+ * @see Function
+ * @author Randall Hauch
  */
-@ThreadSafe
 @FunctionalInterface
-public interface TemperatureSensor {
+public interface IntBiFunction {
+
     /**
-     * Gets the current temperature in degrees Celsius.
+     * Applies this function to the given arguments.
      *
-     * @return the current temperature in Celsius
+     * @param t the first function argument
+     * @param u the second function argument
+     * @return the function result
      */
-    public double getTemperatureInCelsius();
-    /**
-     * Gets the current temperature in degrees Fahrenheit.
-     *
-     * @return the current temperature in Fahrenheit
-     */
-    default public double getTemperatureInFahrenheit() {
-        return getTemperatureInCelsius() * 9.0/5.0 + 32.0;
-    }
+    public int applyAsInt(int t, int u);
 }

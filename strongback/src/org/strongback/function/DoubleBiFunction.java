@@ -14,28 +14,28 @@
  * limitations under the License.
  */
 
-package org.strongback.components;
+package org.strongback.function;
 
-import org.strongback.annotation.ThreadSafe;
+import java.util.function.Function;
 
 /**
- * A sensor the reports the temperature.
+ * Represents a function that accepts two a double-valued arguments and produces a double-valued result. This is the
+ * {@code double} primitive specialization for {@link Function BiFunction<Double,Double,Double>}.
+ * <p>
+ * This is a functional interface whose functional method is {@link #applyAsDouble(double,double)}.
+ *
+ * @see Function
+ * @author Randall Hauch
  */
-@ThreadSafe
 @FunctionalInterface
-public interface TemperatureSensor {
+public interface DoubleBiFunction {
+
     /**
-     * Gets the current temperature in degrees Celsius.
+     * Applies this function to the given arguments.
      *
-     * @return the current temperature in Celsius
+     * @param t the first function argument
+     * @param u the second function argument
+     * @return the function result
      */
-    public double getTemperatureInCelsius();
-    /**
-     * Gets the current temperature in degrees Fahrenheit.
-     *
-     * @return the current temperature in Fahrenheit
-     */
-    default public double getTemperatureInFahrenheit() {
-        return getTemperatureInCelsius() * 9.0/5.0 + 32.0;
-    }
+    public double applyAsDouble(double t, double u);
 }

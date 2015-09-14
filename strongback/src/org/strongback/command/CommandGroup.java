@@ -106,6 +106,27 @@ import org.strongback.annotation.NotThreadSafe;
  */
 @NotThreadSafe
 public class CommandGroup extends Command {
+
+    /**
+     * Creates a single {@link CommandGroup} that executes several {@link Command}s in sequential order.
+     *
+     * @param commands the {@link Command}s to be executed
+     * @return the {@link CommandGroup} wrapping the {@link Command}s
+     */
+    public static CommandGroup runSequentially( Command ... commands ) {
+        return new CommandGroup(commands,Type.SEQUENTIAL);
+    }
+
+    /**
+     * Creates a single {@link CommandGroup} that executes several {@link Command}s simultaneously.
+     *
+     * @param commands the {@link Command}s to be executed
+     * @return the {@link CommandGroup} wrapping the {@link Command}s
+     */
+    public static CommandGroup runSimultaneously( Command ... commands ) {
+        return new CommandGroup(commands,Type.PARRALLEL);
+    }
+
     static enum Type {
         SEQUENTIAL, PARRALLEL, FORK;
     }

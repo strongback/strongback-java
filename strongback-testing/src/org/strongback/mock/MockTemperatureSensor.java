@@ -31,12 +31,12 @@ public class MockTemperatureSensor implements TemperatureSensor {
     private volatile double temp = 0;
 
     @Override
-    public double getTemperature() {
+    public double getTemperatureInCelsius() {
         return temp;
     }
 
     /**
-     * Set the temperature value {@link #getTemperature() returned} by this object.
+     * Set the temperature value {@link #getTemperatureInCelsius() returned} by this object.
      *
      * @param temp the temperature
      * @return this object to allow chaining of methods; never null

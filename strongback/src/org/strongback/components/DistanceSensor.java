@@ -34,16 +34,16 @@ public interface DistanceSensor extends Zeroable {
      * @return the value of this {@link DistanceSensor}
      * @see #getDistanceInFeet()
      */
-    public double getDistance();
+    public double getDistanceInInches();
 
     /**
      * Gets the current value of this {@link DistanceSensor} in feet.
      *
      * @return the value of this {@link DistanceSensor}
-     * @see #getDistance()
+     * @see #getDistanceInInches()
      */
     default public double getDistanceInFeet() {
-        return getDistance() / 12.0;
+        return getDistanceInInches() / 12.0;
     }
 
     @Override
@@ -62,7 +62,7 @@ public interface DistanceSensor extends Zeroable {
             private double zero = 0;
 
             @Override
-            public double getDistance() {
+            public double getDistanceInInches() {
                 return distanceSupplier.getAsDouble() - zero;
             }
 
@@ -70,6 +70,26 @@ public interface DistanceSensor extends Zeroable {
             public DistanceSensor zero() {
                 zero = distanceSupplier.getAsDouble();
                 return this;
+            }
+        };
+    }
+
+    /**
+     * Inverts the specified {@link DistanceSensor} so that negative distances become positive distances.
+     *
+     * @param sensor the {@link DistanceSensor} to invert
+     * @return an {@link DistanceSensor} that reads the negated distance of the original sensor
+     */
+    public static DistanceSensor invert(DistanceSensor sensor) {
+        return new DistanceSensor() {
+            @Override
+            public double getDistanceInInches() {
+                double dist = sensor.getDistanceInInches();
+                return dist == 0.0 ? 0.0 : -dist;
+            }
+            @Override
+            public DistanceSensor zero() {
+                return sensor.zero();
             }
         };
     }
