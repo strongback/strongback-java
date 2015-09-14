@@ -17,6 +17,7 @@
 package org.strongback.components;
 
 import org.strongback.annotation.ThreadSafe;
+import org.strongback.command.Requirable;
 import org.strongback.drive.TankDrive;
 import org.strongback.util.Values;
 
@@ -27,7 +28,7 @@ import org.strongback.util.Values;
  *
  */
 @ThreadSafe
-public interface Motor extends SpeedSensor, SpeedController, Stoppable {
+public interface Motor extends SpeedSensor, SpeedController, Stoppable, Requirable {
 
     public enum Direction {
         FORWARD, REVERSE, STOPPED
