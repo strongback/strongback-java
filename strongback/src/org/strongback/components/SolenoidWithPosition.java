@@ -46,7 +46,7 @@ public interface SolenoidWithPosition extends Solenoid {
     public Position getPosition();
 
     /**
-     * Tests if this <code>Solenoid</code> is extended.
+     * Determines if this <code>Solenoid</code> is extended.
      *
      * @return {@code true} if this solenoid is fully extended, or {@code false} otherwise
      */
@@ -55,7 +55,7 @@ public interface SolenoidWithPosition extends Solenoid {
     }
 
     /**
-     * Tests if this <code>Solenoid</code> is retracted.
+     * Determines if this <code>Solenoid</code> is retracted.
      *
      * @return {@code true} if this solenoid is fully retracted, or {@code false} otherwise
      */

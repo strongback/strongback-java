@@ -19,6 +19,7 @@ package org.strongback;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.LongConsumer;
 
 import org.strongback.annotation.ThreadSafe;
 import org.strongback.components.Clock;
@@ -37,15 +38,17 @@ final class ExecutorDriver implements Stoppable {
     private final Logger logger;
     private final Iterable<Executable> executables;
     private final AtomicReference<Thread> thread = new AtomicReference<>();
+    private final LongConsumer delayInformer;
     private volatile boolean running = false;
     private volatile CountDownLatch stopped = null;
 
-    ExecutorDriver(String name, Iterable<Executable> executables, Clock timeSystem, Metronome metronome, Logger logger) {
+    ExecutorDriver(String name, Iterable<Executable> executables, Clock timeSystem, Metronome metronome, Logger logger, LongConsumer delayInformer ) {
         this.name = name;
         this.timeSystem = timeSystem;
         this.met = metronome;
         this.logger = logger;
         this.executables = executables;
+        this.delayInformer = delayInformer != null ? delayInformer : ExecutorDriver::noDelay;
     }
 
     /**
@@ -59,7 +62,7 @@ final class ExecutorDriver implements Stoppable {
     public void start() {
         thread.getAndUpdate(thread -> {
             if (thread == null) {
-                thread = new Thread(this::update);
+                thread = new Thread(this::run);
                 thread.setName(name);
                 stopped = new CountDownLatch(1);
                 running = true;
@@ -95,11 +98,13 @@ final class ExecutorDriver implements Stoppable {
         }
     }
 
-    private void update() {
+    private void run() {
         try {
             long timeInMillis = 0L;
+            long lastTimeInMillis = 0L;
             while (true) {
                 timeInMillis = timeSystem.currentTimeInMillis();
+                delayInformer.accept( timeInMillis - lastTimeInMillis);
                 for (Executable executable : executables) {
                     if (!running) return;
                     try {
@@ -108,11 +113,16 @@ final class ExecutorDriver implements Stoppable {
                         logger.error(e);
                     }
                 }
+                lastTimeInMillis = timeInMillis;
                 met.pause();
             }
         } finally {
             CountDownLatch latch = stopped;
             if (latch != null) latch.countDown();
         }
+    }
+
+    private static void noDelay( long delay ) {
+        // do nothing
     }
 }

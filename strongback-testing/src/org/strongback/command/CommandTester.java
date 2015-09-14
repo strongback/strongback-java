@@ -44,6 +44,10 @@ public class CommandTester {
         runner.cancel();
     }
 
+    public boolean isCancelled() {
+        return runner.isCancelled();
+    }
+
     @Override
     public String toString() {
         return runner.toString();

@@ -25,7 +25,7 @@ import org.strongback.annotation.ThreadSafe;
 @FunctionalInterface
 public interface CurrentSensor {
     /**
-     * Gets the current of this sensor in amps.
+     * Gets the current of this sensor in amperes.
      * @return the current of this sensor in amps
      */
     public double getCurrent();

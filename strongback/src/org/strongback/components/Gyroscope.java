@@ -43,7 +43,7 @@ public interface Gyroscope extends Compass {
     }
 
     /**
-     * Create a angle sensor for the given function that returns the angle.
+     * Create a gyroscope for the given functions that returns the angular displacement and velocity.
      *
      * @param angleSupplier the function that returns the angle; may not be null
      * @param rateSupplier the function that returns the angular acceleration; may not be null

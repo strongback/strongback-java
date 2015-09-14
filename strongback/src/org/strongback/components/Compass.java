@@ -41,6 +41,21 @@ public interface Compass extends AngleSensor {
     }
 
     /**
+     * Compute the change in heading between the {@link #getHeading() current heading} and the target heading, using the given
+     * tolerance for the difference. The result is the angle that this sensor must rotate to reach the target heading, which may
+     * be positive or negative.
+     *
+     * @param targetHeading the target heading
+     * @param tolerance the allowed tolerance in degrees between the two headings
+     * @return the angular displacement required for this sensor to reach the target heading, or 0.0d if the two headings are
+     *         already within the specified {@code tolerance}
+     */
+    default public double computeHeadingChangeTo(double targetHeading, double tolerance) {
+        double diff = targetHeading - this.getHeading();
+        return Math.abs(diff) <= Math.abs(tolerance) ? 0.0 : diff;
+    }
+
+    /**
      * Create a angle sensor for the given function that returns the angle.
      *
      * @param angleSupplier the function that returns the angle; may not be null

@@ -93,7 +93,7 @@ public interface PowerPanel {
      * @return the temperature of this {@link PowerPanel}
      */
     default public double getTemperature() {
-        return getTemperatureSensor().getTemperature();
+        return getTemperatureSensor().getTemperatureInCelsius();
     }
 
     /**

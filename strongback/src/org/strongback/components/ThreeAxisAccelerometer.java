@@ -16,9 +16,6 @@
 
 package org.strongback.components;
 
-import org.strongback.annotation.Immutable;
-
-
 /**
  * An accelerometer is a device capable of sensing acceleration. By performing two integrations, an accelerometer can also find
  * velocity and displacement.
@@ -53,29 +50,9 @@ public interface ThreeAxisAccelerometer extends TwoAxisAccelerometer {
      * @return the acceleration values for 3 axes; never null
      */
     @Override
-    default public ThreeDimensionalTuple getAcceleration() {
-        return new ThreeDimensionalTuple(getXDirection().getAcceleration(), getYDirection().getAcceleration(), getZDirection()
+    default public ThreeAxisAcceleration getAcceleration() {
+        return new ThreeAxisAcceleration(getXDirection().getAcceleration(), getYDirection().getAcceleration(), getZDirection()
                 .getAcceleration());
-    }
-
-    /**
-     * A set of three immutable acceleration values, one for each axis.
-     */
-    @Immutable
-    public final class ThreeDimensionalTuple extends TwoDimensionalTuple {
-        private final double z;
-
-        public ThreeDimensionalTuple(double x, double y, double z) {
-            super(x,y);
-            this.z = z;
-        }
-        public double getZ() {
-            return z;
-        }
-        @Override
-        public String toString() {
-            return "[" + getX() + ',' + getY() + ',' + getZ() + "]";
-        }
     }
 
     /**
@@ -106,8 +83,8 @@ public interface ThreeAxisAccelerometer extends TwoAxisAccelerometer {
     }
 
     /**
-     * Create a 3-axis accelerometer from a 2-D accelerometer and a separate accelerometer for the Z-axis.
-     * @param xAndY the 2-D accelerometer for the X- and Y-axes; may not be null
+     * Create a 3-axis accelerometer from a 2-axis accelerometer and a separate accelerometer for the Z-axis.
+     * @param xAndY the 2-axis accelerometer for the X- and Y-axes; may not be null
      * @param zAxis the accelerometer for the Z-axis; may not be null
      * @return the 3-axis accelerometer; never null
      */

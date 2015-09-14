@@ -109,9 +109,9 @@ public abstract class Command {
 
     /**
      * Signal that this command has been interrupted before {@link #initialize() initialization} or {@link #execute() execution}
-     * could successfully complete. A command can be interrupted because the command was cancelled, because the robot was
-     * shutdown, or because {@link #initialize()} or {@link #execute()} threw an exception can be interrupted. Note that if this
-     * method is called, then {@link #end()} will not be called on the command.
+     * could successfully complete. A command is interrupted when the command is canceled, when the robot is shutdown while the
+     * command is still running, or when {@link #initialize()} or {@link #execute()} throw exceptions. Note that if this method
+     * is called, then {@link #end()} will not be called on the command.
      * <p>
      * By default this method does nothing.
      */
@@ -169,9 +169,8 @@ public abstract class Command {
      * @return the new command; never null
      */
     public static Command pause(long pauseTime, TimeUnit unit) {
-        double durationInSeconds = (double)unit.toNanos(pauseTime) / (double)TimeUnit.SECONDS.toNanos(1);
-        return create(durationInSeconds, () -> false, () -> "PauseCommand (" + unit.toMillis(pauseTime)
-                + " milliseconds)");
+        double durationInSeconds = (double) unit.toNanos(pauseTime) / (double) TimeUnit.SECONDS.toNanos(1);
+        return create(durationInSeconds, () -> false, () -> "PauseCommand (" + unit.toMillis(pauseTime) + " milliseconds)");
     }
 
     /**
@@ -196,7 +195,7 @@ public abstract class Command {
         return create(0.0, () -> {
             executeFunction.run();
             return true;
-        }, () -> "Command (one-time) " + executeFunction);
+        } , () -> "Command (one-time) " + executeFunction);
     }
 
     /**
@@ -211,7 +210,7 @@ public abstract class Command {
         return create(durationInSeconds, () -> {
             executeFunction.run();
             return false;
-        }, () -> "Command (one-time, duration=" + durationInSeconds + " sec) " + executeFunction);
+        } , () -> "Command (one-time, duration=" + durationInSeconds + " sec) " + executeFunction);
     }
 
     /**
@@ -234,8 +233,9 @@ public abstract class Command {
      * @return the new command; never null
      */
     public static Command create(double timeoutInSeconds, BooleanSupplier executeFunction) {
-        return create(timeoutInSeconds, executeFunction, () -> "Command (timeout=" + timeoutInSeconds + " sec,repeatable) "
-                + executeFunction);
+        return create(timeoutInSeconds,
+                      executeFunction,
+                      () -> "Command (timeout=" + timeoutInSeconds + " sec,repeatable) " + executeFunction);
     }
 
     /**

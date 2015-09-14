@@ -27,11 +27,11 @@ import org.strongback.components.DistanceSensor;
 public class DistanceSensorTest extends DoubleValueTest {
 
     protected static void assertDistance(double distance) {
-        assertValue(distance, sensor::getDistance, distance);
+        assertValue(distance, sensor::getDistanceInInches, distance);
     }
 
     protected static void assertDistance(double distance, double result) {
-        assertValue(distance, sensor::getDistance, result);
+        assertValue(distance, sensor::getDistanceInInches, result);
     }
 
     protected static void assertDistanceInFeet(double distance) {

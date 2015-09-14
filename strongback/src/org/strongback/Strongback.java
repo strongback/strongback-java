@@ -19,8 +19,10 @@ package org.strongback;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
+import java.util.function.LongConsumer;
 import java.util.function.Supplier;
 
 import org.strongback.AsyncEventRecorder.EventWriter;
@@ -61,7 +63,6 @@ import org.strongback.util.Metronome;
  *
  * <pre>
  * Strongback.configure()
- * // begin to configure Strongback
  *           .useSystemLogger(Logger.Level.INFO)
  *           .useFpgaTime()
  *           .useExecutionPeriod(5, TimeUnit.MILLISECONDS)
@@ -86,13 +87,13 @@ public final class Strongback {
             BUSY,
             /**
              * The thread uses {@link Thread#sleep(long)} to wait for the prescribed amount of time. This may not be very
-             * accurate, but it is efficient since the thread will pause so that other work can be done by other threads. See
-             * {@link Metronome#sleeper(long, TimeUnit, Clock)} for details.
+             * accurate, but it is efficient since the thread will pause so that other work can be done by other threads.
+             * See {@link Metronome#sleeper(long, TimeUnit, Clock)} for details.
              */
             SLEEP,
             /**
-             * The thread uses {@link LockSupport#parkNanos(long)} to wait for the prescribed amount of time. The accuracy of
-             * this approach will depend a great deal upon the hardware and operating system. See
+             * The thread uses {@link LockSupport#parkNanos(long)} to wait for the prescribed amount of time. The
+             * accuracy of this approach will depend a great deal upon the hardware and operating system. See
              * {@link Metronome#parker(long, TimeUnit, Clock)} for details.
              */
             PARK;
@@ -110,6 +111,7 @@ public final class Strongback {
         private boolean recordCommandStateChanges = true;
         private Function<Iterable<DataRecorderChannel>, DataWriter> dataWriterFactory = this::createFileDataWriter;
         private Supplier<EventWriter> eventWriterFactory = this::createFileEventWriter;
+        private LongConsumer excessiveExecutorDelayHandler = null;
         private Supplier<String> dataRecorderFilenameGenerator = new Supplier<String>() {
             private Counter counter = Counter.unlimited(1);
 
@@ -346,6 +348,18 @@ public final class Strongback {
         }
 
         /**
+         * Every time the executor takes longer than the {@link #useExecutionPeriod(long, TimeUnit) execution period} to execute
+         * each interval, report this to the given handler.
+         *
+         * @param handler the receiver for notifications of excessive execution times
+         * @return this configurator so that methods can be chained together; never null
+         */
+        public Configurator reportExcessiveExecutionPeriods(LongConsumer handler) {
+            excessiveExecutorDelayHandler = handler;
+            return this;
+        }
+
+        /**
          * Complete the Strongback configuration and initialize Strongback so that it can be used.
          */
         public synchronized void initialize() {
@@ -513,6 +527,16 @@ public final class Strongback {
         return INSTANCE.eventRecorder;
     }
 
+    /**
+     * Get the number of times the {@link #executor() executor} has been unable to execute all work within the time period
+     * {@link Configurator#useExecutionPeriod(long, TimeUnit) specified in the configuration}.
+     *
+     * @return the number of excessive delays
+     */
+    public static long excessiveExecutionTimeCounts() {
+        return INSTANCE.executorDelayCounter.get();
+    }
+
     private final Function<String, Logger> loggers;
     private final Executables executables;
     private final ExecutorDriver executorDriver;
@@ -524,6 +548,8 @@ public final class Strongback {
     private final DataRecorderDriver dataRecorderDriver;
     private final EventRecorder eventRecorder;
     private final AtomicBoolean started = new AtomicBoolean(false);
+    private final AtomicLong executorDelayCounter = new AtomicLong();
+    private final LongConsumer excessiveExecutionHandler;
 
     private Strongback(Configurator config, Strongback previousInstance) {
         boolean start = false;
@@ -537,11 +563,13 @@ public final class Strongback {
             executables.unregister(previousInstance.eventRecorder);
             executables.unregister(previousInstance.scheduler);
             dataRecorderChannels = previousInstance.dataRecorderChannels;
+            excessiveExecutionHandler = previousInstance.excessiveExecutionHandler;
         } else {
             executables = new Executables();
             switchReactor = new AsyncSwitchReactor();
             executables.register(switchReactor);
             dataRecorderChannels = new DataRecorderChannels();
+            excessiveExecutionHandler = config.excessiveExecutorDelayHandler;
         }
         loggers = config.loggersSupplier.get();
         clock = config.timeSystemSupplier.get();
@@ -558,7 +586,8 @@ public final class Strongback {
                 break;
         }
         // Create a new executor driver ...
-        executorDriver = new ExecutorDriver("Strongback Executor", executables, clock, metronome, loggers.apply("executor"));
+        executorDriver = new ExecutorDriver("Strongback Executor", executables, clock, metronome, loggers.apply("executor"),
+                monitorDelay(config.executionPeriodInNanos, TimeUnit.NANOSECONDS));
 
         // Create a new event recorder ...
         if (config.eventWriterFactory != null) {
@@ -582,6 +611,24 @@ public final class Strongback {
         if (previousInstance != null && start) {
             doStart();
         }
+    }
+
+    private LongConsumer monitorDelay(long executionInterval, TimeUnit unit) {
+        long intervalInMs = unit.toMillis(executionInterval);
+        return delayInMs -> {
+            if (delayInMs > intervalInMs) {
+                executorDelayCounter.incrementAndGet();
+                if (excessiveExecutionHandler != null) {
+                    try {
+                        excessiveExecutionHandler.accept(delayInMs);
+                    } catch (Throwable t) {
+                        logger().error(t, "Error with custom handler for excessive execution times");
+                    }
+                } else {
+                    logger().error("Unable to execute all activities within " + intervalInMs + " milliseconds!");
+                }
+            }
+        };
     }
 
     private void recordCommand(Command command, CommandState state) {

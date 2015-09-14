@@ -35,12 +35,12 @@ public class MockDistanceSensor extends MockZeroable implements DistanceSensor {
     }
 
     @Override
-    public double getDistance() {
+    public double getDistanceInInches() {
         return super.getValue();
     }
 
     /**
-     * Set the distance in inches {@link #getDistance() returned} by this object.
+     * Set the distance in inches {@link #getDistanceInInches() returned} by this object.
      *
      * @param distance the new distance in inches
      * @return this instance to enable chaining methods; never null
@@ -52,7 +52,7 @@ public class MockDistanceSensor extends MockZeroable implements DistanceSensor {
     }
 
     /**
-     * Set the distance in feet {@link #getDistance() returned} by this object.
+     * Set the distance in feet {@link #getDistanceInInches() returned} by this object.
      *
      * @param distance the new distance in feet
      * @return this instance to enable chaining methods; never null

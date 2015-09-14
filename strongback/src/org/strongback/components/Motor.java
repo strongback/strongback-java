@@ -136,11 +136,12 @@ public interface Motor extends SpeedSensor, SpeedController, Stoppable {
      * Create a new {@link Motor} instance that inverts the speed sent to and read from another motor. This is useful on
      * {@link TankDrive}, where all motors on one side are physically inverted compared to the motors on the other side.
      * <p>
-     * For example: <code>
+     * For example:
+     * <pre>
      *   Motor left = ...
      *   Motor right = ...
      *   DriveTrain drive = TankDrive.create(left, Motor.invert(right));
-     * </code> or <code>
+     * </pre> or <pre>
      *   Motor leftFront = ...
      *   Motor leftRear = ...
      *   Motor rightFront = ...
@@ -148,7 +149,7 @@ public interface Motor extends SpeedSensor, SpeedController, Stoppable {
      *   Motor left = Motor.compose(leftFront,leftRear);
      *   Motor right = Motor.compose(rightFront,rightRear);
      *   DriveTrain drive = TankDrive.create(left, Motor.invert(right));
-     * </code>
+     * </pre>
      *
      * @param motor the motor to invert; may not be null
      * @return the inverted motor; never null

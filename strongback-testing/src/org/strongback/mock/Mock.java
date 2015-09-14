@@ -71,6 +71,15 @@ public class Mock {
     }
 
     /**
+     * Create a mock compass.
+     *
+     * @return the mock compass; never null
+     */
+    public static MockCompass compass() {
+        return new MockCompass();
+    }
+
+    /**
      * Create a mock current sensor.
      *
      * @return the mock current sensor; never null

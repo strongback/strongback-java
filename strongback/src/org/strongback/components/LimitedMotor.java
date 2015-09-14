@@ -100,16 +100,16 @@ public interface LimitedMotor extends Motor {
      * is completed.
      *
      * @param speed the speed at which the underlying {@link Motor} should spin in the forward direction
-     * @return this object to allow chaining of methods; never null
+     * @return {@code true} if the motor remains moving, or {@code false} if it has reached the forward limit
      */
-    default public LimitedMotor forward(double speed) {
+    default public boolean forward(double speed) {
         // Motor protection
         if (!isAtForwardLimit()) {
             setSpeed(Math.abs(speed));
         } else {
             stop();
         }
-        return this;
+        return !isAtForwardLimit();
     }
 
     /**
@@ -117,16 +117,16 @@ public interface LimitedMotor extends Motor {
      * is completed.
      *
      * @param speed the speed at which the underlying {@link Motor} should spin in the reverse direction
-     * @return this object to allow chaining of methods; never null
+     * @return {@code true} if the motor remains moving, or {@code false} if it has reached the forward limit
      */
-    default public LimitedMotor reverse(double speed) {
+    default public boolean reverse(double speed) {
         // Motor protection
         if (!isAtReverseLimit()) {
             setSpeed(-Math.abs(speed));
         } else {
             stop();
         }
-        return this;
+        return !isAtForwardLimit();
     }
 
     /**
