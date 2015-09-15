@@ -60,15 +60,31 @@ import java.util.Arrays;
  * 20, 16128, 4660
  * </pre>
  * 
+ * <p>
+ * <h1>Exit Codes:</h1>
+ * 0 - Operation successful<br>
+ * 1 - Invalid arguments<br>
+ * 2 - Cannot open input/output file<br>
+ * 3 - Input file not recognized<br>
+ * 4 - Input/output exception<br>
+ * 5 - Unexpected end of file<br>
+ * </p>
  * @author Zach Anderson
  *
  */
 public class LogDecoder {
+    private static final int NORMAL = 0;
+    private static final int INVALID_ARGUMENT = 1;
+    private static final int CANNOT_OPEN_FILE = 2;
+    private static final int CORRUPT_INPUT = 3;
+    private static final int IO_EXCEPTION = 4;
+    private static final int UNEXPECTED_EOF = 5;
+    
     public static void main(String[] args) {
         // Check arguments
         if(args.length != 1 && args.length != 2) {
             System.err.println("Usage: LogDecoder <input_path> [output_path]");
-            System.exit(3);
+            System.exit(INVALID_ARGUMENT);
         }
         // Resolve home directory in path name
         if(args[0].charAt(0)=='~')
@@ -103,7 +119,7 @@ public class LogDecoder {
             in.read(header);
             if(!Arrays.equals(header, "log".getBytes())){
                 System.err.println("File format not recognized");
-                System.exit(2);
+                System.exit(CORRUPT_INPUT);
             }
             
             // Get the number of elements
@@ -124,6 +140,7 @@ public class LogDecoder {
             writer.newLine();
             
             // Read each record
+            int exitCode = NORMAL;
             try {
                 in.mark(4);
                 while(in.readInt()!=0xFFFFFFFF){
@@ -140,16 +157,23 @@ public class LogDecoder {
                 }
             } catch (EOFException e) {
                 System.err.println("Unexpected end of file, did robot crash?");
+                exitCode = UNEXPECTED_EOF;
+            }catch (IOException e) {
+                System.err.println(e.getLocalizedMessage());
+                exitCode = IO_EXCEPTION;
             } finally {
+                // Always flush what we were able to decode
                 writer.close();
                 in.close();
                 System.out.println("Output saved to: "+out.getAbsolutePath());
+                System.exit(exitCode);
             }
         } catch (FileNotFoundException e) {
             System.err.println("Can not open file: " + e.getLocalizedMessage());
-            System.exit(1);
+            System.exit(CANNOT_OPEN_FILE);
         } catch (IOException e) {
             System.err.println(e.getLocalizedMessage());
+            System.exit(IO_EXCEPTION);
         }
     }
 }
