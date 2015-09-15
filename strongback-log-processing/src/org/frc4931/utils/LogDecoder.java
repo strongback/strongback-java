@@ -8,6 +8,7 @@ package org.frc4931.utils;
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -30,6 +31,8 @@ import java.util.Arrays;
  * <p>
  * Now the data is recorded with respect to the number of bytes in each element. 
  * When Logger is stopped it will finish writing the current record followed by the terminator: {@code FF FF FF FF}.
+ * If the Logger was interrupted and was unable to finish writing the log, the decoder will recover as many records
+ * as possible. (Because the Logger is unbuffered, everything up to the point of the crash should be recovered.)
  * 
  * <h1>Example binary file:</h1>
  * <i>Demonstrates the raw binary output of the logger. New lines included only for clarity, 
@@ -121,22 +124,27 @@ public class LogDecoder {
             writer.newLine();
             
             // Read each record
-            in.mark(4);
-            while(in.readInt()!=0xFFFFFFFF){
-                in.reset();
-                for(int i = 0; i < numElements; i++){
-                    if(elementSizes[i]==4){
-                        writer.write(in.readInt() + ", ");
-                    }
-                    else if(elementSizes[i]==2)
-                        writer.write(in.readShort() + ", ");
-                }
-                writer.newLine();
+            try {
                 in.mark(4);
+                while(in.readInt()!=0xFFFFFFFF){
+                    in.reset();
+                    for(int i = 0; i < numElements; i++){
+                        if(elementSizes[i]==4){
+                            writer.write(in.readInt() + ", ");
+                        }
+                        else if(elementSizes[i]==2)
+                            writer.write(in.readShort() + ", ");
+                    }
+                    writer.newLine();
+                    in.mark(4);
+                }
+            } catch (EOFException e) {
+                System.err.println("Unexpected end of file, did robot crash?");
+            } finally {
+                writer.close();
+                in.close();
+                System.out.println("Output saved to: "+out.getAbsolutePath());
             }
-            writer.close();
-            in.close();
-            System.out.println("Success, output saved to: "+out.getAbsolutePath());
         } catch (FileNotFoundException e) {
             System.err.println("Can not open file: " + e.getLocalizedMessage());
             System.exit(1);
