@@ -100,18 +100,18 @@ public class LogDecoder {
             DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
             
             // Resolve output file
-            File out;
+            String outPath;
             if(args.length==1) {
+                outPath = file.getName();
+                
                 // Strips file extension
-                out = new File(file.getName().substring(0, 
-                               file.getName().contains(".") 
-                             ? file.getName().lastIndexOf('.') 
-                             : file.getName().length()
-                        ) + ".csv");
+                int extensionStart = outPath.contains(".") ? outPath.lastIndexOf('.') : outPath.length();
+                outPath = outPath.substring(0, extensionStart) + ".csv";
             } else {
                 assert args.length == 2;
-                out = new File(args[1]).getAbsoluteFile();
+                outPath = args[1];
             }
+            File out = new File(outPath).getAbsoluteFile();;
             BufferedWriter writer = new BufferedWriter(new FileWriter(out));
             
             // Verify Header
@@ -127,8 +127,9 @@ public class LogDecoder {
             
             // Get the size of each element
             int[] elementSizes = new int[numElements];
-            for(int i = 0; i< elementSizes.length; i++)
+            for(int i = 0; i< elementSizes.length; i++) {
                 elementSizes[i] = in.read();
+            }
             
             // Write the name of each element
             for(int i = 0; i< numElements; i++) {
@@ -143,9 +144,9 @@ public class LogDecoder {
             int exitCode = NORMAL;
             try {
                 in.mark(4);
-                while(in.readInt()!=0xFFFFFFFF){
+                while(in.readInt()!=0xFFFFFFFF) {
                     in.reset();
-                    for(int i = 0; i < numElements; i++){
+                    for(int i = 0; i < numElements; i++) {
                         if(elementSizes[i]==4){
                             writer.write(in.readInt() + ", ");
                         }
@@ -158,9 +159,11 @@ public class LogDecoder {
             } catch (EOFException e) {
                 System.err.println("Unexpected end of file, did robot crash?");
                 exitCode = UNEXPECTED_EOF;
+                
             }catch (IOException e) {
                 System.err.println(e.getLocalizedMessage());
                 exitCode = IO_EXCEPTION;
+                
             } finally {
                 // Always flush what we were able to decode
                 writer.close();
@@ -171,6 +174,7 @@ public class LogDecoder {
         } catch (FileNotFoundException e) {
             System.err.println("Can not open file: " + e.getLocalizedMessage());
             System.exit(CANNOT_OPEN_FILE);
+            
         } catch (IOException e) {
             System.err.println(e.getLocalizedMessage());
             System.exit(IO_EXCEPTION);
