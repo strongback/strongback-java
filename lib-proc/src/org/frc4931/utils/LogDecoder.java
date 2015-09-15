@@ -142,5 +142,4 @@ public class LogDecoder {
             System.err.println(e.getLocalizedMessage());
         }
     }
-
 }
