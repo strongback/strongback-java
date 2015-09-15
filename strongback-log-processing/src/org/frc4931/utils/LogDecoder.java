@@ -22,17 +22,19 @@ import java.util.Arrays;
  * extension. <br>
  * {@code Usage: LogDecoder <input_path> [output_path]}
  * 
- * <h1>Log file format:</h1>
+ * <h1>Binary file format:</h1>
  * <p>
  * The first three bytes are the ASCII log ({@code 6C 6F 67}). The next byte is the number of elements that have 
  * been logged {@code n}. The next {@code n} bytes are the number of bytes in each data point, followed by 
  * {@code n} repetitions of the length of the name of each data point and the name itself in ASCII bytes.
  * <p>
  * Now the data is recorded with respect to the number of bytes in each element. 
- * When Logger is stopped it will finish writing the line it is on and then the terminator: {@code FF FF FF FF}.
+ * When Logger is stopped it will finish writing the current record followed by the terminator: {@code FF FF FF FF}.
  * 
- * <h1>Example log file:</h1>
- * <pre> {@code [l o g] 
+ * <h1>Example binary file:</h1>
+ * <i>Demonstrates the raw binary output of the logger. New lines included only for clarity, 
+ * and are not part of the file format</i>
+ * <pre> [l o g] 
  * [3] 
  * [4] [2] [2] 
  * [4][T i m e] [3][F o o] [3][B a r]
@@ -40,7 +42,7 @@ import java.util.Arrays;
  * [00 00 00 0A] [04 D5] [23 AF]
  * [00 00 00 14] [3F 00] [12 34]
  * [FF FF FF FF]
- * }</pre>
+ * </pre>
  * 
  * <h1>Output CSV format:</h1>
  * <p>
@@ -49,11 +51,11 @@ import java.util.Arrays;
  * to the precision specified in the log file.
  * 
  * <h1>Example csv file:</h1>
- * <pre> {@code Time, Foo, Bar
+ * <pre> Time, Foo, Bar
  * 0, 82, 55,
  * 10, 1237, 9135,
  * 20, 16128, 4660
- * }</pre>
+ * </pre>
  * 
  * @author Zach Anderson
  *
