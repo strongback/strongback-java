@@ -63,37 +63,36 @@ import java.util.Arrays;
  */
 public class LogDecoder {
     public static void main(String[] args) {
-    	// Check arguments
-    	if(args.length != 1 && args.length != 2) {
-    		System.err.println("Usage: LogDecoder <input_path> [output_path]");
-    		System.exit(3);
-    	}
-    	
-    	// Resolve home directory in path name
-    	if(args[0].charAt(0)=='~')
-    		args[0] = System.getProperty("user.home")+args[0].substring(1);
-    	
-    	if(args.length==2)
-    		if(args[1].charAt(0)=='~')
-    			args[1] = System.getProperty("user.home")+args[1].substring(1);
-    	
+        // Check arguments
+        if(args.length != 1 && args.length != 2) {
+            System.err.println("Usage: LogDecoder <input_path> [output_path]");
+            System.exit(3);
+        }
+        // Resolve home directory in path name
+        if(args[0].charAt(0)=='~')
+            args[0] = System.getProperty("user.home")+args[0].substring(1);
+        
+        if(args.length==2)
+            if(args[1].charAt(0)=='~')
+                args[1] = System.getProperty("user.home")+args[1].substring(1);
+        
         try {
-        	// Resolve input file
+            // Resolve input file
             File file = new File(args[0]).getAbsoluteFile();
             DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
             
             // Resolve output file
             File out;
             if(args.length==1) {
-            	// Strips file extension
-	            out = new File(file.getParent()+ File.separator + file.getName().substring(0, 
-						file.getName().contains(".") 
-						? file.getName().lastIndexOf('.') 
-						: file.getName().length()
-						) + ".csv");
+                // Strips file extension
+                out = new File(file.getParent()+ File.separator + file.getName().substring(0, 
+                        file.getName().contains(".") 
+                        ? file.getName().lastIndexOf('.') 
+                                : file.getName().length()
+                        ) + ".csv");
             } else {
-            	assert args.length == 2;
-        		out = new File(args[1]).getAbsoluteFile();
+                assert args.length == 2;
+                out = new File(args[1]).getAbsoluteFile();
             }
             BufferedWriter writer = new BufferedWriter(new FileWriter(out));
             
@@ -140,7 +139,7 @@ public class LogDecoder {
             in.close();
             System.out.println("Success, output saved to: "+out.getAbsolutePath());
         } catch (FileNotFoundException e) {
-    		System.err.println("Can not open file: " + e.getLocalizedMessage());
+            System.err.println("Can not open file: " + e.getLocalizedMessage());
             System.exit(1);
         } catch (IOException e) {
             System.err.println(e.getLocalizedMessage());
