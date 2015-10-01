@@ -32,9 +32,10 @@ import org.strongback.executable.utils.PropertiesUtils.InvalidPropertiesExceptio
 public class NewProject {
         
     public static void main(String[] args) {
+        args = new String[]{"-eo", "-d", "~/testing", "-n", "EclipseProject"};
         // Load strongback properties
         Properties strongback = null;
-        
+
         try {
             Properties stb = PropertiesUtils.load(FileUtils.resolvePath("~/strongback/strongback.properties"));
             PropertiesUtils.antify(stb);
@@ -90,8 +91,8 @@ public class NewProject {
         /* Application Begins */
         
         // Source folders
-        File src     = new File(projectRoot, "src" + File.separator + mainPackage.replace('.', File.separatorChar));
-        File testsrc = new File(projectRoot, "src" + File.separator + mainPackage.replace('.', File.separatorChar));
+        File src     = new File(projectRoot, "src"     + File.separator + mainPackage.replace('.', File.separatorChar));
+        File testsrc = new File(projectRoot, "testsrc" + File.separator + mainPackage.replace('.', File.separatorChar));
         
         // Source files to copy
         File buildTemplate = new File(strongback.getProperty("strongback.templates.dir"), "build.xml.template");
@@ -99,11 +100,19 @@ public class NewProject {
         File robotTemplate = new File(strongback.getProperty("strongback.templates.dir"), "Robot.java.template");
         File testTemplate  = new File(strongback.getProperty("strongback.templates.dir"), "TestRobot.java.template");
         
+        // Eclipse specific
+        File projectTemplate   = new File(strongback.getProperty("strongback.templates.dir"), "project.template");
+        File classpathTemplate = new File(strongback.getProperty("strongback.templates.dir"), "classpath.template");
+        
         // Destination files
         File buildProps = new File(projectRoot, "build.properties");
         File buildXML   = new File(projectRoot, "build.xml");
         File robotJava  = new File(src,         "Robot.java");
         File testJava   = new File(testsrc,     "TestRobot.java");
+        
+        // Eclipse specific
+        File project   = new File(projectRoot, ".project");
+        File classpath = new File(projectRoot, ".classpath");
         
         // If any of the files to write to already exist, give up and write message about the overwrite flag
         if(!params.containsKey("o")) {
@@ -111,6 +120,12 @@ public class NewProject {
             if(buildXML.exists())   exit(Strings.OVERWRITE_WARN + buildXML.getPath(),   ExitCodes.OVERWRITE);
             if(robotJava.exists())  exit(Strings.OVERWRITE_WARN + robotJava.getPath(),  ExitCodes.OVERWRITE);
             if(testJava.exists())   exit(Strings.OVERWRITE_WARN + testJava.getPath(),   ExitCodes.OVERWRITE);
+            
+            // Eclipse specific
+            if(params.containsKey("e")) {
+                if(project.exists())   exit(Strings.OVERWRITE_WARN + project.getPath(),   ExitCodes.OVERWRITE);
+                if(classpath.exists()) exit(Strings.OVERWRITE_WARN + classpath.getPath(), ExitCodes.OVERWRITE);
+            }
         }
         
         // Verify templates exist
@@ -118,6 +133,12 @@ public class NewProject {
         if(!propsTemplate.exists()) exit(Strings.MISSING_TEMPLATE + propsTemplate.getPath(), ExitCodes.MISSING_FILE);
         if(!robotTemplate.exists()) exit(Strings.MISSING_TEMPLATE + robotTemplate.getPath(), ExitCodes.MISSING_FILE);
         if(!testTemplate.exists())  exit(Strings.MISSING_TEMPLATE + testTemplate.getPath(),  ExitCodes.MISSING_FILE);
+        
+        // Eclipse specific
+        if(params.containsKey("e")) {
+            if(!projectTemplate.exists())   exit(Strings.MISSING_TEMPLATE + projectTemplate.getPath(),   ExitCodes.MISSING_FILE);
+            if(!classpathTemplate.exists()) exit(Strings.MISSING_TEMPLATE + classpathTemplate.getPath(), ExitCodes.MISSING_FILE);
+        }
         
         // Make the directories
         if(!projectRoot.exists() & !projectRoot.mkdirs()) exit(Strings.FAILED_MKDIR + projectRoot.getPath(), ExitCodes.FAILED_MKDIR);
@@ -130,6 +151,12 @@ public class NewProject {
             copyTo(propsTemplate, buildProps, (line) -> line.replace("PACKAGE", mainPackage));
             copyTo(robotTemplate, robotJava,  (line) -> line.replace("PACKAGE", mainPackage));
             copyTo(testTemplate,  testJava,   (line) -> line.replace("PACKAGE", mainPackage));
+            
+            // Eclipse specific
+            if(params.containsKey("e")) {
+                copyTo(projectTemplate,   project,   (line) -> line.replace("PROJECT_NAME", projectName));
+                copyTo(classpathTemplate, classpath, (line) -> line);
+            }
         } catch (IOException e) {
             exit(Strings.IO_EXCEPTION + e.getLocalizedMessage(), ExitCodes.IO_EXCEPT);
         }
@@ -194,6 +221,9 @@ public class NewProject {
                                     + LS + "  -d <parent_directory>"
                                     + LS + "    The directory to create the new project directory in"
                                     + LS + ""
+                                    + LS + "  -e"
+                                    + LS + "    Adds project metadata for the Eclipse Java IDE"
+                                    + LS + ""
                                     + LS + "  -h"
                                     + LS + "    Displays help information"
                                     + LS + ""
@@ -213,7 +243,7 @@ public class NewProject {
         /* Version Information */
         // TODO Can we update this with ant?
         public static final String VERSION_HEAD = "Strongback New Project Utility";
-        public static final String VERSION      = "1.0.0 compiled on 30 Sep 2015";
+        public static final String VERSION      = "1.1.0 compiled on 1 Oct 2015";
     }
     
     private static final class ExitCodes {
