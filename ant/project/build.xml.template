@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project name="FRCXXXX Deployment" default="deploy">
+<!-- Created DATE -->
+<project name="PROJECT_NAME" default="deploy">
 
 	<!--
   The following properties can be defined to override system level
@@ -21,10 +22,7 @@
 
 	<!-- Any other property in build.properties can also be overridden. -->
 
-	<property file="${user.home}/wpilib/wpilib.properties"/>
 	<property file="build.properties"/>
-	<property file="${user.home}/wpilib/java/${version}/ant/build.properties"/>
-
-	<import file="${user.home}/strongback/ant/build.xml"/>
+	<import file="${user.home}/strongback/java/ant/build.xml"/>
 
 </project>

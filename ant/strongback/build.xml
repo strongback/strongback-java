@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="Strongback Deployment">
-	<property file="${user.home}/strongback/ant/build.properties"/>
-
-	<!--Eclipse reports an error because it does not know that ${wpilib.ant.dir} is defined externally-->
+    <property file="${user.home}/wpilib/wpilib.properties"/>
+    <property file="${user.home}/wpilib/java/${version}/ant/build.properties"/>
+    <property file="${user.home}/strongback/ant/build.properties"/>
+	
 	<import file="${wpilib.ant.dir}/build.xml"/>
-
+	
 	<target name="compile" description="Compile the source code.">
 		<mkdir dir="${build.dir}"/>
 		<echo>Compiling strongback based robot with classpath ${strongback.classpath}</echo>

@@ -1,4 +1,5 @@
 # Project specific information
-package=org.usfirst.frc.teamXXXX.robot
+# Created DATE
+package=PACKAGE
 robot.class=${package}.Robot
 simulation.world.file=/usr/share/frcsim/worlds/GearsBotDemo.world
