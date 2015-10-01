@@ -1,4 +1,4 @@
-package org.strongback.executable;
+package org.strongback.executable.utils;
 
 import java.security.InvalidParameterException;
 import java.util.Collections;
