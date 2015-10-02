@@ -64,6 +64,8 @@ final class ExecutorDriver implements Stoppable {
             if (thread == null) {
                 thread = new Thread(this::run);
                 thread.setName(name);
+                // run with a bit higher priority to reduce thread context switches
+                thread.setPriority(8);
                 stopped = new CountDownLatch(1);
                 running = true;
                 thread.start();

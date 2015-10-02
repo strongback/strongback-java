@@ -21,7 +21,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.IntSupplier;
 
 import org.strongback.annotation.ThreadSafe;
-import org.strongback.components.Motor;
+import org.strongback.components.SpeedSensor;
 import org.strongback.components.Switch;
 import org.strongback.util.Iterators;
 
@@ -56,10 +56,10 @@ final class DataRecorderChannels implements DataRecorder, Iterable<DataRecorderC
     }
 
     @Override
-    public DataRecorder register(String name, Motor motor) {
+    public DataRecorder register(String name, SpeedSensor sensor) {
         if (name == null) throw new IllegalArgumentException("The name may not be null");
-        if (motor == null) throw new IllegalArgumentException("The motor may not be null");
-        channels.addIfAbsent(new DataRecorderChannel(name + " speed", () -> (short) (motor.getSpeed() * 1000)));
+        if (sensor == null) throw new IllegalArgumentException("The motor may not be null");
+        channels.addIfAbsent(new DataRecorderChannel(name + " speed", () -> (int) (sensor.getSpeed() * 1000)));
         return this;
     }
 

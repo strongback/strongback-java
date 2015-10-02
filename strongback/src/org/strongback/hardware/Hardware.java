@@ -254,16 +254,6 @@ public class Hardware {
     public static final class Switches {
 
         /**
-         * Create a relay on the specified channel.
-         *
-         * @param channel the channel the relay is connected to
-         * @return a relay on the specified channel
-         */
-        public static Relay relay(int channel) {
-            return new HardwareRelay(channel);
-        }
-
-        /**
          * Create a generic normally closed digital switch sensor on the specified digital channel.
          *
          * @param channel the channel the switch is connected to
@@ -553,6 +543,17 @@ public class Hardware {
             DoubleSolenoid solenoid = new DoubleSolenoid(module, extendChannel, retractChannel);
             return new HardwareDoubleSolenoid(solenoid, initialDirection);
         }
+
+        /**
+         * Create a relay on the specified channel.
+         *
+         * @param channel the channel the relay is connected to
+         * @return a relay on the specified channel
+         */
+        public static Relay relay(int channel) {
+            return new HardwareRelay(channel);
+        }
+
     }
 
     public static final class HumanInterfaceDevices {

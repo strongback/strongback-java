@@ -16,7 +16,10 @@
 
 package org.strongback;
 
+import java.util.function.Supplier;
+
 import org.strongback.annotation.ThreadSafe;
+import org.strongback.command.Command;
 import org.strongback.components.Switch;
 
 /**
@@ -36,6 +39,26 @@ import org.strongback.components.Switch;
  */
 @ThreadSafe
 public interface SwitchReactor {
+
+    /**
+     * Submit a {@link Command} the moment when the specified {@link Switch} is triggered.
+     *
+     * @param swtch the {@link Switch}
+     * @param commandSupplier the supplier of the command to submit; may not be null but may return a null command
+     */
+    default public void onTriggeredSubmit(Switch swtch, Supplier<Command> commandSupplier) {
+        onTriggered(swtch,()->Strongback.submit(commandSupplier.get()));
+    }
+
+    /**
+     * Submit a {@link Command} the moment when the specified {@link Switch} is untriggered.
+     *
+     * @param swtch the {@link Switch}
+     * @param commandSupplier the supplier of the command to submit; may not be null but may return a null command
+     */
+    default public void onUntriggeredSubmit(Switch swtch, Supplier<Command> commandSupplier) {
+        onTriggered(swtch,()->Strongback.submit(commandSupplier.get()));
+    }
 
     /**
      * Register a {@link Runnable} function that is to be called the moment when the specified {@link Switch} is triggered.
