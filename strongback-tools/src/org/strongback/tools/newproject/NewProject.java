@@ -32,7 +32,6 @@ import org.strongback.tools.utils.PropertiesUtils.InvalidPropertiesException;
 public class NewProject {
         
     public static void main(String[] args) {
-        args = new String[]{"-eo", "-d", "~/testing", "-n", "EclipseProject"};
         // Load strongback properties
         Properties strongback = null;
 
