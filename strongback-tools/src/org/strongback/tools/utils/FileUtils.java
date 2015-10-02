@@ -19,9 +19,14 @@ package org.strongback.tools.utils;
 import java.io.File;
 import java.security.InvalidParameterException;
 
+/**
+ * Utility methods for working with files
+ * @author Zach Anderson
+ *
+ */
 public class FileUtils {
     /**
-     * Convince method that resolves a filepath if it starts with ~
+     * Convenience method that resolves a filepath if it starts with ~
      * @param path the path to resolve
      * @return an absolute {@link File} representing that path
      */
