@@ -79,10 +79,9 @@ public interface Solenoid extends Requirable {
     }
 
     /**
-     * Determine if this solenoid is or was retracting.
+     * Determine if this solenoid is stopped.
      *
-     * @return {@code true} if this solenoid is in the process of retracting but not yet fully retracted, or {@code false}
-     *         otherwise
+     * @return {@code true} if this solenoid is not retracting or extending, or false otherwise
      */
     default boolean isStopped() {
         return getDirection() == Direction.STOPPED;

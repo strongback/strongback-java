@@ -102,7 +102,7 @@ public final class Strongback {
         private Supplier<Function<String, Logger>> loggersSupplier = () -> str -> new SystemLogger().enable(Level.INFO);
         private Supplier<Clock> timeSystemSupplier = Clock::fpgaOrSystem;
         private TimerMode executionWaitMode = TimerMode.BUSY;
-        private long executionPeriodInNanos = TimeUnit.MILLISECONDS.toNanos(5);
+        private long executionPeriodInNanos = TimeUnit.MILLISECONDS.toNanos(20);
         private volatile boolean initialized = false;
         private String dataRecorderFilenameRoot = "strongback";
         private String eventRecorderFilenameRoot = "strongback";
@@ -433,6 +433,7 @@ public final class Strongback {
      *
      * @return Strongback's logger instance; never null
      * @see Configurator#useSystemLogger(org.strongback.Logger.Level)
+     * @see Configurator#useCustomLogger(Function)
      */
     public static Logger logger() {
         return logger("");
@@ -444,9 +445,22 @@ public final class Strongback {
      * @param context the context of the logger
      * @return Strongback's logger instance; never null
      * @see Configurator#useSystemLogger(org.strongback.Logger.Level)
+     * @see Configurator#useCustomLogger(Function)
      */
     public static Logger logger(String context) {
         return INSTANCE.loggers.apply(context);
+    }
+
+    /**
+     * Get Strongback's global {@link Logger} implementation.
+     *
+     * @param context the context of the logger
+     * @return Strongback's logger instance; never null
+     * @see Configurator#useSystemLogger(org.strongback.Logger.Level)
+     * @see Configurator#useCustomLogger(Function)
+     */
+    public static Logger logger(Class<?> context) {
+        return INSTANCE.loggers.apply(context.getName());
     }
 
     /**

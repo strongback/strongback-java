@@ -174,6 +174,14 @@ public class Mock {
     }
 
     /**
+     * Create a relay that operates instantaneously.
+     * @return the mock relay; never null
+     */
+    public static MockRelay relay() {
+        return new MockRelay();
+    }
+
+    /**
      * Create a mock gyroscope.
      *
      * @return the mock gyroscope; never null

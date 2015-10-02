@@ -16,9 +16,10 @@
 
 package org.strongback;
 
+import java.util.function.DoubleSupplier;
 import java.util.function.IntSupplier;
 
-import org.strongback.components.Motor;
+import org.strongback.components.SpeedSensor;
 import org.strongback.components.Switch;
 
 /**
@@ -27,8 +28,8 @@ import org.strongback.components.Switch;
  */
 public interface DataRecorder {
     /**
-     * Registers the value of the specified {@link IntSupplier} to be logged. This method will remove any previously-registered
-     * supplier, switch, or motor with the same name.
+     * Registers by name a function that will be periodically polled to obtain and record an integer value. This method will
+     * remove any previously-registered supplier, switch, or motor with the same name.
      *
      * @param name the name of this data supplier
      * @param supplier the {@link IntSupplier} of the value to be logged
@@ -38,8 +39,22 @@ public interface DataRecorder {
     public DataRecorder register(String name, IntSupplier supplier);
 
     /**
-     * Registers a {@link Switch} to be logged. This method will remove any previously-registered supplier, switch, or motor
-     * with the same name.
+     * Registers by name a function that will be periodically polled to obtain a double value and scale it to an integer value
+     * that can be recorded. This method will remove any previously-registered supplier, switch, or motor with the same name.
+     *
+     * @param name the name of this data supplier
+     * @param scale the scale factor to multiply the supplier's double values before casting to an integer value
+     * @param supplier the {@link IntSupplier} of the value to be logged
+     * @return this instance so methods can be chained together; never null
+     * @throws IllegalArgumentException if the {@code supplier} parameter is null
+     */
+    default public DataRecorder register(String name, double scale, DoubleSupplier supplier) {
+        return register(name, () -> (int) (supplier.getAsDouble() * scale));
+    }
+
+    /**
+     * Registers by name a switch that will be periodically polled to obtain and record the switch state. This method will
+     * remove any previously-registered supplier, switch, or motor with the same name.
      *
      * @param name the name of the {@link Switch}
      * @param swtch the {@link Switch} to be logged
@@ -49,13 +64,13 @@ public interface DataRecorder {
     public DataRecorder register(String name, Switch swtch);
 
     /**
-     * Registers a {@link Motor} to be logged. This method will remove any previously-registered supplier, switch, or motor with
-     * the same name.
+     * Registers by name a speed sensor that will be periodically polled to obtain and record the current speed. This method
+     * will remove any previously-registered supplier, switch, or motor with the same name.
      *
-     * @param name the name of the {@link Motor}
-     * @param motor the {@link Motor} to be logged
+     * @param name the name of the {@link SpeedSensor}
+     * @param sensor the {@link SpeedSensor} to be logged
      * @return this instance so methods can be chained together; never null
-     * @throws IllegalArgumentException if the {@code motor} parameter is null
+     * @throws IllegalArgumentException if the {@code sensor} parameter is null
      */
-    public DataRecorder register(String name, Motor motor);
+    public DataRecorder register(String name, SpeedSensor sensor);
 }
