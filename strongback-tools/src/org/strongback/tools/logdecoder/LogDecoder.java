@@ -4,7 +4,7 @@
  * Open source software. Licensed under the FIRST BSD license file in the
  * root directory of this project's Git repository.
  */
-package org.strongback.executable.logdecoder;
+package org.strongback.tools.logdecoder;
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
@@ -18,10 +18,10 @@ import java.security.InvalidParameterException;
 import java.util.Arrays;
 import java.util.Map;
 
-import org.strongback.executable.utils.FileUtils;
-import org.strongback.executable.utils.Parser;
-import org.strongback.executable.utils.Printer;
-import org.strongback.executable.utils.Printer.Verbosity;
+import org.strongback.tools.utils.FileUtils;
+import org.strongback.tools.utils.Parser;
+import org.strongback.tools.utils.Printer;
+import org.strongback.tools.utils.Printer.Verbosity;
 
 /**
  * Utility to convert Strongback Binary Logs into human readable csv format. Usage: 

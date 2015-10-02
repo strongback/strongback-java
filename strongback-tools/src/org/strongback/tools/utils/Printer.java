@@ -1,4 +1,4 @@
-package org.strongback.executable.utils;
+package org.strongback.tools.utils;
 
 public class Printer {
     private boolean quiet = false;

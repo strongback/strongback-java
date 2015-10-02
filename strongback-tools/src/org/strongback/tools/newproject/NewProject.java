@@ -1,4 +1,4 @@
-package org.strongback.executable.newproject;
+package org.strongback.tools.newproject;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -12,10 +12,10 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.function.Function;
 
-import org.strongback.executable.utils.FileUtils;
-import org.strongback.executable.utils.Parser;
-import org.strongback.executable.utils.PropertiesUtils;
-import org.strongback.executable.utils.PropertiesUtils.InvalidPropertiesException;
+import org.strongback.tools.utils.FileUtils;
+import org.strongback.tools.utils.Parser;
+import org.strongback.tools.utils.PropertiesUtils;
+import org.strongback.tools.utils.PropertiesUtils.InvalidPropertiesException;
 
 /**
  * Utility to create a new FRC robot project compatible with the strongback library

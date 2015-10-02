@@ -1,4 +1,4 @@
-package org.strongback.executable.utils;
+package org.strongback.tools.utils;
 
 import java.io.File;
 import java.security.InvalidParameterException;
