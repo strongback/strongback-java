@@ -1,0 +1,5 @@
+# Project specific information
+# Created DATE
+package=PACKAGE
+robot.class=${package}.Robot
+simulation.world.file=/usr/share/frcsim/worlds/GearsBotDemo.world

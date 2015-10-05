@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Strongback Deployment">
+    <property file="${user.home}/wpilib/wpilib.properties"/>
+    <property file="${user.home}/wpilib/java/${version}/ant/build.properties"/>
+    <property file="${user.home}/strongback/ant/build.properties"/>
+	
+	<import file="${wpilib.ant.dir}/build.xml"/>
+	
+	<target name="compile" description="Compile the source code.">
+		<mkdir dir="${build.dir}"/>
+		<echo>Compiling strongback based robot with classpath ${strongback.classpath}</echo>
+		<javac srcdir="${src.dir}" 
+            destdir="${build.dir}" 
+            includeantruntime="false" 
+            classpath = "${strongback.classpath}">
+		</javac>
+	</target>
+
+	<target name="jar" depends="compile">
+		<echo>Making jar ${dist.jar}.</echo>
+		<mkdir dir="${dist.dir}" />
+		<mkdir dir="${build.jars}" />
+
+		<echo>Copying jars from ${strongback.classpath} to ${build.jars}.</echo>
+		<copy todir="${build.jars}" flatten="true">
+			<path>
+				<pathelement path="${strongback.classpath}"/>
+			</path>
+		</copy>
+
+		<jar destfile="${dist.jar}" update="false">
+			<manifest>
+				<attribute name="Main-Class" value="edu.wpi.first.wpilibj.RobotBase"/>
+				<attribute name="Robot-Class" value="${robot.class}"/>
+				<attribute name="Class-Path" value="."/>
+			</manifest>
+
+			<fileset dir="${build.dir}" includes="**/*.class"/>
+
+			<zipgroupfileset dir="${build.jars}">
+				<include name="**/*.jar" />
+			</zipgroupfileset>
+		</jar>
+	</target>
+</project>
