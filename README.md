@@ -11,6 +11,6 @@ Strongback is a new open source software library that makes your robot code ligh
 * **Logging** - Simple extendable framework to log messages at different levels.
 * **Uses WPILib** - Uses the WPILib classes underneath for safety and consistency.
 
-Check out our new [Using Strongback](https://www.gitbook.com/book/strongback/using-strongback/welcome) online book. It's chocked full of descriptions, details, and example code.
+Check out our new [Using Strongback](https://www.gitbook.com/book/strongback/using-strongback/) online book. It's chocked full of descriptions, details, and example code.
 
 We're just getting started, so stay tuned. See [our wiki](https://github.com/strongback/strongback-java/wiki) for more details, including how you can help out!
