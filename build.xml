@@ -94,21 +94,30 @@
             <entry key="build.date" value="${current.date}"/>
         </propertyfile>
 
-        <!-- Build the ZIP file -->
+        <!-- Build the TAR file, which should maintain file permissions -->
+        <tar destfile="${build.dir}/strongback-${strongback.version}.tar">
+            <tarfileset dir="strongback-tools/scripts" prefix="strongback/java/bin" filemode="755"/>
+            <tarfileset dir="strongback/build" includes="*.jar" prefix="strongback/java/lib"/>
+            <tarfileset dir="libs" includes="*.jar" prefix="strongback/java/lib"/>
+            <tarfileset dir="strongback-testing/build" includes="*.jar" prefix="strongback/java/lib-tests"/>
+            <tarfileset dir="libs/test" includes="*.jar" prefix="strongback/java/lib-tests"/>
+            <tarfileset dir="strongback-tools/build" includes="*.jar" prefix="strongback/java/lib-tools"/>
+            <tarfileset dir="ant/strongback" includes="**" prefix="strongback/java/ant"/>
+            <tarfileset dir="templates" includes="**" prefix="strongback/java/templates"/>
+            <tarfileset dir="build/javadoc" includes="**" prefix="strongback/java/javadoc"/>
+            <tarfileset dir="build" includes="strongback.properties" prefix="strongback"/>
+            <tarfileset dir="." includes="COPYRIGHT.txt" prefix="strongback"/>
+            <tarfileset dir="." includes="LICENSE.txt" prefix="strongback"/>
+            <tarfileset dir="." includes="README.md" prefix="strongback"/>
+        </tar>
+
+        <!-- Build the ZIP file (which may not maintain file permissions) -->
         <zip destfile="${build.dir}/strongback-${strongback.version}.zip">
-            <zipfileset dir="strongback-tools/scripts" prefix="strongback/java/bin"/>
-            <zipfileset dir="strongback/build" includes="*.jar" prefix="strongback/java/lib"/>
-            <zipfileset dir="libs" includes="*.jar" prefix="strongback/java/lib"/>
-            <zipfileset dir="strongback-testing/build" includes="*.jar" prefix="strongback/java/lib-tests"/>
-            <zipfileset dir="libs/test" includes="*.jar" prefix="strongback/java/lib-tests"/>
-            <zipfileset dir="strongback-tools/build" includes="*.jar" prefix="strongback/java/lib-tools"/>
-            <zipfileset dir="ant/strongback" includes="**" prefix="strongback/java/ant"/>
-            <zipfileset dir="templates" includes="**" prefix="strongback/java/templates"/>
-            <zipfileset dir="build/javadoc" includes="**" prefix="strongback/java/javadoc"/>
-            <zipfileset dir="build" includes="strongback.properties" prefix="strongback"/>
-            <zipfileset dir="." includes="COPYRIGHT.txt" prefix="strongback"/>
-            <zipfileset dir="." includes="LICENSE.txt" prefix="strongback"/>
-            <zipfileset dir="." includes="README.md" prefix="strongback"/>
+            <tarfileset src="${build.dir}/strongback-${strongback.version}.tar"/>
         </zip>
+
+        <gzip destfile="${build.dir}/strongback-${strongback.version}.tar.gz" src="${build.dir}/strongback-${strongback.version}.tar"/>
+        <delete file="${build.dir}/strongback-${strongback.version}.tar" />
+
     </target>
 </project>
