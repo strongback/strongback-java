@@ -1,18 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="Strongback Deployment">
+	<property name="test.source.dir" value="testsrc"/>
+	<property name="test.output.dir" value="tests"/>
+	<property name="test.report.dir" value="${test.output.dir}/classes"/>
+	<property name="test.target.dir" value="${test.output.dir}/classes"/>
     <property file="${user.home}/wpilib/wpilib.properties"/>
     <property file="${user.home}/wpilib/java/${version}/ant/build.properties"/>
-    <property file="${user.home}/strongback/ant/build.properties"/>
-	
+    <property file="${user.home}/strongback/java/ant/build.properties"/>
+
 	<import file="${wpilib.ant.dir}/build.xml"/>
 	
+    <!-- Define the classpaths -->
+    <path id="compile.classpath">
+        <fileset dir="${strongback.home}/java/lib" includes="**/*.jar" excludes="**/*-sources.jar"/>
+        <fileset dir="${user.home}/wpilib/java/${version}/lib" includes="**/*.jar" excludes="**/*-sources.jar"/>
+        <pathelement path="${classpath}" />
+    </path>
+
+    <!-- Define a classpath for unit testing -->
+    <path id="junit.classpath">
+        <fileset dir="${strongback.home}/java/lib" includes="**/*.jar" excludes="**/*-sources.jar"/>
+        <fileset dir="${strongback.home}/java/lib-tests" includes="**/*.jar" excludes="**/*-sources.jar"/>
+        <pathelement location="${build.dir}" />
+        <pathelement path="${classpath}" />
+    </path>
+
+    <!-- Deletes the directories used by the tests-->
+    <target name="clean-tests" description="Clean up all generated test files">
+        <delete dir="${test.output.dir}" />
+    </target>
+	    
+    <!-- Deletes the directories used by the tests-->
+    <target name="clean" depends="clean-tests" description="Clean up all generated files">
+        <ant antfile="${wpilib.ant.dir}/build.xml" target="clean"/>
+    </target>
+
 	<target name="compile" description="Compile the source code.">
-		<mkdir dir="${build.dir}"/>
-		<echo>Compiling strongback based robot with classpath ${strongback.classpath}</echo>
-		<javac srcdir="${src.dir}" 
-            destdir="${build.dir}" 
-            includeantruntime="false" 
-            classpath = "${strongback.classpath}">
+	    <mkdir dir="${build.dir}"/>
+	    <javac srcdir="${src.dir}" destdir="${build.dir}" includeantruntime="false">
+            <classpath refid="compile.classpath"/>
 		</javac>
 	</target>
 
@@ -20,13 +46,6 @@
 		<echo>Making jar ${dist.jar}.</echo>
 		<mkdir dir="${dist.dir}" />
 		<mkdir dir="${build.jars}" />
-
-		<echo>Copying jars from ${strongback.classpath} to ${build.jars}.</echo>
-		<copy todir="${build.jars}" flatten="true">
-			<path>
-				<pathelement path="${strongback.classpath}"/>
-			</path>
-		</copy>
 
 		<jar destfile="${dist.jar}" update="false">
 			<manifest>
@@ -41,5 +60,52 @@
 				<include name="**/*.jar" />
 			</zipgroupfileset>
 		</jar>
+
+		<echo>Copying jars from ${strongback.classpath} to ${build.jars}.</echo>
+		<copy todir="${build.jars}" flatten="true">
+			<file file="${dist.jar}"/>
+			<path>
+				<pathelement path="${strongback.classpath}"/>
+			</path>
+		</copy>
 	</target>
+
+    <!-- Check if there are any JUnit Tests -->
+    <target name="if-tests">
+        <condition property="tests-exists">
+            <available file="testsrc" type="dir"/>
+        </condition>
+    </target>
+
+    <!-- Run the JUnit Tests -->
+    <target name="compile-tests" depends="compile, if-tests" if="tests-exists" description="Compile the unit tests">
+        <mkdir dir="${test.target.dir}" />
+        <javac srcdir="${test.source.dir}" destdir="${test.target.dir}" includeantruntime="false">
+            <classpath refid="junit.classpath" />
+        </javac>
+    </target>
+
+    <!-- Run the JUnit Tests -->
+    <target name="test" depends="compile-tests, if-tests" if="tests-exists" description="Run the unit tests">
+	    <!-- Creates the directories used in the tests -->
+	    <mkdir dir="${test.target.dir}" />
+	    <mkdir dir="${test.report.dir}" />
+	    <echo>[run-tests] Running all unit tests...</echo>
+	    <junit printsummary="off" showOutput="false" fork="false" haltonfailure="no" failureproperty="test.failed" >
+	      <classpath refid="junit.classpath" />
+	      <classpath>
+	        <pathelement location="${test.target.dir}"/>
+	      </classpath>
+	      <formatter type="plain" usefile="false" /> <!-- to screen -->
+	      <batchtest todir="${test.report.dir}">
+	        <fileset dir="${test.source.dir}">
+	          <include name="**/*Test*.java" />
+	          <include name="**/Test*.java" />
+	          <exclude name="**/Abstract*.java" />
+	        </fileset>
+	      </batchtest>
+	    </junit>
+        <fail message="Test failure detected, check test results." if="test.failed" />
+    </target>
+
 </project>
