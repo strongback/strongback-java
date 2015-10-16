@@ -26,7 +26,7 @@ import org.strongback.components.AngleSensor;
  * @author Randall Hauch
  *
  */
-public class AngleSensorTest extends DoubleValueTest {
+public class AngleSensorTest extends AbstractDoubleValueTest {
 
     protected static void assertAngle(double newAngle) {
         assertValue(newAngle, sensor::getAngle, newAngle);

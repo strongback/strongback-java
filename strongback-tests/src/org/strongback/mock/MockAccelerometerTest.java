@@ -21,7 +21,7 @@ import org.junit.Before;
 /**
  * @author Randall Hauch
  */
-public class MockAccelerometerTest extends BasicDoubleMockTest {
+public class MockAccelerometerTest extends AbstractDoubleMockTest {
 
     private MockAccelerometer mock;
 

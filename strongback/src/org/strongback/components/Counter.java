@@ -87,7 +87,7 @@ public interface Counter extends Zeroable {
      * @param maximum the maximum value the counter can achieve; must be positive and greater than {@code initial}
      * @return the new counter; never null
      * @throws IllegalArgumentException if {@code initial} or {@code resetValue} are negative, or if {@code maximum} is less
-     *         than or equal to {@code initial}, or if {@increment} is not positive
+     *         than or equal to {@code initial}, or if {@code increment} is not positive
      */
     public static Counter circular(int initial, int increment, int maximum) {
         if (initial < 0) throw new IllegalArgumentException("The intial value must be non-negative");

@@ -24,7 +24,7 @@ import org.strongback.components.DistanceSensor;
  * @author Randall Hauch
  *
  */
-public class DistanceSensorTest extends DoubleValueTest {
+public class DistanceSensorTest extends AbstractDoubleValueTest {
 
     protected static void assertDistance(double distance) {
         assertValue(distance, sensor::getDistanceInInches, distance);

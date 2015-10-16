@@ -7,5 +7,5 @@
 	<classpathentry kind="lib" path="/libs/test/junit-4.11.jar" sourcepath="/libs/test/junit-4.11-sources.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/strongback"/>
 	<classpathentry kind="lib" path="/libs/test/metrics-core-3.1.0.jar" sourcepath="/libs/test/metrics-core-3.1.0-sources.jar"/>
-	<classpathentry kind="output" path="bin"/>
+	<classpathentry kind="output" path="build/classes"/>
 </classpath>

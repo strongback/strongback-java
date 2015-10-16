@@ -29,7 +29,6 @@ import org.strongback.util.Values;
  * <li> {@code UNKNOWN} - neither switch is triggered (or both switches are triggered, typically as the result of a problem with
  * the robot hardware)</li>
  * </ol>
- * </p>
  * <p>
  * and three possible {@link Motor.Direction directions}:
  * <ol>
@@ -37,7 +36,6 @@ import org.strongback.util.Values;
  * <li> {@code REVERSE} - the underlying motor is moving to the low limit</li>
  * <li> {@code STOPPED} - the underlying motor is not moving</li>
  * </ol>
- * </p>
  *
  * @author Zach Anderson
  * @see Motor

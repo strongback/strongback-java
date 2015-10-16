@@ -18,7 +18,7 @@ package org.strongback.command;
 
 
 /**
- *
+ * A Strongback testing utility that can be used in unit tests
  */
 public class CommandTester {
     private final CommandRunner runner;

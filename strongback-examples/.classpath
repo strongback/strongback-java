@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" output="build/main" path="src/main/java"/>
-	<classpathentry kind="src" output="build/main" path="src/main/resources"/>
-	<classpathentry kind="src" output="build/test" path="src/test/java"/>
+	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="var" path="wpilib" sourcepath="wpilib.sources"/>
 	<classpathentry kind="lib" path="/libs/test/fest-assert-1.4.jar" sourcepath="/libs/test/fest-assert-1.4-sources.jar"/>
@@ -11,5 +9,5 @@
 	<classpathentry kind="lib" path="/libs/test/hamcrest-core-1.3.jar" sourcepath="/libs/test/hamcrest-core-1.3-sources.jar"/>
 	<classpathentry kind="var" path="networktables" sourcepath="networktables.sources"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/strongback"/>
-	<classpathentry kind="output" path="bin"/>
+	<classpathentry kind="output" path="build/classes"/>
 </classpath>

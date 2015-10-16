@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="strongback-testing" default="default">
+    <import file="../build-common.xml"/>
+
+    <!-- Define the classpaths with our dependencies -->
+    <path id="project.dependency.class.path">
+      	<dirset dir="${strongback.dir}/strongback/build/classes"/>
+    </path>
+
+</project>

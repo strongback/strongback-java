@@ -41,7 +41,7 @@ import org.strongback.util.Metronome;
 /**
  * Access point for a number of the higher-level Strongback functions. This class can be used within robot code or within unit
  * tests.
- * <p>
+ *
  * <h2>Configuration</h2>
  * <p>
  * Strongback will by default use the system logger, FPGA time (if available), and an executor that operates on a 5 millisecond
@@ -84,18 +84,16 @@ public final class Strongback {
              * This is a very accurate approach, but the thread remains busy the entire time. See
              * {@link Metronome#busy(long, TimeUnit, Clock)} for details.
              */
-            BUSY,
-            /**
-             * The thread uses {@link Thread#sleep(long)} to wait for the prescribed amount of time. This may not be very
-             * accurate, but it is efficient since the thread will pause so that other work can be done by other threads.
-             * See {@link Metronome#sleeper(long, TimeUnit, Clock)} for details.
-             */
-            SLEEP,
-            /**
-             * The thread uses {@link LockSupport#parkNanos(long)} to wait for the prescribed amount of time. The
-             * accuracy of this approach will depend a great deal upon the hardware and operating system. See
-             * {@link Metronome#parker(long, TimeUnit, Clock)} for details.
-             */
+            BUSY, /**
+                   * The thread uses {@link Thread#sleep(long)} to wait for the prescribed amount of time. This may not be very
+                   * accurate, but it is efficient since the thread will pause so that other work can be done by other threads.
+                   * See {@link Metronome#sleeper(long, TimeUnit, Clock)} for details.
+                   */
+            SLEEP, /**
+                    * The thread uses {@link LockSupport#parkNanos(long)} to wait for the prescribed amount of time. The
+                    * accuracy of this approach will depend a great deal upon the hardware and operating system. See
+                    * {@link Metronome#parker(long, TimeUnit, Clock)} for details.
+                    */
             PARK;
         }
 

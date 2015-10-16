@@ -31,7 +31,7 @@ import org.strongback.components.Zeroable;
  *
  * @author Randall Hauch
  */
-public abstract class BasicDoubleMockTest {
+public abstract class AbstractDoubleMockTest {
 
     protected static double[] TEST_VALUES = { 0.01, 1.0, 0.0000001, 2.000001, 5.5, 0.99999, -1.0, -0.01, -0.000001, -2.00001,
             -5.5 };
