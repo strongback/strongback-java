@@ -1,6 +1,13 @@
 /* Created DATE */
 package PACKAGE;
 
+import org.junit.Test;
+
 public class TestRobot {
+
+    @Test
+    public void test() {
+        // do something here
+    }
 
 }
