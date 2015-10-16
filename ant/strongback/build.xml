@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="Strongback Deployment">
-	<property name="test.source.dir" value="testsrc"/>
+    <property name="resources.dir" value="resources"/>
+    <property name="test.resources.dir" value="testresources"/>
+    <property name="test.source.dir" value="testsrc"/>
 	<property name="test.output.dir" value="tests"/>
 	<property name="test.report.dir" value="${test.output.dir}/classes"/>
 	<property name="test.target.dir" value="${test.output.dir}/classes"/>
@@ -40,6 +42,12 @@
 	    <javac srcdir="${src.dir}" destdir="${build.dir}" includeantruntime="false">
             <classpath refid="compile.classpath"/>
 		</javac>
+        <copy todir="${build.dir}">
+            <fileset dir="${src.dir}" includes="**/*.xml,**/*.properties,**/*.txt,**/*.ico" />
+        </copy>
+        <copy todir="${build.dir}" failonerror="false" quiet="true">
+            <fileset dir="${resources.dir}"/>
+        </copy>
 	</target>
 
 	<target name="jar" depends="compile">
@@ -83,6 +91,12 @@
         <javac srcdir="${test.source.dir}" destdir="${test.target.dir}" includeantruntime="false">
             <classpath refid="junit.classpath" />
         </javac>
+        <copy todir="${test.target.dir}">
+            <fileset dir="${test.source.dir}" includes="**/*.xml,**/*.properties,**/*.txt,**/*.ico" />
+        </copy>
+        <copy todir="${test.target.dir}" failonerror="false" quiet="true">
+            <fileset dir="${test.resources.dir}"/>
+        </copy>
     </target>
 
     <!-- Run the JUnit Tests -->

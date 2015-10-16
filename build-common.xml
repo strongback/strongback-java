@@ -10,8 +10,10 @@
     <property name="java.target.version" value="1.8"/>
     <property name="project.build.dir" value="build"/>
     <property name="project.source.dir" value="src"/>
+    <property name="project.resources.dir" value="resources"/>
     <property name="project.output.dir" value="${project.build.dir}/classes"/>
     <property name="project.test.source.dir" value="test"/>
+    <property name="project.test.resources.dir" value="testresources"/>
     <property name="project.test.output.dir" value="${project.build.dir}/test-classes"/>
     <property name="project.test.report.dir" value="${project.build.dir}/test-reports"/>
     <property name="wpi.libs.dir" value="${wpilib.dir}/java/current/lib"/>
@@ -30,6 +32,7 @@
     <!-- Define the classpaths -->
     <path id="compile.class.path">
         <path refid="project.dependency.class.path"/>
+        <pathelement location="${project.output.dir}" />
         <fileset dir="${compile.libs.dir}" includes="**/*.jar" excludes="**/*-sources.jar"/>
         <fileset dir="${wpi.libs.dir}" includes="**/*.jar" excludes="**/*-sources.jar"/>
         <pathelement path="${classpath}" />
@@ -63,6 +66,12 @@
             <classpath refid="test.class.path" />
             <!--compilerarg value="${java.compile.arg}"/-->
         </javac>
+        <copy todir="${project.output.dir}">
+            <fileset dir="${project.source.dir}" includes="**/*.xml,**/*.properties,**/*.txt,**/*.ico" />
+        </copy>
+        <copy todir="${project.output.dir}" failonerror="false" quiet="true">
+            <fileset dir="${project.resources.dir}"/>
+        </copy>
     </target>
 
     <target name="compile-tests" depends="compile, if-tests" if="tests-exists" description="Compile the unit tests">
@@ -78,6 +87,12 @@
             </classpath>
             <!--compilerarg value="${java.compile.arg}"/-->
         </javac>
+        <copy todir="${project.test.output.dir}">
+            <fileset dir="${project.test.source.dir}" includes="**/*.xml,**/*.properties,**/*.txt,**/*.ico" />
+        </copy>
+        <copy todir="${project.output.dir}" failonerror="false" quiet="true">
+            <fileset dir="${project.test.resources.dir}"/>
+        </copy>
     </target>
 
     <!-- Run the JUnit Tests that are in the 'test' directory of this project -->
@@ -103,8 +118,8 @@
     <!-- Override the several targets that will need to use the extra library JARs. -->
     <target name="jar" depends="compile, test" description="Build and collect the JARs necessary for the robot">
         <mkdir dir="${project.build.dir}" />
-        <jar destfile="${project.build.dir}/${project.jar.name}" basedir="${project.output.dir}" />
-        <jar destfile="${project.build.dir}/${project.source.jar.name}" basedir="${project.source.dir}" />
+        <jar destfile="${project.build.dir}/${project.jar.name}" basedir="${project.output.dir}"/>
+        <jar destfile="${project.build.dir}/${project.source.jar.name}" basedir="${project.source.dir}"/>
     </target>
 
     <target name="dist.dependencies">

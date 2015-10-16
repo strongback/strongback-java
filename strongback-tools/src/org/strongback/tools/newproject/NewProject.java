@@ -32,6 +32,7 @@ import org.strongback.tools.utils.FileUtils;
 import org.strongback.tools.utils.Parser;
 import org.strongback.tools.utils.PropertiesUtils;
 import org.strongback.tools.utils.PropertiesUtils.InvalidPropertiesException;
+import org.strongback.tools.utils.Version;
 
 /**
  * Utility to create a new FRC robot project compatible with the strongback library
@@ -39,14 +40,14 @@ import org.strongback.tools.utils.PropertiesUtils.InvalidPropertiesException;
  * -d with the name -n. If -r is specified, the project will be created directly inside
  * -r with the project name being the same as -r. No files will be overwritten unless -o
  * is specified.
- * 
+ *
  * <pre>usage: strongback newproject [options] -d &ltdirectory&gt -n &ltproject_name&gt
  *       strongback newproject [options] -r &ltproject_root&gt</pre>
  *
  * @author Zach Anderson
  */
 public class NewProject {
-        
+
     public static void main(String[] args) {
         // Load strongback properties
         Properties strongback = null;
@@ -63,7 +64,7 @@ public class NewProject {
             exit(Strings.BAD_PROPS + e.getLocalizedMessage(), ExitCodes.BAD_PROPS);
         }
         assert strongback != null;
-        
+
         Map<String, String> params = null;
         try {
             params = Parser.parse(args, "npr", "v|h|nd!r|r!n!d");
@@ -73,7 +74,7 @@ public class NewProject {
             exit("", ExitCodes.BAD_ARGS);
         }
         assert params != null;
-        
+
         if(params.containsKey("h")) {
             System.out.println(Strings.HELP);
             exit();
@@ -84,11 +85,11 @@ public class NewProject {
             System.out.println(Strings.VERSION);
             exit();
         }
-        
+
         File projectRoot;
         String projectName;
         String mainPackage;
-        
+
         if(params.containsKey("r")) {
             projectRoot = FileUtils.resolvePath(params.get("r"));
             projectName = projectRoot.getName();
@@ -96,77 +97,77 @@ public class NewProject {
             projectName = params.get("n");
             projectRoot = FileUtils.resolvePath(params.get("d") + File.separator + projectName);
         }
-        
+
         if(params.containsKey("p")) {
             mainPackage = params.get("p");
         } else {
             mainPackage = "org.usfirst.frc.team"+ strongback.getProperty("team-number") +".robot";
         }
-        
+
         /* Application Begins */
-        
+
         // Source folders
         File src     = new File(projectRoot, "src"     + File.separator + mainPackage.replace('.', File.separatorChar));
         File testsrc = new File(projectRoot, "testsrc" + File.separator + mainPackage.replace('.', File.separatorChar));
-        
+
         // Source files to copy
         File buildTemplate = new File(strongback.getProperty("strongback.templates.dir"), "build.xml.template");
         File propsTemplate = new File(strongback.getProperty("strongback.templates.dir"), "build.properties.template");
         File robotTemplate = new File(strongback.getProperty("strongback.templates.dir"), "Robot.java.template");
         File testTemplate  = new File(strongback.getProperty("strongback.templates.dir"), "TestRobot.java.template");
-        
+
         // Eclipse specific
         File projectTemplate   = new File(strongback.getProperty("strongback.templates.dir"), "project.template");
         File classpathTemplate = new File(strongback.getProperty("strongback.templates.dir"), "classpath.template");
-        
+
         // Destination files
         File buildProps = new File(projectRoot, "build.properties");
         File buildXML   = new File(projectRoot, "build.xml");
         File robotJava  = new File(src,         "Robot.java");
         File testJava   = new File(testsrc,     "TestRobot.java");
-        
+
         // Eclipse specific
         File project   = new File(projectRoot, ".project");
         File classpath = new File(projectRoot, ".classpath");
-        
+
         // If any of the files to write to already exist, give up and write message about the overwrite flag
         if(!params.containsKey("o")) {
             if(buildProps.exists()) exit(Strings.OVERWRITE_WARN + buildProps.getPath(), ExitCodes.OVERWRITE);
             if(buildXML.exists())   exit(Strings.OVERWRITE_WARN + buildXML.getPath(),   ExitCodes.OVERWRITE);
             if(robotJava.exists())  exit(Strings.OVERWRITE_WARN + robotJava.getPath(),  ExitCodes.OVERWRITE);
             if(testJava.exists())   exit(Strings.OVERWRITE_WARN + testJava.getPath(),   ExitCodes.OVERWRITE);
-            
+
             // Eclipse specific
             if(params.containsKey("e")) {
                 if(project.exists())   exit(Strings.OVERWRITE_WARN + project.getPath(),   ExitCodes.OVERWRITE);
                 if(classpath.exists()) exit(Strings.OVERWRITE_WARN + classpath.getPath(), ExitCodes.OVERWRITE);
             }
         }
-        
+
         // Verify templates exist
         if(!buildTemplate.exists()) exit(Strings.MISSING_TEMPLATE + buildTemplate.getPath(), ExitCodes.MISSING_FILE);
         if(!propsTemplate.exists()) exit(Strings.MISSING_TEMPLATE + propsTemplate.getPath(), ExitCodes.MISSING_FILE);
         if(!robotTemplate.exists()) exit(Strings.MISSING_TEMPLATE + robotTemplate.getPath(), ExitCodes.MISSING_FILE);
         if(!testTemplate.exists())  exit(Strings.MISSING_TEMPLATE + testTemplate.getPath(),  ExitCodes.MISSING_FILE);
-        
+
         // Eclipse specific
         if(params.containsKey("e")) {
             if(!projectTemplate.exists())   exit(Strings.MISSING_TEMPLATE + projectTemplate.getPath(),   ExitCodes.MISSING_FILE);
             if(!classpathTemplate.exists()) exit(Strings.MISSING_TEMPLATE + classpathTemplate.getPath(), ExitCodes.MISSING_FILE);
         }
-        
+
         // Make the directories
         if(!projectRoot.exists() & !projectRoot.mkdirs()) exit(Strings.FAILED_MKDIR + projectRoot.getPath(), ExitCodes.FAILED_MKDIR);
         if(!src.exists()         & !src.mkdirs())         exit(Strings.FAILED_MKDIR + src.getPath(),         ExitCodes.FAILED_MKDIR);
         if(!testsrc.exists()     & !testsrc.mkdirs())     exit(Strings.FAILED_MKDIR + testsrc.getPath(),     ExitCodes.FAILED_MKDIR);
-        
+
         // Copy templates
         try {
             copyTo(buildTemplate, buildXML,   (line) -> line.replace("PROJECT_NAME", projectName));
             copyTo(propsTemplate, buildProps, (line) -> line.replace("PACKAGE", mainPackage));
             copyTo(robotTemplate, robotJava,  (line) -> line.replace("PACKAGE", mainPackage));
             copyTo(testTemplate,  testJava,   (line) -> line.replace("PACKAGE", mainPackage));
-            
+
             // Eclipse specific
             if(params.containsKey("e")) {
                 copyTo(projectTemplate,   project,   (line) -> line.replace("PROJECT_NAME", projectName));
@@ -175,7 +176,7 @@ public class NewProject {
         } catch (IOException e) {
             exit(Strings.IO_EXCEPTION + e.getLocalizedMessage(), ExitCodes.IO_EXCEPT);
         }
-   
+
         // Print success
         System.out.print(Strings.SUCCESS);
         try {
@@ -198,16 +199,16 @@ public class NewProject {
             testReader.close();
         }
     }
-    
+
     private static void exit(String exitMessage, int exitCode) {
         System.err.println(exitMessage);
         System.exit(exitCode);
     }
-    
+
     private static void exit() {
         System.exit(ExitCodes.NORMAL);
     }
-    
+
     private static final class Strings {
         public static final String LS = System.lineSeparator();
         /* Error Text */
@@ -221,7 +222,7 @@ public class NewProject {
         public static final String MISSING_STRONGBK = "Could not locate the strongback directory. Double check that the strongback"
                                                       + " folder is in the same directory as your wpilib folder.";
         public static final String SUCCESS          = "Successfully created new project at: ";
-        
+
         public static final String HELP =  "usage: strongback newproject [options] -d <directory> -n <project_name>"
                                     + LS + "       strongback newproject [options] -r <project_root>"
                                     + LS + ""
@@ -254,13 +255,13 @@ public class NewProject {
                                     + LS + "  -v"
                                     + LS + "     Displays version information"
                                     ;
-        
+
         /* Version Information */
         // TODO Can we update this with ant?
         public static final String VERSION_HEAD = "Strongback New Project Utility";
-        public static final String VERSION      = "1.1.0 compiled on 1 Oct 2015";
+        public static final String VERSION      = Version.versionNumber() + " compiled on " + Version.buildDate();
     }
-    
+
     private static final class ExitCodes {
         public static final int NORMAL       = 0;
         public static final int BAD_PROPS    = 1;
@@ -269,6 +270,6 @@ public class NewProject {
         public static final int FAILED_MKDIR = 4;
         public static final int OVERWRITE    = 5;
         public static final int MISSING_FILE = 6;
-        
+
     }
 }
