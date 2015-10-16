@@ -6,10 +6,10 @@ shift
 
 case $cmd in
     "new-project")
-        java -cp $strongback_home/libs/strongback-tools.jar org.strongback.tools.newproject.NewProject "$@"
+        java -cp $strongback_home/lib-tools/strongback-tools.jar org.strongback.tools.newproject.NewProject "$@"
         ;;
     "log-decoder")
-        java -cp $strongback_home/libs/strongback-tools.jar org.strongback.tools.logdecoder.LogDecoder "$@"
+        java -cp $strongback_home/lib-tools/strongback-tools.jar org.strongback.tools.logdecoder.LogDecoder "$@"
         ;;
     *)
         echo "usage: strongback <command>"

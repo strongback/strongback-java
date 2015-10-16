@@ -8,10 +8,10 @@ shift
 
 GOTO %cmd%
 :new-project
-    java -cp %strongback_home%\libs\strongback-tools.jar org.strongback.tools.newproject.NewProject %*
+    java -cp %strongback_home%\lib-tools\strongback-tools.jar org.strongback.tools.newproject.NewProject %*
     GOTO END
 :log-decoder
-    java -cp %strongback_home%\libs\strongback-tools.jar org.strongback.tools.logdecoder.LogDecoder %*
+    java -cp %strongback_home%\lib-tools\strongback-tools.jar org.strongback.tools.logdecoder.LogDecoder %*
     GOTO END
 :help
     echo usage: strongback ^<command^>
