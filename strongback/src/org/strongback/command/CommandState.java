@@ -20,10 +20,10 @@ package org.strongback.command;
  * Defines the current state of a {@link Command}. The state transition is as follows:
  *
  * <pre>
- *   UNINITIALIZED ----> RUNNING ----> FINISHED ----> FINALIZED
+ *   UNINITIALIZED ----&gt; RUNNING ----&gt; FINISHED ----&gt; FINALIZED
  *        |                 |             |
  *        |                 |             |
- *        +-----------------+-------------+----> INTERRUPTED
+ *        +-----------------+-------------+----&gt; INTERRUPTED
  * </pre>
  *
  * However, a command in any state state may transition to INTERRUPTED.

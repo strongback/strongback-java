@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="build-common" default="test">
+
+    <property name="strongback.dir" value=".."/>
+    <property file="${strongback.dir}/build.properties"/>
+
+    <property name="wpilib.dir" value="${user.home}/wpilib"/>
+    <property name="java.compile.arg" value=""/>
+    <property name="java.source.version" value="1.8"/>
+    <property name="java.target.version" value="1.8"/>
+    <property name="project.build.dir" value="build"/>
+    <property name="project.source.dir" value="src"/>
+    <property name="project.output.dir" value="${project.build.dir}/classes"/>
+    <property name="project.test.source.dir" value="test"/>
+    <property name="project.test.output.dir" value="${project.build.dir}/test-classes"/>
+    <property name="project.test.report.dir" value="${project.build.dir}/test-reports"/>
+    <property name="wpi.libs.dir" value="${wpilib.dir}/java/current/lib"/>
+    <property name="test.libs.dir" value="${strongback.dir}/libs/test"/>
+    <property name="compile.libs.dir" value="${strongback.dir}/libs"/>
+    <property name="project.jar.name" value="${ant.project.name}.jar"/>
+    <property name="project.source.jar.name" value="${ant.project.name}-sources.jar"/>
+
+    <property file="${strongback.dir}/build.properties"/>
+    <property file="${wpilib.dir}/wpilib.properties"/>
+
+    <!-- Define the classpaths -->
+    <path id="project.dependency.class.path">
+    </path>
+
+    <!-- Define the classpaths -->
+    <path id="compile.class.path">
+        <path refid="project.dependency.class.path"/>
+        <fileset dir="${compile.libs.dir}" includes="**/*.jar" excludes="**/*-sources.jar"/>
+        <fileset dir="${wpi.libs.dir}" includes="**/*.jar" excludes="**/*-sources.jar"/>
+        <pathelement path="${classpath}" />
+    </path>
+
+    <path id="test.class.path">
+        <path refid="compile.class.path"/>
+        <fileset dir="${test.libs.dir}" includes="**/*.jar" excludes="**/*-sources.jar"/>
+    </path>
+
+    <import file="dependencies.xml"/>
+    
+    <target name="clean">
+        <delete dir="${project.build.dir}" />
+    </target>
+
+    <!-- Check if there are any JUnit Tests -->
+    <target name="if-tests">
+        <condition property="tests-exists">
+            <available file="${project.test.source.dir}" type="dir"/>
+        </condition>
+    </target>
+
+    <target name="compile" description="Compile the code">
+        <mkdir dir="${project.output.dir}"/>
+        <javac srcdir="${project.source.dir}" 
+               destdir="${project.output.dir}" 
+               source="${java.source.version}"
+               target="${java.target.version}"
+               includeantruntime="false">
+            <classpath refid="test.class.path" />
+            <!--compilerarg value="${java.compile.arg}"/-->
+        </javac>
+    </target>
+
+    <target name="compile-tests" depends="compile, if-tests" if="tests-exists" description="Compile the unit tests">
+        <mkdir dir="${project.test.output.dir}"/>
+        <javac srcdir="${project.test.source.dir}" 
+               destdir="${project.test.output.dir}" 
+               source="${java.source.version}"
+               target="${java.target.version}"
+               includeantruntime="false">
+            <classpath refid="test.class.path" />
+            <classpath> 
+                <pathelement location="${project.test.output.dir}"/>
+            </classpath>
+            <!--compilerarg value="${java.compile.arg}"/-->
+        </javac>
+    </target>
+
+    <!-- Run the JUnit Tests that are in the 'test' directory of this project -->
+    <target name="test" depends="compile-tests, if-tests" if="tests-exists" description="Run the unit tests">
+        <!-- Creates the directories used in the tests -->
+        <mkdir dir="${project.test.output.dir}" />
+        <mkdir dir="${project.test.report.dir}" />
+        <junit printsummary="off" showOutput="false" fork="false" haltonfailure="no" failureproperty="test.failed" >
+            <classpath refid="test.class.path" />
+            <classpath> 
+                <pathelement location="${project.test.output.dir}"/>
+            </classpath>
+            <formatter type="plain" usefile="false" /> <!-- to screen -->
+            <batchtest todir="${project.test.report.dir}">
+                <fileset dir="${project.test.source.dir}">
+                    <include name="**/*Test*.java" />
+                </fileset>
+            </batchtest>
+        </junit>
+        <fail message="Test failure detected, check test results." if="test.failed" />
+    </target>
+
+    <!-- Override the several targets that will need to use the extra library JARs. -->
+    <target name="jar" depends="compile, test" description="Build and collect the JARs necessary for the robot">
+        <mkdir dir="${project.build.dir}" />
+        <jar destfile="${project.build.dir}/${project.jar.name}" basedir="${project.output.dir}" />
+        <jar destfile="${project.build.dir}/${project.source.jar.name}" basedir="${project.source.dir}" />
+    </target>
+
+    <target name="dist.dependencies">
+        <antcall target="depend.${ant.project.name}"/>
+    </target>
+</project>

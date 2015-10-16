@@ -186,6 +186,7 @@ public class MecanumDrive implements Stoppable, Requirable {
 
     /**
      * Normalize all wheel speeds if the magnitude of any wheel is greater than 1.0.
+     * @param wheelSpeeds the speed of each motor
      */
     protected static void normalize(double wheelSpeeds[]) {
         double maxMagnitude = Math.abs(wheelSpeeds[0]);
@@ -202,6 +203,8 @@ public class MecanumDrive implements Stoppable, Requirable {
 
     /**
      * Scale all speeds.
+     * @param wheelSpeeds the speed of each motor
+     * @param scaleFactor the scale factor to apply to the motor speeds
      */
     protected static void scale(double wheelSpeeds[], double scaleFactor) {
         for (int i = 1; i < NUMBER_OF_MOTORS; i++) {
@@ -211,6 +214,10 @@ public class MecanumDrive implements Stoppable, Requirable {
 
     /**
      * Rotate a vector in Cartesian space.
+     * @param x the x value of the vector
+     * @param y the y value of the vector
+     * @param angle the angle to rotate
+     * @return the vector of x and y values
      */
     protected static double[] rotateVector(double x, double y, double angle) {
         double angleInRadians = Math.toRadians(angle);

@@ -20,7 +20,7 @@ import java.util.function.Function;
 
 /**
  * Represents a function that accepts two a integer-valued arguments and produces a integer-valued result. This is the
- * {@code integer} primitive specialization for {@link Function BiFunction<Integer,Integer,Integer>}.
+ * {@code integer} primitive specialization for {@link Function BiFunction}.
  * <p>
  * This is a functional interface whose functional method is {@link #applyAsInt(int,int)}.
  *

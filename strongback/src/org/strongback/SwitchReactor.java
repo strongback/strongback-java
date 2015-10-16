@@ -28,8 +28,8 @@ import org.strongback.components.Switch;
  *
  * <pre>
  *   Gamepad gamepad = ...
- *   reactor.onTriggered(gamepad.getRightTrigger(),()->Strongback.submit(new FireRepeatedlyCommand()));
- *   reactor.onUnTriggered(gamepad.getRightTrigger(),()->Strongback.submit(new StopFireCommand()));
+ *   reactor.onTriggered(gamepad.getRightTrigger(),()-&gt;Strongback.submit(new FireRepeatedlyCommand()));
+ *   reactor.onUnTriggered(gamepad.getRightTrigger(),()-&gt;Strongback.submit(new StopFireCommand()));
  * </pre>
  * <p>
  * The reactor is threadsafe, meaning functions can be registered even while the reactor is forwarding state and state

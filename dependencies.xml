@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="strongback-project" default="strongback.all">
+    <dirname property="strongback.basedir" file="${ant.file.dependencies}"/>
+    <!-- ================================================================== -->
+    <target name="strongback.all" depends="strongback.core, strongback.tests, strongback.tools, strongback.examples">
+    </target>
+    <!-- ================================================================== -->
+    <target name="strongback.core">
+        <ant dir="${strongback.basedir}/strongback"
+             target="${dependency.target}"
+             inheritAll="false"/>
+    </target>
+    <!-- ================================================================== -->
+    <target name="strongback.testing" depends="strongback.core">
+        <ant dir="${strongback.basedir}/strongback-testing"
+             target="${dependency.target}"
+             inheritAll="false"/>
+    </target>
+    <!-- ================================================================== -->
+    <target name="strongback.tests" depends="strongback.core, strongback.testing">
+        <ant dir="${strongback.basedir}/strongback-tests"
+             target="${dependency.target}"
+             inheritAll="false"/>
+    </target>
+    <!-- ================================================================== -->
+    <target name="strongback.tools">
+        <ant dir="${strongback.basedir}/strongback-tools"
+             target="${dependency.target}"
+             inheritAll="false"/>
+    </target>
+    <!-- ================================================================== -->
+    <target name="strongback.examples">
+        <ant dir="${strongback.basedir}/strongback-examples"
+             target="${dependency.target}"
+             inheritAll="false"/>
+    </target>
+</project>

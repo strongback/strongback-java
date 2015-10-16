@@ -27,7 +27,7 @@ import org.junit.Before;
  * @author Randall Hauch
  *
  */
-abstract class DoubleValueTest {
+abstract class AbstractDoubleValueTest {
 
     private static double value;
 
@@ -36,7 +36,7 @@ abstract class DoubleValueTest {
     }
 
     protected static void setValue( double value) {
-        DoubleValueTest.value = value;
+        AbstractDoubleValueTest.value = value;
     }
 
     protected static void assertValue(double value, DoubleSupplier getter, double result ) {

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="strongback" default="dist">
+    <import file="dependencies.xml"/>
+    <tstamp>
+        <format property="current.year" pattern="yyyy" locale="en"/>
+        <format property="current.date" pattern="yyyy-MM-dd" locale="en"/>
+    </tstamp>
+    <property file="build.properties"/>
+    <property name="wpi.libs.dir" value="${wpilib.dir}/java/current/lib"/>
+    <property name="build.dir" value="build"/>
+
+    <target name="help">
+        <echo>Building Strongback includes the following Ant targets:</echo>
+        <echo></echo>
+        <echo>   clean         Deletes all files and directories created during previous builds</echo>
+        <echo>   compile       Compiles the source code in all projects</echo>
+        <echo>   test          Compiles and runs the tests in all projects</echo>
+        <echo>   jar           Compiles, runs the tests, and builds JAR files for all projects</echo>
+        <echo>   dist          Creates the distribution archive</echo>
+        <echo></echo>
+        <echo>Some of these targets depend on other targets. For example, running 'ant test' will</echo>
+        <echo>automatically include the 'compile' target, so it is equivalent to running 'ant compile test'.</echo>
+        <echo>Likewise, 'jar' automatically runs 'test', and 'dist' automatically runs 'clean' and 'jar'.</echo>
+        <echo></echo>
+    </target>
+
+    <target name="clean" description="Deletes build files">
+        <delete dir="${build.dir}" />
+        <antcall target="strongback.all">
+            <param name="dependency.target" value="clean"/>
+        </antcall>
+    </target>
+
+    <target name="compile" description="Compiles source code">
+        <antcall target="strongback.all">
+            <param name="dependency.target" value="compile"/>
+        </antcall>
+    </target>
+
+    <target name="test" description="Run the tests">
+        <antcall target="strongback.all">
+            <param name="dependency.target" value="test"/>
+        </antcall>
+    </target>
+
+    <target name="jar" description="Creates the JARs">
+        <antcall target="strongback.all">
+            <param name="dependency.target" value="jar"/>
+        </antcall>
+    </target>
+
+    <target name="javadoc">
+        <mkdir dir="build"/>
+        <javadoc destdir="build/javadoc"
+                 author="false"
+                 version="true"
+                 use="true"
+                 windowtitle="Strongback Java Library">
+
+            <classpath>
+                <fileset dir="libs" includes="**/*.jar" excludes="**/*-sources.jar"/>
+                <fileset dir="${wpi.libs.dir}" includes="**/*.jar" excludes="**/*-sources.jar"/>
+                <pathelement path="${classpath}" />
+            </classpath>
+            <sourcefiles>
+                <fileset dir="strongback/src"/>
+                <!--fileset dir="strongback-testing/src"/-->
+            </sourcefiles>
+            <packageset dir="strongback/src" defaultexcludes="yes">
+              <include name="org.strongback/**"/>
+            </packageset>
+
+            <doctitle><![CDATA[<h1>Strongback Java Library</h1>]]></doctitle>
+            <bottom><![CDATA[<i>Copyright &#169; ${current.year} Strongback and individual contributors. All Rights Reserved.</i>]]></bottom>
+            <tag name="todo" scope="all" description="To do:"/>
+            <group title="Strongback" packages="org.strongback"/>
+            <group title="Components" packages="org.strongback.components*:org.strongback.hardware*"/>
+            <group title="Drives" packages="org.strongback.drive"/>
+            <group title="Commands" packages="org.strongback.command*"/>
+            <group title="" packages="org.strongback.util*:org.strongback.function*:org.strongback.annotation*"/>
+            <link href="http://docs.oracle.com/javase/8/docs/api/"/>
+            <link offline="true" href="http://first.wpi.edu/FRC/roborio/release/docs/java/" packagelistLoc="${wpilib.dir}/java/current/javadoc"/>
+        </javadoc>
+    </target>
+
+    <target name="dist" depends="clean, jar, javadoc" description="Creates the distribution">
+        <echo>Building Strongback distribution version ${strongback.version}</echo>
+        <mkdir dir="build"/>
+
+        <!-- Update the strongback.properties file -->
+        <copy file="strongback.properties" tofile="${build.dir}/strongback.properties"/>
+        <propertyfile file="${build.dir}/strongback.properties">
+            <entry key="strongback.version" value="${strongback.version}"/>
+            <entry key="build.date" value="${current.date}"/>
+        </propertyfile>
+
+        <!-- Build the ZIP file -->
+        <zip destfile="${build.dir}/strongback-${strongback.version}.zip">
+            <zipfileset dir="strongback-tools/scripts" prefix="strongback/java/bin"/>
+            <zipfileset dir="strongback/build" includes="*.jar" prefix="strongback/java/lib"/>
+            <zipfileset dir="libs" includes="*.jar" prefix="strongback/java/lib"/>
+            <zipfileset dir="strongback-testing/build" includes="*.jar" prefix="strongback/java/lib-tests"/>
+            <zipfileset dir="libs/test" includes="*.jar" prefix="strongback/java/lib-tests"/>
+            <zipfileset dir="strongback-tools/build" includes="*.jar" prefix="strongback/java/lib-tools"/>
+            <zipfileset dir="ant/strongback" includes="**" prefix="strongback/java/ant"/>
+            <zipfileset dir="templates" includes="**" prefix="strongback/java/templates"/>
+            <zipfileset dir="build/javadoc" includes="**" prefix="strongback/java/javadoc"/>
+            <zipfileset dir="build" includes="strongback.properties" prefix="strongback"/>
+            <zipfileset dir="." includes="COPYRIGHT.txt" prefix="strongback"/>
+            <zipfileset dir="." includes="LICENSE.txt" prefix="strongback"/>
+            <zipfileset dir="." includes="README.md" prefix="strongback"/>
+        </zip>
+    </target>
+</project>

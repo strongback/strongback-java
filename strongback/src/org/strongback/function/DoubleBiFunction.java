@@ -20,7 +20,7 @@ import java.util.function.Function;
 
 /**
  * Represents a function that accepts two a double-valued arguments and produces a double-valued result. This is the
- * {@code double} primitive specialization for {@link Function BiFunction<Double,Double,Double>}.
+ * {@code double} primitive specialization for {@link Function BiFunction}.
  * <p>
  * This is a functional interface whose functional method is {@link #applyAsDouble(double,double)}.
  *

@@ -24,7 +24,7 @@ import org.junit.Test;
 /**
  * @author Randall Hauch
  */
-public class MockCompassTest extends BasicDoubleMockTest {
+public class MockCompassTest extends AbstractDoubleMockTest {
 
     private static final double[][] POSITIVE_ANGLES = { { 0.0, 0.0 }, { 180.0, 180.0 }, { 359.0, 359.0 }, { 360.0, 0.0 },
             { 360.001, 0.001 }, { 361.0, 1.0 }, { 360.0 * 2, 0.0 }, { 360.0 * 3, 0.0 }, { 360.0 * 4, 0.0 } };

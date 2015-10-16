@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="strongback-tests" default="default">
+    <import file="../build-common.xml"/>
+
+    <!-- Define the classpaths with our dependencies -->
+    <path id="project.dependency.class.path">
+      	<dirset dir="${strongback.dir}/strongback/build/classes"/>
+      	<dirset dir="${strongback.dir}/strongback-testing/build/classes"/>
+    </path>
+
+    <!-- Run the JUnit Tests -->
+    <target name="test" depends="compile" description="Run the unit tests">
+        <!-- Creates the directories used in the tests -->
+        <mkdir dir="${project.test.report.dir}" />
+        <echo>[run-tests] Running all unit tests...</echo>
+        <junit printsummary="off" showOutput="false" fork="false" haltonfailure="no" failureproperty="test.failed" >
+            <classpath> 
+                <pathelement location="${project.output.dir}"/>
+            </classpath>
+        	<classpath refid="compile.class.path"/>
+        	<classpath>
+        		<fileset dir="${test.libs.dir}" includes="**/*.jar" excludes="**/*-sources.jar"/>
+        	</classpath>
+            <formatter type="plain" usefile="false" /> <!-- to screen -->
+            <batchtest todir="${project.test.report.dir}">
+                <fileset dir="${project.source.dir}">
+                    <include name="**/*Test.java" />
+                    <exclude name="**/Abstract*Test.java" />
+                </fileset>
+            </batchtest>
+        </junit>
+        <fail message="Test failure detected, check test results." if="test.failed" />
+    </target>
+</project>

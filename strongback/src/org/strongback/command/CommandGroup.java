@@ -25,19 +25,19 @@ import org.strongback.annotation.NotThreadSafe;
  * passed into these methods can be any {@link Command} subclass, {@link CommandGroup} subclass, or a group of sequential,
  * simultaneous, or forked commands.
  * <p>
- * <li>Commands executed one after the other are <em>sequential</em>, and are defined with a call to
+ * Commands executed one after the other are <em>sequential</em>, and are defined with a call to
  * {@link #sequentially(Command...)} and the list of {@link Command} instances, in order. The whole block finishes only when the
  * last {@link Command} is done.
  *
- * <li>Commands executed at the same time (in parallel) are <em>simultaneous</em>, and are defined with a call to
+ * <p>Commands executed at the same time (in parallel) are <em>simultaneous</em>, and are defined with a call to
  * {@link #simultaneously(Command...)} and a list of the {@link Command} instances. Order is not important, as they are all are
  * executed at the same time. The whole block finishes only when all {@link Command}s have completed.
  *
- * <li>When a command is to be executed completely independently of the command group, then that command (or group of commands)
+ * <p>When a command is to be executed completely independently of the command group, then that command (or group of commands)
  * can be <em>forked</em>. A command (or group) is forked by calling {@link #fork(Command)} with the one {@link Command}, a
  * {@link CommandGroup} subclass, or a group created with {@link #sequentially(Command...)} or
  * {@link #simultaneously(Command...)}. For the purposes of {@link #sequentially(Command...)} the block finishes instantly.
- * </p>
+ *
  * <h2>Sequential example</h2>
  * <p>
  * The following code shows a complete CommandGroup subclass that, when executed, first executes a {@code CommandA}, then a
