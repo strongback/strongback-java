@@ -19,11 +19,18 @@ package org.strongback.tools.newproject;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.security.InvalidParameterException;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.function.Function;
@@ -105,6 +112,7 @@ public class NewProject {
         }
 
         /* Application Begins */
+        File strongbackHome = FileUtils.resolvePath("~/strongback");
 
         // Source folders
         File src     = new File(projectRoot, "src"     + File.separator + mainPackage.replace('.', File.separatorChar));
@@ -119,6 +127,8 @@ public class NewProject {
         // Eclipse specific
         File projectTemplate   = new File(strongback.getProperty("strongback.templates.dir"), "project.template");
         File classpathTemplate = new File(strongback.getProperty("strongback.templates.dir"), "classpath.template");
+        File userlibTemplate  = new File(strongback.getProperty("strongback.templates.dir"), "Strongback.userlibraries.template");
+        File userlibImportTemplate  = new File(strongback.getProperty("strongback.templates.dir"), "Strongback.userlibraries.import.template");
 
         // Destination files
         File buildProps = new File(projectRoot, "build.properties");
@@ -129,6 +139,9 @@ public class NewProject {
         // Eclipse specific
         File project   = new File(projectRoot, ".project");
         File classpath = new File(projectRoot, ".classpath");
+        File eclipseDir = FileUtils.resolvePath("~/strongback/java/eclipse");
+        File userlibraries = new File(eclipseDir, "Strongback.userlibraries");
+        File metadataDir = new File(projectRoot.getParentFile(), ".metadata");
 
         // If any of the files to write to already exist, give up and write message about the overwrite flag
         if(!params.containsKey("o")) {
@@ -162,6 +175,9 @@ public class NewProject {
         if(!testsrc.exists()     & !testsrc.mkdirs())     exit(Strings.FAILED_MKDIR + testsrc.getPath(),     ExitCodes.FAILED_MKDIR);
 
         // Copy templates
+        boolean eclipseProject = false;
+        boolean foundMetadata = false;
+        boolean updatedMetadata = false;
         try {
             copyTo(buildTemplate, buildXML,   (line) -> line.replace("PROJECT_NAME", projectName));
             copyTo(propsTemplate, buildProps, (line) -> line.replace("PACKAGE", mainPackage));
@@ -172,6 +188,41 @@ public class NewProject {
             if(params.containsKey("e")) {
                 copyTo(projectTemplate,   project,   (line) -> line.replace("PROJECT_NAME", projectName));
                 copyTo(classpathTemplate, classpath, (line) -> line);
+
+                // Ensure the file for importing Eclipse userlibraries is generated ...
+                eclipseDir.mkdirs();
+                if(!userlibraries.exists()) {
+                    copyTo(userlibImportTemplate, userlibraries, (line) -> line.replaceAll("STRONGBACKHOME", strongbackHome.getAbsolutePath()));
+                }
+
+                // See if the `Strongback` user library is in the workspace ...
+                if (metadataDir.exists()) {
+                    foundMetadata = true;
+                    File jdtPrefsFile = new File(metadataDir,".plugins/org.eclipse.core.runtime/.settings/org.eclipse.jdt.core.prefs");
+                    if (jdtPrefsFile.exists()) {
+                        Properties jdtPrefs = new Properties();
+                        try ( InputStream is = new FileInputStream(jdtPrefsFile) ) {
+                            jdtPrefs.load(is);
+                        }
+                        if (!jdtPrefs.isEmpty() && !jdtPrefs.containsKey("org.eclipse.jdt.core.userLibrary.Strongback")) {
+                            // Make a backup of the original preferences file ...
+                            File jdtPrefsFileCopy = new File(jdtPrefsFile.getParentFile(),"org.eclipse.jdt.core.prefs.backup");
+                            copyTo(jdtPrefsFile, jdtPrefsFileCopy, (line) -> line);
+
+                            // Read in the userlibrary file and escape all the required characters ...
+                            List<String> lines = Files.readAllLines(userlibTemplate.toPath(), StandardCharsets.UTF_8);
+                            String escapedContents = combineAndEscape(lines, strongbackHome.getAbsolutePath());
+
+                            // Set the property and output the file ...
+                            jdtPrefs.setProperty("org.eclipse.jdt.core.userLibrary.Strongback", escapedContents);
+                            try ( OutputStream os = new FileOutputStream(jdtPrefsFile) ) {
+                                jdtPrefs.store(os,"");
+                                updatedMetadata = true;
+                            }
+                        }
+                    }
+                }
+                eclipseProject = true;
             }
         } catch (IOException e) {
             exit(Strings.IO_EXCEPTION + e.getLocalizedMessage(), ExitCodes.IO_EXCEPT);
@@ -184,9 +235,29 @@ public class NewProject {
         } catch (IOException e) {
             System.out.println(projectRoot.getPath());
         }
+        if ( foundMetadata && updatedMetadata ) {
+            System.out.print(Strings.UPDATED_WORKSPACE);
+            System.out.println(metadataDir.getParentFile().getAbsolutePath());
+            System.out.print(Strings.RESTART_ECLIPSE);
+        } else if ( eclipseProject ) {
+            System.out.println(Strings.IMPORT_ECLIPSE);
+            if ( !foundMetadata ) {
+                System.out.print(Strings.IMPORT_USERLIB);
+                System.out.println(strongbackHome.getAbsolutePath() + "/java/eclipse/Strongback.userlibraries");
+            }
+        }
     }
 
-    private static void copyTo(File input, File output, Function<String, String> each) throws IOException {
+    protected static String combineAndEscape( List<String> lines, String strongbackHome ) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        lines.forEach(str->{
+            String replaced = str.replaceAll("STRONGBACKHOME",strongbackHome).replaceAll("    ", "\t");
+            sb.append(replaced).append("\n");
+        });
+        return sb.toString();
+    }
+
+    protected static void copyTo(File input, File output, Function<String, String> each) throws IOException {
         BufferedReader testReader = new BufferedReader(new FileReader(input));
         BufferedWriter testWriter = new BufferedWriter(new FileWriter(output));
         try {
@@ -222,6 +293,10 @@ public class NewProject {
         public static final String MISSING_STRONGBK = "Could not locate the strongback directory. Double check that the strongback"
                                                       + " folder is in the same directory as your wpilib folder.";
         public static final String SUCCESS          = "Successfully created new project at: ";
+        public static final String UPDATED_WORKSPACE= "\nAdded the Strongback user library to your Eclipse workspace at ";
+        public static final String RESTART_ECLIPSE  = "Restart this Eclipse workspace and import the project.\n";
+        public static final String IMPORT_ECLIPSE   = "\nProject ready for importing into Eclipse workspace.";
+        public static final String IMPORT_USERLIB   = "\nEnsure that the Strongback user library is defined in workspace; if not then import from ";
 
         public static final String HELP =  "usage: strongback newproject [options] -d <directory> -n <project_name>"
                                     + LS + "       strongback newproject [options] -r <project_root>"
@@ -238,7 +313,8 @@ public class NewProject {
                                     + LS + "    The directory to create the new project directory in"
                                     + LS + ""
                                     + LS + "  -e"
-                                    + LS + "    Adds project metadata for the Eclipse Java IDE"
+                                    + LS + "    Adds project metadata for the Eclipse Java IDE, and looks for the Eclipse workspace"
+                                    + LS + "    .metadata folder to add the Strongback user library if not already defined."
                                     + LS + ""
                                     + LS + "  -h"
                                     + LS + "    Displays help information"

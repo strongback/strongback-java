@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
         <classpathentry kind="src" path="src"/>
-        <classpathentry kind="src" path="testsrc"/>
-        
+        <classpathentry kind="src" output="build/test-classes" path="testsrc"/>
         <classpathentry kind="var" path="wpilib" sourcepath="wpilib.sources"/>
         <classpathentry kind="var" path="networktables" sourcepath="networktables.sources"/>
-        
         <classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Strongback"/>
         <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-        
-        <classpathentry kind="output" path="bin"/>
+        <classpathentry kind="output" path="build/classes"/>
 </classpath>
