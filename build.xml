@@ -1,12 +1,19 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<project name="strongback" default="dist">
+<project name="strongback" default="dist" xmlns:antcontrib="antlib:net.sf.antcontrib">
+    <!-- Add Ant-Contrib -->
+    <taskdef uri="antlib:net.sf.antcontrib"
+             resource="net/sf/antcontrib/antlib.xml"
+             classpath="libs/build/ant-contrib-1.0b3.jar"/>
+
     <import file="dependencies.xml"/>
     <tstamp>
         <format property="current.year" pattern="yyyy" locale="en"/>
         <format property="current.date" pattern="yyyy-MM-dd" locale="en"/>
     </tstamp>
     <property file="build.properties"/>
+    <property name="wpilib.dir" value="libs/wpilib"/>
     <property name="wpi.libs.dir" value="${wpilib.dir}/java/current/lib"/>
+    <property file="${wpilib.dir}/wpilib.properties"/>
     <property name="build.dir" value="build"/>
 
     <target name="help">
@@ -16,11 +23,18 @@
         <echo>   compile       Compiles the source code in all projects</echo>
         <echo>   test          Compiles and runs the tests in all projects</echo>
         <echo>   jar           Compiles, runs the tests, and builds JAR files for all projects</echo>
-        <echo>   dist          Creates the distribution archive</echo>
+        <echo>   javadoc       Builds the JavaDoc</echo>
+        <echo>   dist          Creates the distribution ZIP and TAR archives in the `build` directory</echo>
         <echo></echo>
         <echo>Some of these targets depend on other targets. For example, running 'ant test' will</echo>
         <echo>automatically include the 'compile' target, so it is equivalent to running 'ant compile test'.</echo>
         <echo>Likewise, 'jar' automatically runs 'test', and 'dist' automatically runs 'clean' and 'jar'.</echo>
+        <echo></echo>
+        <echo>There are a few other targets that are automatically run when the above targets are used,</echo>
+        <echo>but which you may want to run manually:</echo>
+        <echo></echo>
+        <echo>   dep           Install the dependencies required to compile, run tests, and create the distribution.</echo>
+        <echo>   remove-dep    Remove the dependencies installed by `dep`</echo>
         <echo></echo>
     </target>
 
@@ -31,19 +45,19 @@
         </antcall>
     </target>
 
-    <target name="compile" description="Compiles source code">
+    <target name="compile" depends="dep" description="Compiles source code">
         <antcall target="strongback.all">
             <param name="dependency.target" value="compile"/>
         </antcall>
     </target>
 
-    <target name="test" description="Run the tests">
+    <target name="test" depends="dep" description="Run the tests">
         <antcall target="strongback.all">
             <param name="dependency.target" value="test"/>
         </antcall>
     </target>
 
-    <target name="jar" description="Creates the JARs">
+    <target name="jar" depends="dep" description="Creates the JARs">
         <antcall target="strongback.all">
             <param name="dependency.target" value="jar"/>
         </antcall>
@@ -85,6 +99,7 @@
 
     <target name="dist" depends="clean, jar, javadoc" description="Creates the distribution">
         <echo>Building Strongback distribution version ${strongback.version}</echo>
+        <echo>for the WPILib version ${wpilib.version} installed at ${wpilib.dir}</echo>
         <mkdir dir="build"/>
 
         <!-- Update the strongback.properties file -->
@@ -120,4 +135,82 @@
         <delete file="${build.dir}/strongback-${strongback.version}.tar" />
 
     </target>
+
+    <!-- Remove and clean dependencies -->
+    <target name="remove-dep" depends="clean-downloads" description="Removes the locally-installed dependencies">
+        <!-- !!!! Always remove the *local* installation; never the one in ${wpilib.dir} !!!! -->
+        <delete dir="libs/wpilib" />
+    </target>
+
+    <!-- Remove and clean dependencies -->
+    <target name="clean-downloads" description="Deletes the temporary downloads folder">
+        <delete dir="downloads" />
+    </target>
+
+    <!-- Install Dependencies -->
+    <target name="dep" depends="download-wpilib,clean-downloads" description="Downloads and installs the dependencies required for the build">
+    </target>
+
+    <!-- Check if the WPI directory exists -->
+    <target name="check-for-wpilib">
+        <condition property="wpilib-missing">
+            <not>
+                <available file="${wpilib.dir}" type="dir"/>
+            </not>
+        </condition>
+    </target>
+
+    <!-- Install the WPI directory -->
+    <target name="download-wpilib" depends="check-for-wpilib" if="wpilib-missing" >
+        <echo>Downloading the WPILib library and installing into '${wpilib.dir}'.</echo>
+        <mkdir dir="downloads"/>
+        <!-- Download the 'site.xml' file that contains the URL to the feature we want, and get that URL -->
+        <get src="${wpilib.updatesite.url}/site.xml" dest="downloads/site.xml"/>
+        <xmlproperty file="downloads/site.xml" collapseAttributes="true" semanticAttributes="true" keepRoot="true"/>
+        <antcontrib:for list="${site.feature.url}" param="url">
+            <sequential>
+                <antcontrib:if>
+                    <contains string="@{url}" substring="java.feature"/>
+                    <then>
+                        <property name="javaFeatureUrl" value="@{url}"/>
+                    </then>
+                </antcontrib:if>
+            </sequential>
+        </antcontrib:for>
+        <antcontrib:propertyregex property="wpilib.version" input="${javaFeatureUrl}" regexp="_([\d.]*).jar" select="\1" casesensitive="false" />
+        <!-- The feature URL can be converted to the plugin URL -->
+        <loadresource property="javaPluginUrl">
+          <propertyresource name="javaFeatureUrl"/>
+          <filterchain>
+            <tokenfilter>
+              <filetokenizer/>
+              <replacestring from="features" to="plugins"/>
+            </tokenfilter>
+            <tokenfilter>
+              <filetokenizer/>
+              <replacestring from="java.feature" to="java"/>
+            </tokenfilter>
+          </filterchain>
+        </loadresource>
+        <!-- Get the plugin JAR file, and extract it's 'java.zip' file -->
+        <get src="${wpilib.updatesite.url}/${javaPluginUrl}" dest="downloads/wpi-java-plugin.jar"/>
+        <unzip src="downloads/wpi-java-plugin.jar" dest="downloads">
+            <patternset>
+                <include name="**/java.zip"/>
+            </patternset>
+        </unzip>
+        <!-- Extract the 'java.zip' file into a new `wpilib` directory -->
+        <mkdir dir="${wpilib.dir}/java/current"/>
+        <unzip src="downloads/resources/java.zip" dest="${wpilib.dir}/java/current">
+            <patternset>
+                <include name="**/*"/>
+            </patternset>
+        </unzip>
+        <!-- Write out a property file in the directory -->
+        <propertyfile file="${wpilib.dir}/wpilib.properties" comment="Downloaded and installed by Strongback build system">
+            <entry  key="version" value="current"/>
+            <entry  key="wpilib.version" value="${wpilib.version}"/>
+        </propertyfile>
+    </target>
+
 </project>

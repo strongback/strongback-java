@@ -2,10 +2,10 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="var" path="wpilib" sourcepath="wpilib.sources"/>
-	<classpathentry kind="var" path="networktables" sourcepath="networktables.sources"/>
 	<classpathentry kind="lib" path="/libs/test/junit-4.11.jar" sourcepath="/libs/test/junit-4.11-sources.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/strongback"/>
 	<classpathentry kind="lib" path="/libs/test/metrics-core-3.1.0.jar" sourcepath="/libs/test/metrics-core-3.1.0-sources.jar"/>
+	<classpathentry kind="lib" path="/libs/wpilib/java/current/lib/WPILib.jar" sourcepath="/libs/wpilib/java/current/lib/WPILib-sources.jar"/>
+	<classpathentry kind="lib" path="/libs/wpilib/java/current/lib/NetworkTables.jar" sourcepath="/libs/wpilib/java/current/lib/NetworkTables-sources.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
