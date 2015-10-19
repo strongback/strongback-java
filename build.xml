@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<project name="strongback" default="dist" xmlns:antcontrib="antlib:net.sf.antcontrib">
+<project name="strongback" default="dist">
     <!-- Add Ant-Contrib -->
-    <taskdef uri="antlib:net.sf.antcontrib"
-             resource="net/sf/antcontrib/antlib.xml"
-             classpath="libs/build/ant-contrib-1.0b3.jar"/>
+    <taskdef resource="net/sf/antcontrib/antlib.xml">
+        <classpath>
+            <pathelement location="libs/ant/ant-contrib-1.0b3.jar"/>
+        </classpath>
+    </taskdef>
 
     <import file="dependencies.xml"/>
     <tstamp>
@@ -33,8 +35,8 @@
         <echo>There are a few other targets that are automatically run when the above targets are used,</echo>
         <echo>but which you may want to run manually:</echo>
         <echo></echo>
-        <echo>   dep           Install the dependencies required to compile, run tests, and create the distribution.</echo>
-        <echo>   remove-dep    Remove the dependencies installed by `dep`</echo>
+        <echo>   deps          Install the dependencies required to compile, run tests, and create the distribution.</echo>
+        <echo>   remove-deps   Remove the dependencies installed by `dep`</echo>
         <echo></echo>
     </target>
 
@@ -45,19 +47,19 @@
         </antcall>
     </target>
 
-    <target name="compile" depends="dep" description="Compiles source code">
+    <target name="compile" depends="deps" description="Compiles source code">
         <antcall target="strongback.all">
             <param name="dependency.target" value="compile"/>
         </antcall>
     </target>
 
-    <target name="test" depends="dep" description="Run the tests">
+    <target name="test" depends="deps" description="Run the tests">
         <antcall target="strongback.all">
             <param name="dependency.target" value="test"/>
         </antcall>
     </target>
 
-    <target name="jar" depends="dep" description="Creates the JARs">
+    <target name="jar" depends="deps" description="Creates the JARs">
         <antcall target="strongback.all">
             <param name="dependency.target" value="jar"/>
         </antcall>
@@ -137,7 +139,7 @@
     </target>
 
     <!-- Remove and clean dependencies -->
-    <target name="remove-dep" depends="clean-downloads" description="Removes the locally-installed dependencies">
+    <target name="remove-deps" depends="clean-downloads" description="Removes the locally-installed dependencies">
         <!-- !!!! Always remove the *local* installation; never the one in ${wpilib.dir} !!!! -->
         <delete dir="libs/wpilib" />
     </target>
@@ -148,7 +150,7 @@
     </target>
 
     <!-- Install Dependencies -->
-    <target name="dep" depends="download-wpilib,clean-downloads" description="Downloads and installs the dependencies required for the build">
+    <target name="deps" depends="download-wpilib,clean-downloads" description="Downloads and installs the dependencies required for the build">
     </target>
 
     <!-- Check if the WPI directory exists -->
@@ -167,17 +169,17 @@
         <!-- Download the 'site.xml' file that contains the URL to the feature we want, and get that URL -->
         <get src="${wpilib.updatesite.url}/site.xml" dest="downloads/site.xml"/>
         <xmlproperty file="downloads/site.xml" collapseAttributes="true" semanticAttributes="true" keepRoot="true"/>
-        <antcontrib:for list="${site.feature.url}" param="url">
+        <for list="${site.feature.url}" param="url">
             <sequential>
-                <antcontrib:if>
+                <if>
                     <contains string="@{url}" substring="java.feature"/>
                     <then>
                         <property name="javaFeatureUrl" value="@{url}"/>
                     </then>
-                </antcontrib:if>
+                </if>
             </sequential>
-        </antcontrib:for>
-        <antcontrib:propertyregex property="wpilib.version" input="${javaFeatureUrl}" regexp="_([\d.]*).jar" select="\1" casesensitive="false" />
+        </for>
+        <propertyregex property="wpilib.version" input="${javaFeatureUrl}" regexp="_([\d.]*).jar" select="\1" casesensitive="false" />
         <!-- The feature URL can be converted to the plugin URL -->
         <loadresource property="javaPluginUrl">
           <propertyresource name="javaFeatureUrl"/>

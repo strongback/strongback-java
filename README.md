@@ -23,7 +23,7 @@ If you want to build Strongback locally, you will need to have installed JDK 1.8
 
     $ ant test
 
-This will download the appropriate version of WPILib and install it into the `libs` directory, and then compile all the code and run the unit tests. Once this works, you know your environment is set up correctly, and you can proceed to import the projects into your Eclipse workspace and view or make changes to the library and/or tests using Eclipse. At any time, you can run Ant to compile, test, or create distribution files.
+This will download the appropriate version of WPILib and install it into the `libs` directory, and then compile all the code and run the unit tests. Once this works, you know your environment is set up correctly, and you can proceed to import the projects into your Eclipse workspace and view or make changes to the library and/or tests using Eclipse. At any time, you can run Ant to compile, test, or create distribution files. For help with Ant, run `ant help` to see the available targets and their descriptions.
 
 If you have any problems getting this far, please check our [developers discussion forum](https://groups.google.com/forum/#!forum/strongback-dev) to see if others are having similar problems. If you see no relevant discussion, post a question with the details about your platform, the versions of the tools, what you are trying to do, and what result you are getting. 
 
