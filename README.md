@@ -1,6 +1,12 @@
 [![Build Status](https://travis-ci.org/strongback/strongback-java.svg?branch=master)](https://travis-ci.org/strongback/strongback-java)
 
-# Introducing Strongback
+# Using Strongback
+
+Our new [Using Strongback](https://www.gitbook.com/book/strongback/using-strongback/) online book has all the information you need to download and start using Strongback on your FRC robot, and the library is available on our [releases page](https://github.com/strongback/strongback-java/releases). Our [overview presentation](http://slides.com/strongback/using-strongback/#/) is an alternative introduction that touches on all the major features.
+
+If you have questions or want to get involved in the project, post to our [online discussion forums](https://github.com/strongback/strongback-java/wiki/Community).
+
+# What is Strongback?
 
 Strongback is a new open source software library that makes your robot code lighter and stronger. You use it along with the [WPILib library](https://wpilib.screenstepslive.com/s/4485/m/13809) on your [FIRST Robotics Competition](http://www.usfirst.org/roboticsprograms/frc) robot's RoboRIO, but Strongback's APIs and functionality mean you need less code to do more. Plus, Strongback makes it easier for you to test your code without robot hardware and can record real-time data while you operate your robot for later post-processing.
 
@@ -12,12 +18,6 @@ Strongback is a new open source software library that makes your robot code ligh
 * **Data and event recorder** - Record in real time the input and output signals from the RoboRIO, button presses, changes in command state, and other robot-specific events. Post-process the data off-robot (or in the future do it in real time).
 * **Logging** - Simple extendable framework to log messages at different levels.
 * **Uses WPILib** - Uses the WPILib classes underneath for safety and consistency.
-
-# Using Strongback
-
-Check out our new [Using Strongback](https://www.gitbook.com/book/strongback/using-strongback/) online book. It's chocked full of descriptions, details, and example code. The book's [Getting Started](https://strongback.gitbooks.io/using-strongback/content/getting_started.html) section shows you how to download, install, and use the [latest release](https://github.com/strongback/strongback-java/releases). Or, look at [this presentation](http://slides.com/strongback/using-strongback/#/) for an overview of the major features.
-
-We're just getting started, so stay tuned. See [our wiki](https://github.com/strongback/strongback-java/wiki) for more details, including how you can help out!
 
 # Building locally
 
