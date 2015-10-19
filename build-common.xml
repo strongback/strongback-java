@@ -70,7 +70,7 @@
         <copy todir="${project.output.dir}">
             <fileset dir="${project.source.dir}" includes="**/*.xml,**/*.properties,**/*.txt,**/*.ico" />
         </copy>
-        <copy todir="${project.output.dir}" failonerror="false" quiet="true">
+        <copy todir="${project.output.dir}" failonerror="false">
             <fileset dir="${project.resources.dir}"/>
         </copy>
     </target>
@@ -92,7 +92,7 @@
         <copy todir="${project.test.output.dir}">
             <fileset dir="${project.test.source.dir}" includes="**/*.xml,**/*.properties,**/*.txt,**/*.ico" />
         </copy>
-        <copy todir="${project.output.dir}" failonerror="false" quiet="true">
+        <copy todir="${project.output.dir}" failonerror="false">
             <fileset dir="${project.test.resources.dir}"/>
         </copy>
     </target>
