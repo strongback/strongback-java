@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <project name="build-common" default="test">
 
-    <property name="strongback.dir" value=".."/>
+    <property name="strongback.dir" location=".."/>
     <property file="${strongback.dir}/build.properties"/>
+    <property name="wpilib.dir" value="${strongback.dir}/libs/wpilib"/>
 
-    <property name="wpilib.dir" value="${user.home}/wpilib"/>
     <property name="java.compile.arg" value=""/>
     <property name="java.source.version" value="1.8"/>
     <property name="java.target.version" value="1.8"/>
@@ -57,6 +57,7 @@
     </target>
 
     <target name="compile" description="Compile the code">
+        <echo>Compiling against WPILib ${wpilib.version} installed at ${wpilib.dir}</echo>
         <mkdir dir="${project.output.dir}"/>
         <javac srcdir="${project.source.dir}" 
                destdir="${project.output.dir}" 
@@ -75,6 +76,7 @@
     </target>
 
     <target name="compile-tests" depends="compile, if-tests" if="tests-exists" description="Compile the unit tests">
+        <echo>Compiling against WPILib ${wpilib.version} installed at ${wpilib.dir}</echo>
         <mkdir dir="${project.test.output.dir}"/>
         <javac srcdir="${project.test.source.dir}" 
                destdir="${project.test.output.dir}" 
@@ -97,6 +99,7 @@
 
     <!-- Run the JUnit Tests that are in the 'test' directory of this project -->
     <target name="test" depends="compile-tests, if-tests" if="tests-exists" description="Run the unit tests">
+        <echo>Testing with WPILib ${wpilib.version} installed at ${wpilib.dir}</echo>
         <!-- Creates the directories used in the tests -->
         <mkdir dir="${project.test.output.dir}" />
         <mkdir dir="${project.test.report.dir}" />

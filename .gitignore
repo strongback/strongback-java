@@ -12,4 +12,8 @@ deploy/
 target/
 *.class
 
+# The wpilib directory should never be committed
+libs/wpilib
+downloads/
+
 .DS_Store/
