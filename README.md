@@ -1,5 +1,4 @@
 [![Build Status](https://travis-ci.org/strongback/strongback-java.svg?branch=master)](https://travis-ci.org/strongback/strongback-java)
-
 # Using Strongback
 
 Our new [Using Strongback](https://www.gitbook.com/book/strongback/using-strongback/) online book has all the information you need to download and start using Strongback on your FRC robot, and the library is available on our [releases page](https://github.com/strongback/strongback-java/releases). Our [overview presentation](http://slides.com/strongback/using-strongback/#/) is an alternative introduction that touches on all the major features.
