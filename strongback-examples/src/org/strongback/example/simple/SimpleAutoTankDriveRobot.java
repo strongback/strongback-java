@@ -17,7 +17,6 @@
 package org.strongback.example.simple;
 
 import org.strongback.Strongback;
-import org.strongback.command.Command;
 import org.strongback.components.Motor;
 import org.strongback.components.ui.ContinuousRange;
 import org.strongback.components.ui.FlightStick;
@@ -41,7 +40,6 @@ public class SimpleAutoTankDriveRobot extends IterativeRobot {
     private static final int RF_MOTOR_PORT = 3;
     private static final int RR_MOTOR_PORT = 4;
 
-    private Command autonomousCommand;
     private TankDrive drive;
     private ContinuousRange driveSpeed;
     private ContinuousRange turnSpeed;
@@ -64,11 +62,6 @@ public class SimpleAutoTankDriveRobot extends IterativeRobot {
         driveSpeed = joystick.getPitch().scale(sensitivity::read); // scaled
         turnSpeed = joystick.getRoll().scale(sensitivity::read).invert(); // scaled and inverted
 
-        // Set up the command we'll use during autonomous. We'd probably use a custom CommandGroup that did something more
-        // complicated, but for this very simple example we'll just drive forward at 50% speed for 5 seconds,
-        // so we can use a simple lambda ...
-        autonomousCommand = Command.create(5.0, () -> drive.tank(0.5, 0.5));
-
         // Set up the data recorder to capture the left & right motor speeds (since both motors on the same side should
         // be at the same speed, we can just use the composed motors for each) and the sensitivity. We have to do this
         // before we start Strongback...
@@ -83,7 +76,7 @@ public class SimpleAutoTankDriveRobot extends IterativeRobot {
     public void autonomousInit() {
         // Start Strongback functions ...
         Strongback.start();
-        Strongback.submit(autonomousCommand);
+        Strongback.submit(()->drive.tank(0.5, 0.5), 5.0, drive::stop);
     }
 
     @Override
@@ -99,8 +92,10 @@ public class SimpleAutoTankDriveRobot extends IterativeRobot {
 
     @Override
     public void disabledInit() {
+        drive.stop();
         // Tell Strongback that the robot is disabled so it can flush and kill commands.
         Strongback.disable();
     }
 
 }
+

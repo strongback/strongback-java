@@ -207,10 +207,38 @@ public abstract class Command {
      * @return the new command; never null
      */
     public static Command create(double durationInSeconds, Runnable executeFunction) {
-        return create(durationInSeconds, () -> {
-            executeFunction.run();
-            return false;
-        } , () -> "Command (one-time, duration=" + durationInSeconds + " sec) " + executeFunction);
+        return create(durationInSeconds, executeFunction, null);
+    }
+
+    /**
+     * Create a new command that runs once by executing the supplied function, then wait the prescribed amount of time, and then
+     * call the supplied {@code endFunction}. The resulting command will have no {@link Requirable}s.
+     *
+     * @param durationInSeconds the maximum duration in seconds that the command should execute; must be positive
+     * @param executeFunction the function to be called during execution; may not be null
+     * @param endFunction the function to be called when the command terminates; may be null
+     * @return the new command; never null
+     */
+    public static Command create(double durationInSeconds, Runnable executeFunction, Runnable endFunction) {
+        return new Command(durationInSeconds) {
+            boolean completed = false;
+            @Override
+            public boolean execute() {
+                if ( !completed ) {
+                    executeFunction.run();
+                    completed = true;
+                }
+                return true;
+            }
+            @Override
+            public void end() {
+                if ( endFunction != null ) endFunction.run();
+            }
+            @Override
+            public String toString() {
+                return "one-time, duration=" + durationInSeconds + " sec) " + executeFunction;
+            }
+        };
     }
 
     /**
@@ -221,7 +249,19 @@ public abstract class Command {
      * @return the new command; never null
      */
     public static Command create(BooleanSupplier executeFunction) {
-        return create(0.0, executeFunction, () -> "Command " + executeFunction);
+        return create(0.0, executeFunction, null, () -> "Command " + executeFunction);
+    }
+
+    /**
+     * Create a new command that runs one or more times by executing the supplied function. When the command terminates, the
+     * {@code endFunction} will be called. The resulting command will have no {@link Requirable}s.
+     *
+     * @param executeFunction the function to be called during execution; may not be null
+     * @param endFunction the function to be called when the command terminates; may be null
+     * @return the new command; never null
+     */
+    public static Command create(BooleanSupplier executeFunction, Runnable endFunction) {
+        return create(0.0, executeFunction, endFunction, () -> "Command " + executeFunction);
     }
 
     /**
@@ -240,20 +280,61 @@ public abstract class Command {
 
     /**
      * Create a new command that runs one or more times by executing the supplied function, but that will timeout if taking
-     * longer than the specified timeout. The resulting command will have no {@link Requirable}s.
+     * longer than the specified timeout. When the command terminates, the {@code endFunction} will be called. The resulting
+     * command will have no {@link Requirable}s.
      *
      * @param timeoutInSeconds the time in seconds
      * @param executeFunction the function to be called during execution; may not be null
+     * @param endFunction the function to be called when the command terminates; may be null
+     * @return the new command; never null
+     */
+    public static Command create(double timeoutInSeconds, BooleanSupplier executeFunction, Runnable endFunction) {
+        return create(timeoutInSeconds,
+                      executeFunction,
+                      endFunction,
+                      () -> "Command (timeout=" + timeoutInSeconds + " sec,repeatable) " + executeFunction);
+    }
+
+    /**
+     * Create a new command that runs one or more times by executing the supplied function, but that will timeout if taking
+     * longer than the specified timeout. When the command terminates, the {@code endFunction} will be called. The resulting
+     * command will have no {@link Requirable}s.
+     *
+     * @param timeoutInSeconds the time in seconds
+     * @param executeFunction the function to be called during execution; may not be null
+     * @param endFunction the function to be called when the command terminates; may be null
      * @param toString the function to be called when {@link Command#toString()} is called; may not be null
      * @param requirements the {@link Requirable}s for the command
      * @return the new command; never null
      */
-    protected static Command create(double timeoutInSeconds, BooleanSupplier executeFunction, Supplier<String> toString,
-            Requirable... requirements) {
+    protected static Command create(double timeoutInSeconds, BooleanSupplier executeFunction,
+            Supplier<String> toString, Requirable... requirements) {
+        return create(timeoutInSeconds, executeFunction, null, toString, requirements);
+    }
+
+    /**
+     * Create a new command that runs one or more times by executing the supplied function, but that will timeout if taking
+     * longer than the specified timeout. When the command terminates, the {@code endFunction} will be called. The resulting
+     * command will have no {@link Requirable}s.
+     *
+     * @param timeoutInSeconds the time in seconds
+     * @param executeFunction the function to be called during execution; may not be null
+     * @param endFunction the function to be called when the command terminates; may be null
+     * @param toString the function to be called when {@link Command#toString()} is called; may not be null
+     * @param requirements the {@link Requirable}s for the command
+     * @return the new command; never null
+     */
+    protected static Command create(double timeoutInSeconds, BooleanSupplier executeFunction, Runnable endFunction,
+            Supplier<String> toString, Requirable... requirements) {
         return new Command(timeoutInSeconds, requirements) {
             @Override
             public boolean execute() {
                 return executeFunction.getAsBoolean();
+            }
+
+            @Override
+            public void end() {
+                if (endFunction != null) endFunction.run();
             }
 
             @Override

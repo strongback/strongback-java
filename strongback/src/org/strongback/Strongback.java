@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
+import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.LongConsumer;
 import java.util.function.Supplier;
@@ -482,6 +483,55 @@ public final class Strongback {
      */
     public static void submit(Command command) {
         if (command != null) INSTANCE.scheduler.submit(command);
+    }
+
+    /**
+     * Submit to Strongback's internal scheduler a {@link Command} that runs the supplied function one time and completes
+     * immediately.
+     *
+     * @param executeFunction the function to be called during execution; may not be null
+     */
+    public static void submit(Runnable executeFunction) {
+        submit(Command.create(executeFunction));
+    }
+
+    /**
+     * Submit to Strongback's internal scheduler a {@link Command} that runs the supplied function one time, waits the
+     * prescribed amount of time, and then calls the second function.
+     *
+     * @param first the first function to be called; may not be null
+     * @param delayInSeconds the delay in seconds after the first function completes; must be positive
+     * @param second the second function to be called after the delay; may be null if not needed
+     */
+    public static void submit(Runnable first, double delayInSeconds, Runnable second) {
+        submit(Command.create(delayInSeconds, first, second));
+    }
+
+    /**
+     * Submit to Strongback's internal scheduler a {@link Command} that runs the supplied function one or more times until it
+     * returns <code>false</code> or until the prescribed maximum time has passed, whichever comes first.
+     *
+     * @param function the function to be called at least one time and that should return <code>true</code> if it is to be
+     *        called again; may not be null
+     * @param maxDurationInSeconds the maximum amount of time that the first function should be repeatedly called; must be
+     *        positive
+     */
+    public static void submit(BooleanSupplier function, double maxDurationInSeconds) {
+        submit(Command.create(maxDurationInSeconds, function));
+    }
+
+    /**
+     * Submit to Strongback's internal scheduler a {@link Command} that runs the supplied function one or more times until it
+     * returns <code>false</code> or until the prescribed maximum time has passed, and then calls the second function.
+     *
+     * @param first the first function to be called at least one time and that should return <code>true</code> if it is to be
+     *        called again; may not be null
+     * @param maxDurationInSeconds the maximum amount of time that the first function should be repeatedly called; must be
+     *        positive
+     * @param second the second function to be called after the delay; may be null if not needed
+     */
+    public static void submit(BooleanSupplier first, double maxDurationInSeconds, Runnable second) {
+        submit(Command.create(maxDurationInSeconds, first, second));
     }
 
     /**
