@@ -36,4 +36,9 @@ public class MockThreeAxisAccelerometer extends MockTwoAxisAccelerometer impleme
     public MockAccelerometer getZDirection() {
         return z;
     }
+
+    @Override
+    public String toString() {
+        return "" + getXDirection().getAcceleration() + ", " + getYDirection().getAcceleration() + ", " + getZDirection().getAcceleration() + " g/s\u00B2";
+    }
 }

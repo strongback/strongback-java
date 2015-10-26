@@ -46,4 +46,9 @@ public class MockCurrentSensor implements CurrentSensor {
         return this;
     }
 
+    @Override
+    public String toString() {
+        return Double.toString(getCurrent()) + "A";
+    }
+
 }

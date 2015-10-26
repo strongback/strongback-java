@@ -49,4 +49,9 @@ public class MockCompass extends MockZeroable implements Compass {
         super.setValue(angle);
         return this;
     }
+
+    @Override
+    public String toString() {
+        return Double.toString(getHeading()) + "\u00B0 heading (" + getAngle() + "\u00B0)";
+    }
 }

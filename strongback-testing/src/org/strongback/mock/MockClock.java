@@ -69,4 +69,8 @@ public class MockClock implements Clock {
         return ticker.get();
     }
 
+    @Override
+    public String toString() {
+        return Long.toString(currentTimeInMillis()) + " ms";
+    }
 }

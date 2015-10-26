@@ -62,4 +62,8 @@ public class MockDistanceSensor extends MockZeroable implements DistanceSensor {
         return setDistanceInInches(distance * 12.0);
     }
 
+    @Override
+    public String toString() {
+        return Double.toString(getDistanceInInches()) + " inches";
+    }
 }

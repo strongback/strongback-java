@@ -46,4 +46,8 @@ public class MockAccelerometer implements Accelerometer {
         return this;
     }
 
+    @Override
+    public String toString() {
+        return Double.toString(getAcceleration()) + " g/s\u00B2";
+    }
 }

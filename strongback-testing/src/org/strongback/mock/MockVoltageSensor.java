@@ -46,4 +46,8 @@ public class MockVoltageSensor implements VoltageSensor {
         return this;
     }
 
+    @Override
+    public String toString() {
+        return Double.toString(getVoltage()) + " V";
+    }
 }

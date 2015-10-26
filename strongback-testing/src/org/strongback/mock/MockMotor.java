@@ -43,6 +43,7 @@ public class MockMotor implements Motor {
         return this;
     }
 
+    @Override
     public MockMotor invert() {
         return new MockMotor(speed) {
             @Override
@@ -58,4 +59,9 @@ public class MockMotor implements Motor {
         };
     }
 
+
+    @Override
+    public String toString() {
+        return Double.toString(getSpeed());
+    }
 }
