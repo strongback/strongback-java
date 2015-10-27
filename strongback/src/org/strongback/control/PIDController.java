@@ -276,6 +276,11 @@ public class PIDController implements LiveWindowSendable, Requirable, Controller
     }
 
     @Override
+    public boolean checkTolerance(double value) {
+        return target.isWithinTolerance(value);
+    }
+
+    @Override
     public boolean computeOutput() {
         if (enabled.get()) {
             lastInput = source.getAsDouble();
@@ -313,7 +318,7 @@ public class PIDController implements LiveWindowSendable, Requirable, Controller
             output.accept(result);
 
             // Determine if we're within the tolerance ...
-            return Math.abs(error) > target.tolerance;
+            return Math.abs(error) < target.tolerance;
         }
         return false;
     }
@@ -466,6 +471,10 @@ public class PIDController implements LiveWindowSendable, Requirable, Controller
 
         public Target continuous(boolean continuous) {
             return new Target(setpoint, minInput, maxInput, tolerance, continuous, minOutput, maxOutput);
+        }
+
+        public boolean isWithinTolerance(double value) {
+            return Math.abs(value) <= (setpoint - tolerance);
         }
 
         public double calculateError(double input) {

@@ -24,8 +24,8 @@ import org.strongback.control.PIDController;
  * use it as is.
  *
  * @author Randall Hauch
- * @see Command#approach(PIDController, double, double)
- * @see Command#approach(double, PIDController, double, double)
+ * @see Command#use(PIDController, double, double)
+ * @see Command#use(double, PIDController, double, double)
  */
 public class ControllerCommand extends Command {
 

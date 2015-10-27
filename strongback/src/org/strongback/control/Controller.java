@@ -27,10 +27,19 @@ public interface Controller {
      * Calculate the next controller output. This usually involves reading one or more inputs and computing the output based
      * upon a model of the system.
      *
-     * @return <code>true</code> if the execution resulted in an error that is within the tolerance of the setpoint, or
-     *         <code>false</code> if this controller has not completed
+     * @return <code>true</code> if the execution completed because it resulted in a value that is within the tolerance of the
+     *         setpoint, or <code>false</code> if this controller is not {@link #isEnabled() enabled} or has not yet reached the
+     *         setpoint given the tolerance
      */
     public boolean computeOutput();
+
+    /**
+     * Determines whether the supplied value is within the tolerance of the setpoint.
+     *
+     * @param value the proposed value
+     * @return <code>true</code> if the proposed value is within the tolerance of the setpoint, or <code>false</code> otherwise
+     */
+    public boolean checkTolerance(double value);
 
     /**
      * Sets the target value for this controller.

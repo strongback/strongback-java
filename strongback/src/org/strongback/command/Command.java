@@ -150,21 +150,20 @@ public abstract class Command {
     }
 
     /**
-     * Create a command that uses the supplied PID controller and moves within the specified tolerance of the specified
-     * setpoint.
+     * Create a command that uses the supplied PID controller to move within the specified tolerance of the specified setpoint.
      *
      * @param controller the PID+FF controller; may not be null
      * @param setpoint the desired value for the input to the controller
      * @param tolerance the absolute tolerance for how close the controller should come before completing the command
      * @return the command; never null
      */
-    public static Command approach(PIDController controller, double setpoint, double tolerance) {
+    public static Command use(PIDController controller, double setpoint, double tolerance) {
         return new ControllerCommand(controller, setpoint, tolerance, controller);
     }
 
     /**
-     * Create a command that uses the supplied PID controller and moves within the specified tolerance of the specified
-     * setpoint, timing out if the command takes longer than {@code durationInSeconds}.
+     * Create a command that uses the supplied PID controller to move within the specified tolerance of the specified setpoint,
+     * timing out if the command takes longer than {@code durationInSeconds}.
      *
      * @param durationInSeconds the maximum duration in seconds that the command should execute; must be non-negative, and 0.0
      *        equates to forever
@@ -173,7 +172,7 @@ public abstract class Command {
      * @param tolerance the absolute tolerance for how close the controller should come before completing the command
      * @return the command; never null
      */
-    public static Command approach(double durationInSeconds, PIDController controller, double setpoint, double tolerance) {
+    public static Command use(double durationInSeconds, PIDController controller, double setpoint, double tolerance) {
         return new ControllerCommand(durationInSeconds, controller, setpoint, tolerance, controller);
     }
 
@@ -251,18 +250,21 @@ public abstract class Command {
     public static Command create(double durationInSeconds, Runnable executeFunction, Runnable endFunction) {
         return new Command(durationInSeconds) {
             boolean completed = false;
+
             @Override
             public boolean execute() {
-                if ( !completed ) {
+                if (!completed) {
                     executeFunction.run();
                     completed = true;
                 }
                 return true;
             }
+
             @Override
             public void end() {
-                if ( endFunction != null ) endFunction.run();
+                if (endFunction != null) endFunction.run();
             }
+
             @Override
             public String toString() {
                 return "one-time, duration=" + durationInSeconds + " sec) " + executeFunction;
@@ -335,8 +337,8 @@ public abstract class Command {
      * @param requirements the {@link Requirable}s for the command
      * @return the new command; never null
      */
-    protected static Command create(double timeoutInSeconds, BooleanSupplier executeFunction,
-            Supplier<String> toString, Requirable... requirements) {
+    protected static Command create(double timeoutInSeconds, BooleanSupplier executeFunction, Supplier<String> toString,
+            Requirable... requirements) {
         return create(timeoutInSeconds, executeFunction, null, toString, requirements);
     }
 
