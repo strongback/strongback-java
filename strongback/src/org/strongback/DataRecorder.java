@@ -73,4 +73,15 @@ public interface DataRecorder {
      * @throws IllegalArgumentException if the {@code sensor} parameter is null
      */
     public DataRecorder register(String name, SpeedSensor sensor);
+
+    /**
+     * Registers by name a recordable object that likely has multiple channels. This method will remove any
+     * previously-registered supplier, switch, or motor with the same name.
+     *
+     * @param name the name of the {@link SpeedSensor}
+     * @param recordable the {@link DataRecordable} to be registered
+     * @return this instance so methods can be chained together; never null
+     * @throws IllegalArgumentException if the {@code sensor} parameter is null
+     */
+    public DataRecorder register(String name, DataRecordable recordable);
 }

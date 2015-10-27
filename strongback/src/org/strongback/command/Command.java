@@ -23,6 +23,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import org.strongback.Strongback;
+import org.strongback.control.PIDController;
 import org.strongback.util.Collections;
 
 /**
@@ -146,6 +147,34 @@ public abstract class Command {
 
     final boolean isInterruptible() {
         return interruptible;
+    }
+
+    /**
+     * Create a command that uses the supplied PID controller and moves within the specified tolerance of the specified
+     * setpoint.
+     *
+     * @param controller the PID+FF controller; may not be null
+     * @param setpoint the desired value for the input to the controller
+     * @param tolerance the absolute tolerance for how close the controller should come before completing the command
+     * @return the command; never null
+     */
+    public static Command approach(PIDController controller, double setpoint, double tolerance) {
+        return new PIDCommand(controller, setpoint, tolerance, controller);
+    }
+
+    /**
+     * Create a command that uses the supplied PID controller and moves within the specified tolerance of the specified
+     * setpoint, timing out if the command takes longer than {@code durationInSeconds}.
+     *
+     * @param durationInSeconds the maximum duration in seconds that the command should execute; must be non-negative, and 0.0
+     *        equates to forever
+     * @param controller the PID+FF controller; may not be null
+     * @param setpoint the desired value for the input to the controller
+     * @param tolerance the absolute tolerance for how close the controller should come before completing the command
+     * @return the command; never null
+     */
+    public static Command approach(double durationInSeconds, PIDController controller, double setpoint, double tolerance) {
+        return new PIDCommand(durationInSeconds, controller, setpoint, tolerance, controller);
     }
 
     /**
@@ -302,7 +331,6 @@ public abstract class Command {
      *
      * @param timeoutInSeconds the time in seconds
      * @param executeFunction the function to be called during execution; may not be null
-     * @param endFunction the function to be called when the command terminates; may be null
      * @param toString the function to be called when {@link Command#toString()} is called; may not be null
      * @param requirements the {@link Requirable}s for the command
      * @return the new command; never null

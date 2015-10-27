@@ -64,6 +64,14 @@ final class DataRecorderChannels implements DataRecorder, Iterable<DataRecorderC
     }
 
     @Override
+    public DataRecorder register(String name, DataRecordable recordable) {
+        if (name == null) throw new IllegalArgumentException("The name may not be null");
+        if (recordable == null) throw new IllegalArgumentException("The recordable may not be null");
+        recordable.registerWith(this, name);
+        return this;
+    }
+
+    @Override
     public Iterator<DataRecorderChannel> iterator() {
         return Iterators.immutable(channels);
     }
