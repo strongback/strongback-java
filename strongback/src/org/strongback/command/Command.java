@@ -23,6 +23,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import org.strongback.Strongback;
+import org.strongback.control.PIDController;
 import org.strongback.util.Collections;
 
 /**
@@ -149,6 +150,33 @@ public abstract class Command {
     }
 
     /**
+     * Create a command that uses the supplied PID controller to move within the specified tolerance of the specified setpoint.
+     *
+     * @param controller the PID+FF controller; may not be null
+     * @param setpoint the desired value for the input to the controller
+     * @param tolerance the absolute tolerance for how close the controller should come before completing the command
+     * @return the command; never null
+     */
+    public static Command use(PIDController controller, double setpoint, double tolerance) {
+        return new ControllerCommand(controller, setpoint, tolerance, controller);
+    }
+
+    /**
+     * Create a command that uses the supplied PID controller to move within the specified tolerance of the specified setpoint,
+     * timing out if the command takes longer than {@code durationInSeconds}.
+     *
+     * @param durationInSeconds the maximum duration in seconds that the command should execute; must be non-negative, and 0.0
+     *        equates to forever
+     * @param controller the PID+FF controller; may not be null
+     * @param setpoint the desired value for the input to the controller
+     * @param tolerance the absolute tolerance for how close the controller should come before completing the command
+     * @return the command; never null
+     */
+    public static Command use(double durationInSeconds, PIDController controller, double setpoint, double tolerance) {
+        return new ControllerCommand(durationInSeconds, controller, setpoint, tolerance, controller);
+    }
+
+    /**
      * Create a new command object that will cancel all currently-running commands that require the supplied {@link Requirable}
      * objects. When this command is {@link Strongback#submit(Command) submitted}, it will preempt any running (or scheduled)
      * command that also requires any of the supplied {@link Requirable}s.
@@ -222,18 +250,21 @@ public abstract class Command {
     public static Command create(double durationInSeconds, Runnable executeFunction, Runnable endFunction) {
         return new Command(durationInSeconds) {
             boolean completed = false;
+
             @Override
             public boolean execute() {
-                if ( !completed ) {
+                if (!completed) {
                     executeFunction.run();
                     completed = true;
                 }
                 return true;
             }
+
             @Override
             public void end() {
-                if ( endFunction != null ) endFunction.run();
+                if (endFunction != null) endFunction.run();
             }
+
             @Override
             public String toString() {
                 return "one-time, duration=" + durationInSeconds + " sec) " + executeFunction;
@@ -302,13 +333,12 @@ public abstract class Command {
      *
      * @param timeoutInSeconds the time in seconds
      * @param executeFunction the function to be called during execution; may not be null
-     * @param endFunction the function to be called when the command terminates; may be null
      * @param toString the function to be called when {@link Command#toString()} is called; may not be null
      * @param requirements the {@link Requirable}s for the command
      * @return the new command; never null
      */
-    protected static Command create(double timeoutInSeconds, BooleanSupplier executeFunction,
-            Supplier<String> toString, Requirable... requirements) {
+    protected static Command create(double timeoutInSeconds, BooleanSupplier executeFunction, Supplier<String> toString,
+            Requirable... requirements) {
         return create(timeoutInSeconds, executeFunction, null, toString, requirements);
     }
 
