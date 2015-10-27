@@ -16,6 +16,7 @@
 
 package org.strongback.command;
 
+import org.strongback.control.Controller;
 import org.strongback.control.PIDController;
 
 /**
@@ -26,9 +27,9 @@ import org.strongback.control.PIDController;
  * @see Command#approach(PIDController, double, double)
  * @see Command#approach(double, PIDController, double, double)
  */
-public class PIDCommand extends Command {
+public class ControllerCommand extends Command {
 
-    private final PIDController controller;
+    private final Controller controller;
     private final Runnable initializer;
 
     /**
@@ -38,7 +39,7 @@ public class PIDCommand extends Command {
      * @param setpoint the desired value for the input to the controller
      * @param requirements the {@link Requirable}s this {@link Command} requires
      */
-    public PIDCommand(PIDController controller, double setpoint, Requirable... requirements) {
+    public ControllerCommand(Controller controller, double setpoint, Requirable... requirements) {
         super(0.0, requirements);
         this.controller = controller;
         this.initializer = () -> controller.setpoint(setpoint).enable();
@@ -53,7 +54,7 @@ public class PIDCommand extends Command {
      * @param tolerance the absolute tolerance for how close the controller should come before completing the command
      * @param requirements the {@link Requirable}s this {@link Command} requires
      */
-    public PIDCommand(PIDController controller, double setpoint, double tolerance, Requirable... requirements) {
+    public ControllerCommand(Controller controller, double setpoint, double tolerance, Requirable... requirements) {
         super(0.0, requirements);
         this.controller = controller;
         this.initializer = () -> controller.setpoint(setpoint).tolerance(tolerance).enable();
@@ -67,7 +68,7 @@ public class PIDCommand extends Command {
      * @param setpoint the desired value for the input to the controller
      * @param requirements the {@link Requirable}s this {@link Command} requires
      */
-    public PIDCommand(double timeoutInSeconds, PIDController controller, double setpoint, Requirable... requirements) {
+    public ControllerCommand(double timeoutInSeconds, Controller controller, double setpoint, Requirable... requirements) {
         super(timeoutInSeconds, requirements);
         this.controller = controller;
         this.initializer = () -> controller.setpoint(setpoint).enable();
@@ -83,7 +84,7 @@ public class PIDCommand extends Command {
      * @param tolerance the absolute tolerance for how close the controller should come before completing the command
      * @param requirements the {@link Requirable}s this {@link Command} requires
      */
-    public PIDCommand(double timeoutInSeconds, PIDController controller, double setpoint, double tolerance,
+    public ControllerCommand(double timeoutInSeconds, Controller controller, double setpoint, double tolerance,
             Requirable... requirements) {
         super(timeoutInSeconds, requirements);
         this.controller = controller;

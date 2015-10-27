@@ -68,7 +68,7 @@ import edu.wpi.first.wpilibj.tables.ITableListener;
  * @author Randall Hauch
  */
 @ThreadSafe
-public class PIDController implements LiveWindowSendable, Requirable {
+public class PIDController implements LiveWindowSendable, Requirable, Controller {
 
     private final DoubleSupplier source;
     private final DoubleConsumer output;
@@ -126,33 +126,19 @@ public class PIDController implements LiveWindowSendable, Requirable {
         return executable;
     }
 
-    /**
-     * Determine if this controller is {@link #enable() enabled}.
-     *
-     * @return <code>true</code> if enabled, or <code>false</code> otherwise
-     */
+    @Override
     public boolean isEnabled() {
         return enabled.get();
     }
 
-    /**
-     * Enable this controller so that it does read inputs, compute errors, and generate outputs when {@link #computeOutput()} is
-     * called.
-     *
-     * @return this object so that methods can be chained; never null
-     */
+    @Override
     public PIDController enable() {
         enabled.set(true);
         onTable(table -> table.putBoolean("enabled", true));
         return this;
     }
 
-    /**
-     * Disable this controller to <em>not</em> read inputs, compute errors, and generate outputs when {@link #computeOutput()}
-     * is called.
-     *
-     * @return this object so that methods can be chained; never null
-     */
+    @Override
     public PIDController disable() {
         enabled.set(false);
         output.accept(0.0d);
@@ -161,11 +147,7 @@ public class PIDController implements LiveWindowSendable, Requirable {
         return this;
     }
 
-    /**
-     * Reset any error values stored from previous {@link #computeOutput() executions}.
-     *
-     * @return this object so that methods can be chained; never null
-     */
+    @Override
     public PIDController reset() {
         error = 0.0;
         prevError = 0.0;
@@ -251,16 +233,12 @@ public class PIDController implements LiveWindowSendable, Requirable {
      * @return this object so that methods can be chained; never null
      * @see #inputRange(double, double)
      */
+    @Override
     public PIDController setpoint(double setpoint) {
         Target target = this.target.withSetpoint(setpoint);
         this.target = target;
         updateSetpoint(target);
         return this;
-    }
-
-    private void updateSetpoint(Target target) {
-        reset();
-        onTable(table -> table.putNumber("setpoint", target.setpoint));
     }
 
     /**
@@ -270,9 +248,15 @@ public class PIDController implements LiveWindowSendable, Requirable {
      * @return this object so that methods can be chained; never null
      * @see #inputRange(double, double)
      */
+    @Override
     public PIDController tolerance(double tolerance) {
         target = target.withTolerance(Math.abs(tolerance));
         return this;
+    }
+
+    private void updateSetpoint(Target target) {
+        reset();
+        onTable(table -> table.putNumber("setpoint", target.setpoint));
     }
 
     /**
@@ -291,13 +275,7 @@ public class PIDController implements LiveWindowSendable, Requirable {
         return this;
     }
 
-    /**
-     * Calculate the next output, and return whether the controller has reached the {@link #setpoint(double) setpoint} within
-     * the desired {@link #tolerance(double) tolerance}.
-     *
-     * @return <code>true</code> if the execution resulted in an error that is within the tolerance of the setpoint, or
-     *         <code>false</code> if this controller has not completed
-     */
+    @Override
     public boolean computeOutput() {
         if (enabled.get()) {
             lastInput = source.getAsDouble();

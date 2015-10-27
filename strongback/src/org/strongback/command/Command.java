@@ -159,7 +159,7 @@ public abstract class Command {
      * @return the command; never null
      */
     public static Command approach(PIDController controller, double setpoint, double tolerance) {
-        return new PIDCommand(controller, setpoint, tolerance, controller);
+        return new ControllerCommand(controller, setpoint, tolerance, controller);
     }
 
     /**
@@ -174,7 +174,7 @@ public abstract class Command {
      * @return the command; never null
      */
     public static Command approach(double durationInSeconds, PIDController controller, double setpoint, double tolerance) {
-        return new PIDCommand(durationInSeconds, controller, setpoint, tolerance, controller);
+        return new ControllerCommand(durationInSeconds, controller, setpoint, tolerance, controller);
     }
 
     /**
