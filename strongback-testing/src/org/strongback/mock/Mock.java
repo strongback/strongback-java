@@ -26,6 +26,25 @@ import org.strongback.components.Fuse;
 public class Mock {
 
     /**
+     * Create a mock power panel.
+     *
+     * @return the mock power panel; never null
+     */
+    public static MockPowerPanel powerPanel() {
+        return new MockPowerPanel(16);
+    }
+
+    /**
+     * Create a mock pneumatics module. This method can be called more than once to represent a robot with multiple pneumatics
+     * modules.
+     *
+     * @return the mock pneumatics module; never null
+     */
+    public static MockPneumaticsModule pnuematicsModule() {
+        return new MockPneumaticsModule();
+    }
+
+    /**
      * Create a mock clock.
      *
      * @return the mock clock; never null
@@ -175,6 +194,7 @@ public class Mock {
 
     /**
      * Create a relay that operates instantaneously.
+     *
      * @return the mock relay; never null
      */
     public static MockRelay relay() {

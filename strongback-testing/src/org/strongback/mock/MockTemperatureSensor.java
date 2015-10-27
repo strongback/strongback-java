@@ -46,4 +46,8 @@ public class MockTemperatureSensor implements TemperatureSensor {
         return this;
     }
 
+    @Override
+    public String toString() {
+        return Double.toString(getTemperatureInFahrenheit()) + "\u00B0F";
+    }
 }

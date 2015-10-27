@@ -50,4 +50,8 @@ public class MockAngleSensor extends MockZeroable implements AngleSensor {
         return this;
     }
 
+    @Override
+    public String toString() {
+        return Double.toString(getAngle()) + "\u00B0";
+    }
 }

@@ -18,6 +18,7 @@ package org.strongback.components;
 
 import java.util.concurrent.TimeUnit;
 
+import org.strongback.Strongback;
 import org.strongback.annotation.ThreadSafe;
 
 /**
@@ -26,8 +27,8 @@ import org.strongback.annotation.ThreadSafe;
 @ThreadSafe
 public interface Fuse extends Switch {
     /**
-     * Trigger the fuse. Once this method is called, the {@link #isTriggered()} switches but then will never change
-     * until it is {@link #reset()}.
+     * Trigger the fuse. Once this method is called, the {@link #isTriggered()} switches but then will never change until it is
+     * {@link #reset()}.
      *
      * @return this object to allow for chaining methods together; never null
      */
@@ -74,6 +75,44 @@ public interface Fuse extends Switch {
     }
 
     /**
+     * Create a simple fuse that is manually {@link #trigger() triggered} and manually {@link #reset()}.
+     *
+     * @param whenTriggered the function that is to be called when the fuse is triggered; may be null
+     * @return the fuse; never null
+     */
+    public static Fuse instantaneous( Runnable whenTriggered ) {
+        return new Fuse() {
+
+            @Override
+            public boolean isTriggered() {
+                return false;
+            }
+
+            @Override
+            public Fuse trigger() {
+                if (whenTriggered != null) {
+                    try {
+                        whenTriggered.run();
+                    } catch (Throwable t) {
+                        Strongback.logger(Fuse.class).error(t, "Error when calling fuse trigger function");
+                    }
+                }
+                return this;
+            }
+
+            @Override
+            public Fuse reset() {
+                return this;
+            }
+
+            @Override
+            public String toString() {
+                return "notTriggered";
+            }
+        };
+    }
+
+    /**
      * Create a fuse that can be manually {@link #reset()} but that will automatically reset after the given delay.
      *
      * @param delay the time after the fuse is triggered that it should automatically reset; must be positive
@@ -82,6 +121,19 @@ public interface Fuse extends Switch {
      * @return the auto-resetting fuse; never null
      */
     public static Fuse autoResetting(long delay, TimeUnit unit, Clock clock) {
+        return autoResetting(delay, unit, clock, null);
+    }
+
+    /**
+     * Create a fuse that can be manually {@link #reset()} but that will automatically reset after the given delay.
+     *
+     * @param delay the time after the fuse is triggered that it should automatically reset; must be positive
+     * @param unit the time units for the delay; may not be null
+     * @param clock the clock that the fuse should use; if null, the system clock will be used
+     * @param whenTriggered the function that is to be called when the fuse is triggered; may be null
+     * @return the auto-resetting fuse; never null
+     */
+    public static Fuse autoResetting(long delay, TimeUnit unit, Clock clock, Runnable whenTriggered) {
         Clock theClock = clock != null ? clock : Clock.system();
         if (unit == null) throw new IllegalArgumentException("The time unit may not be null");
         long delayTimeInMillis = unit.toMillis(delay);
@@ -99,6 +151,13 @@ public interface Fuse extends Switch {
             public synchronized Fuse trigger() {
                 triggered = true;
                 resetTime = theClock.currentTimeInMillis() + delayTimeInMillis;
+                if (whenTriggered != null) {
+                    try {
+                        whenTriggered.run();
+                    } catch (Throwable t) {
+                        Strongback.logger(Fuse.class).error(t, "Error when calling fuse trigger function");
+                    }
+                }
                 return this;
             }
 

@@ -41,4 +41,9 @@ public class MockTwoAxisAccelerometer implements TwoAxisAccelerometer {
     public MockAccelerometer getYDirection() {
         return y;
     }
+
+    @Override
+    public String toString() {
+        return "" + getXDirection().getAcceleration() + ", " + getYDirection().getAcceleration() + " g/s\u00B2";
+    }
 }

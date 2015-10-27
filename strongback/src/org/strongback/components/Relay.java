@@ -16,6 +16,9 @@
 
 package org.strongback.components;
 
+import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
+
 import org.strongback.annotation.ThreadSafe;
 
 /**
@@ -54,6 +57,7 @@ public interface Relay {
 
     /**
      * Get the current state of this relay.
+     *
      * @return the current state; never null
      */
     State state();
@@ -128,6 +132,36 @@ public interface Relay {
 
             @Override
             public Relay off() {
+                return this;
+            }
+        };
+    }
+
+    /**
+     * Obtain a relay that instantaneously switches from one state to another using the given functions.
+     *
+     * @param switcher the function that switches the state, where <code>true</code> represents {@link State#ON} and
+     *        <code>false</code> represents {@link State#OFF}; may not be null
+     * @param onState the function that returns <code>true</code> if the current state is {@link State#ON}, or
+     *        <code>false</code> otherwise; may not be null
+     * @return the relay; never null
+     */
+    static Relay instantaneous(Consumer<Boolean> switcher, BooleanSupplier onState) {
+        return new Relay() {
+            @Override
+            public State state() {
+                return onState.getAsBoolean() ? State.ON : State.OFF;
+            }
+
+            @Override
+            public Relay on() {
+                switcher.accept(Boolean.TRUE);
+                return this;
+            }
+
+            @Override
+            public Relay off() {
+                switcher.accept(Boolean.FALSE);
                 return this;
             }
         };

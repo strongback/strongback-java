@@ -21,6 +21,7 @@ import org.strongback.components.AngleSensor;
 import org.strongback.components.DistanceSensor;
 import org.strongback.components.Gyroscope;
 import org.strongback.components.Motor;
+import org.strongback.components.PneumaticsModule;
 import org.strongback.components.PowerPanel;
 import org.strongback.components.Relay;
 import org.strongback.components.Solenoid;
@@ -42,6 +43,7 @@ import edu.wpi.first.wpilibj.AnalogPotentiometer;
 import edu.wpi.first.wpilibj.AnalogTrigger;
 import edu.wpi.first.wpilibj.BuiltInAccelerometer;
 import edu.wpi.first.wpilibj.CANTalon;
+import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.Encoder;
@@ -81,6 +83,26 @@ public class Hardware {
     public static PowerPanel powerPanel() {
         PowerDistributionPanel pdp = new PowerDistributionPanel();
         return PowerPanel.create(pdp::getCurrent, pdp::getTotalCurrent, pdp::getVoltage, pdp::getTemperature);
+    }
+
+    /**
+     * Gets the {@link PneumaticsModule} of the robot with the default CAN ID of 0.
+     *
+     * @return the {@link PneumaticsModule} of the robot; never null
+     */
+    public static PneumaticsModule pneumaticsModule() {
+        return new HardwarePneumaticsModule(new Compressor());
+    }
+
+    /**
+     * Gets the {@link PneumaticsModule} of the robot with the supplied CAN ID. Multiple pneumatics modules can be used by
+     * specifying the correct CAN ID of each module.
+     *
+     * @param canID the CAN ID of the module
+     * @return the {@link PneumaticsModule} of the robot; never null
+     */
+    public static PneumaticsModule pneumaticsModule(int canID) {
+        return new HardwarePneumaticsModule(new Compressor(canID));
     }
 
     /**

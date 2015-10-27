@@ -65,4 +65,9 @@ public class MockRelay implements Relay {
     public State state() {
         return state;
     }
+
+    @Override
+    public String toString() {
+        return state().name();
+    }
 }

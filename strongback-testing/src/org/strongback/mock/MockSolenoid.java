@@ -63,4 +63,9 @@ public class MockSolenoid implements Solenoid {
         direction = Direction.STOPPED;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return getDirection().name();
+    }
 }
