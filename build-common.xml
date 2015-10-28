@@ -63,6 +63,7 @@
                destdir="${project.output.dir}" 
                source="${java.source.version}"
                target="${java.target.version}"
+               debug="true"
                includeantruntime="false">
             <classpath refid="test.class.path" />
             <!--compilerarg value="${java.compile.arg}"/-->
@@ -82,6 +83,7 @@
                destdir="${project.test.output.dir}" 
                source="${java.source.version}"
                target="${java.target.version}"
+               debug="true"
                includeantruntime="false">
             <classpath refid="test.class.path" />
             <classpath> 
