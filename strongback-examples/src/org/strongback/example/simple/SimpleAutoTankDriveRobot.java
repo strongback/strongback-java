@@ -76,13 +76,13 @@ public class SimpleAutoTankDriveRobot extends IterativeRobot {
     public void autonomousInit() {
         // Start Strongback functions ...
         Strongback.start();
-        Strongback.submit(()->drive.tank(0.5, 0.5), 5.0, drive::stop);
+        Strongback.submit(() -> drive.tank(0.5, 0.5), 5.0, drive::stop);
     }
 
     @Override
     public void teleopInit() {
-        // Start Strongback functions ...
-        Strongback.start();
+        // Starts Strongback if not already started; if it is, kill any commands that might still be running from autonomous
+        Strongback.restart();
     }
 
     @Override
@@ -93,9 +93,8 @@ public class SimpleAutoTankDriveRobot extends IterativeRobot {
     @Override
     public void disabledInit() {
         drive.stop();
-        // Tell Strongback that the robot is disabled so it can flush and kill commands.
+        // Tell Strongback that the robot is disabled so it can flush all data and kill all commands.
         Strongback.disable();
     }
 
 }
-

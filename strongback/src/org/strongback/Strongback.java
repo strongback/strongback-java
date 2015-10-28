@@ -387,10 +387,30 @@ public final class Strongback {
 
     /**
      * Start the Strongback functions, including the {@link #executor() Executor}, {@link #submit(Command) command scheduler},
-     * and the {@link #dataRecorder() data recorder}.
+     * and the {@link #dataRecorder() data recorder}. This does nothing if Strongback is already started.
+     * <p>
+     * This is often useful to call in {@code IterativeRobot.autonomousInit()} to start Strongback and prepare for any
+     * autonomous based commands and start recording data and events.
+     *
+     * @see #restart()
      */
     public static void start() {
         INSTANCE.doStart();
+    }
+
+    /**
+     * Ensure that Strongback is {@link #start() started} and, if it was already running, {@link #killAllCommands() kill all
+     * currently-running commands}. It is equivalent to calling both {@code #start()} <em>and</em> {@code #killAllCommands()},
+     * although it is a bit more efficient.
+     * <p>
+     * This is often useful to use in {@code IterativeRobot.teleopInit()} to ensure Strongback is running and to cancel any
+     * commands that might still be running from autonomous mode.
+     *
+     * @see #start
+     * @see #killAllCommands()
+     */
+    public static void restart() {
+        INSTANCE.doRestart();
     }
 
     /**
@@ -532,6 +552,20 @@ public final class Strongback {
      */
     public static void submit(BooleanSupplier first, double maxDurationInSeconds, Runnable second) {
         submit(Command.create(maxDurationInSeconds, first, second));
+    }
+
+    /**
+     * Kill all currently-running commands.
+     */
+    public static void killAllCommands() {
+        INSTANCE.scheduler.killAll();
+    }
+
+    /**
+     * Flush all data that has been recorded but not written to disk.
+     */
+    public static void flushRecorders() {
+        INSTANCE.dataRecorderDriver.flush();
     }
 
     /**
@@ -701,32 +735,44 @@ public final class Strongback {
     }
 
     private void doStart() {
-        try {
-            dataRecorderDriver.start();
-        } finally {
+        if (!started.get()) {
             try {
-                executorDriver.start();
+                dataRecorderDriver.start();
             } finally {
-                started.set(true);
+                try {
+                    executorDriver.start();
+                } finally {
+                    started.set(true);
+                }
+            }
+        }
+    }
+
+    private void doRestart() {
+        if (started.get()) {
+            // Kill any remaining commands ...
+            scheduler.killAll();
+        } else {
+            try {
+                dataRecorderDriver.start();
+            } finally {
+                try {
+                    executorDriver.start();
+                } finally {
+                    started.set(true);
+                }
             }
         }
     }
 
     private void killCommandsAndFlush() {
-        try {
-            // First stop executing immediately; at this point, no executables will run ...
-            executorDriver.stop();
-        } finally {
+        if (started.get()) {
             try {
                 // Kill any remaining commands ...
                 scheduler.killAll();
             } finally {
-                try {
-                    // Finally flush the data recorder ...
-                    dataRecorderDriver.flush();
-                } finally {
-                    started.set(false);
-                }
+                // Finally flush the data recorder ...
+                dataRecorderDriver.flush();
             }
         }
     }
