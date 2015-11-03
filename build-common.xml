@@ -35,7 +35,6 @@
         <pathelement location="${project.output.dir}" />
         <fileset dir="${compile.libs.dir}" includes="**/*.jar" excludes="**/*-sources.jar"/>
         <fileset dir="${wpi.libs.dir}" includes="**/*.jar" excludes="**/*-sources.jar"/>
-        <pathelement path="${classpath}" />
     </path>
 
     <path id="test.class.path">
@@ -65,7 +64,7 @@
                target="${java.target.version}"
                debug="true"
                includeantruntime="false">
-            <classpath refid="test.class.path" />
+            <classpath refid="compile.class.path" />
             <!--compilerarg value="${java.compile.arg}"/-->
         </javac>
         <copy todir="${project.output.dir}">
