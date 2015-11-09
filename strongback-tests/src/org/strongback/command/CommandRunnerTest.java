@@ -75,7 +75,7 @@ public class CommandRunnerTest {
 
     @Test
     public void shouldInterruptCommandThatThrowsExceptionDuringFirstExecute() {
-        WatchedCommand watched = WatchedCommand.watch(Command.create(()->{throw new IllegalStateException();}));
+        WatchedCommand watched = WatchedCommand.watch(Command.create((Runnable)()->{throw new IllegalStateException();}));
         CommandRunner runner = new CommandRunner(CONTEXT,watched);
         assertThat(runner.step(INITIAL_TIME)).isTrue(); // completes because it is interrupted
         assertExecutedAtLeast(watched,1);
