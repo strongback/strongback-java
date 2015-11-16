@@ -17,6 +17,7 @@
 package org.strongback.mock;
 
 import org.strongback.components.Fuse;
+import org.strongback.components.Gyroscope;
 import org.strongback.components.Switch;
 import org.strongback.components.TalonSRX;
 import org.strongback.components.TemperatureSensor;
@@ -24,7 +25,12 @@ import org.strongback.components.VoltageSensor;
 
 public class MockTalonSRX extends MockMotor implements TalonSRX {
 
-    private final MockAngleSensor encoder = new MockAngleSensor();
+    private static final Gyroscope NO_OP_GYRO = new MockGyroscope();
+
+    private final int deviceId;
+    private final MockGyroscope encoderInput = new MockGyroscope();
+    private final MockGyroscope analogInput = new MockGyroscope();
+    private Gyroscope selectedInput = NO_OP_GYRO;
     private final MockCurrentSensor current = new MockCurrentSensor();
     private final MockVoltageSensor voltage = new MockVoltageSensor();
     private final MockVoltageSensor busVoltage = new MockVoltageSensor();
@@ -37,8 +43,14 @@ public class MockTalonSRX extends MockMotor implements TalonSRX {
     private double expiration = 0.1d;
     private boolean alive = true;
 
-    protected MockTalonSRX(double speed) {
+    protected MockTalonSRX(int deviceId, double speed) {
         super(speed);
+        this.deviceId = deviceId;
+    }
+
+    @Override
+    public int getDeviceID() {
+        return deviceId;
     }
 
     @Override
@@ -48,8 +60,51 @@ public class MockTalonSRX extends MockMotor implements TalonSRX {
     }
 
     @Override
-    public MockAngleSensor getAngleSensor() {
-        return encoder;
+    public MockGyroscope getAnalogInput() {
+        return analogInput;
+    }
+
+    @Override
+    public MockGyroscope getEncoderInput() {
+        return encoderInput;
+    }
+
+    @Override
+    public Gyroscope getSelectedSensor() {
+        return selectedInput;
+    }
+
+    @Override
+    public MockTalonSRX reverseSensor(boolean flip) {
+        return this;
+    }
+
+    @Override
+    public MockTalonSRX setFeedbackDevice(FeedbackDevice device) {
+        switch(device) {
+            case ANALOG_POTENTIOMETER:
+            case ANALOG_ENCODER:
+                this.selectedInput = analogInput;
+                break;
+            case QUADRATURE_ENCODER:
+                this.selectedInput = encoderInput;
+                break;
+            case ENCODER_FALLING:
+            case ENCODER_RISING:
+                selectedInput = NO_OP_GYRO;
+                break;
+        }
+        return this;
+    }
+
+    @Override
+    public MockTalonSRX setStatusFrameRate(StatusFrameRate frameRate, int periodMillis) {
+        return this;
+    }
+
+    @Override
+    public MockTalonSRX setVoltageRampRate(double rampRate) {
+        return this;
     }
 
     @Override

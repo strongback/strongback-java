@@ -524,7 +524,7 @@ public class SoftwarePIDController implements LiveWindowSendable, PIDController 
         return gains.feedForward;
     }
 
-    protected final class Gains implements PIDController.Gains {
+    protected static final class Gains implements PIDController.Gains {
         protected final double p;
         protected final double i;
         protected final double d;

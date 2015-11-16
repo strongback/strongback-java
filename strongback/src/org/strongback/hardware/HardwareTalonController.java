@@ -87,14 +87,9 @@ class HardwareTalonController extends HardwareTalonSRX implements TalonControlle
     private volatile int currentProfile = 0;
     private final Set<Integer> profiles = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    HardwareTalonController(CANTalon talon, double pulsesPerDegree) {
-        super(talon, pulsesPerDegree);
+    HardwareTalonController(CANTalon talon, double pulsesPerDegree, double analogTurnsOverVoltageRange) {
+        super(talon, pulsesPerDegree, analogTurnsOverVoltageRange);
         profiles.add(currentProfile);
-    }
-
-    @Override
-    public int getDeviceID() {
-        return talon.getDeviceID();
     }
 
     @Override
@@ -177,7 +172,7 @@ class HardwareTalonController extends HardwareTalonSRX implements TalonControlle
 
     @Override
     public TalonController setFeedbackDevice(FeedbackDevice device) {
-        talon.setFeedbackDevice(edu.wpi.first.wpilibj.CANTalon.FeedbackDevice.valueOf(device.value()));
+        super.setFeedbackDevice(device);
         return this;
     }
 
@@ -195,7 +190,7 @@ class HardwareTalonController extends HardwareTalonSRX implements TalonControlle
 
     @Override
     public TalonController reverseSensor(boolean flip) {
-        talon.reverseSensor(flip);
+        super.reverseSensor(flip);
         return this;
     }
 
@@ -310,7 +305,7 @@ class HardwareTalonController extends HardwareTalonSRX implements TalonControlle
 
     @Override
     public TalonController setVoltageRampRate(double rampRate) {
-        talon.setVoltageRampRate(rampRate);
+        super.setVoltageRampRate(rampRate);
         return this;
     }
 

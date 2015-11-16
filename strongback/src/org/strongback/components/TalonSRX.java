@@ -27,11 +27,52 @@ public interface TalonSRX extends LimitedMotor {
     public TalonSRX setSpeed(double speed);
 
     /**
+     * Get the CAN device ID.
+     *
+     * @return the device ID.
+     */
+    public int getDeviceID();
+
+    /**
+     * <b>Deprecated.</b> Use {@link #getEncoderInput()} instead.
+     * <p>
      * Get the angle sensor (encoder) hooked up to the Talon SRX motor controller.
      *
      * @return the angle sensor; never null, but if not hooked up the sensor will always return a meaningless value
+     * @deprecated Use {@link #getEncoderInput()} instead.
      */
-    public AngleSensor getAngleSensor();
+    @Deprecated
+    public default AngleSensor getAngleSensor() {
+        return getEncoderInput();
+    }
+
+    /**
+     * Get the current encoder angle and rate, regardless of whether it is the current feedback device.
+     *
+     * @return the gyroscope that reads the encoder sensor; or null if the motor was created with no quadrature encoder input
+     * @see org.strongback.hardware.Hardware.Motors#talonSRX(int)
+     * @see org.strongback.hardware.Hardware.Motors#talonSRX(int, double)
+     * @see org.strongback.hardware.Hardware.Motors#talonSRX(int, double, double)
+     */
+    public Gyroscope getEncoderInput();
+
+    /**
+     * Get the current analog angle and rate, regardless of whether it is the current feedback device.
+     *
+     * @return the gyroscope that reads the 3.3V analog sensor; or null if the motor was created with no analog input
+     * @see org.strongback.hardware.Hardware.Motors#talonSRX(int)
+     * @see org.strongback.hardware.Hardware.Motors#talonSRX(int, double)
+     * @see org.strongback.hardware.Hardware.Motors#talonSRX(int, double, double)
+     */
+    public Gyroscope getAnalogInput();
+
+    /**
+     * Get the input angle and rate of the current {@link #setFeedbackDevice(FeedbackDevice) feedback device}.
+     *
+     * @return the selected input device sensor; never null, but it may return a meaningless value if a sensor is not physically
+     *         wired as an input to the Talon device
+     */
+    public Gyroscope getSelectedSensor();
 
     /**
      * Get the Talon SRX's output current sensor.
@@ -60,6 +101,36 @@ public interface TalonSRX extends LimitedMotor {
      * @return the temperature sensor; never null
      */
     public TemperatureSensor getTemperatureSensor();
+
+    /**
+     * Set the feedback device for this controller.
+     *
+     * @param device the feedback device; may not be null
+     * @return this object so that methods can be chained; never null
+     * @see #reverseSensor(boolean)
+     */
+    public TalonSRX setFeedbackDevice(FeedbackDevice device);
+
+    /**
+     * Set the status frame rate for this controller.
+     *
+     * @param frameRate the status frame rate; may not be null
+     * @param periodMillis frame rate period in milliseconds
+     * @return this object so that methods can be chained; never null
+     */
+    public TalonSRX setStatusFrameRate(StatusFrameRate frameRate, int periodMillis);
+
+    /**
+     * Flips the sign (multiplies by negative one) the {@link #setFeedbackDevice(FeedbackDevice) feedback device} values read by
+     * the Talon.
+     * <p>
+     * This only affects position and velocity closed loop control. Allows for situations where you may have a sensor flipped
+     * and going in the wrong direction.
+     *
+     * @param flip <code>true</code> if sensor input should be flipped, or <code>false</code> if not.
+     * @return this object so that methods can be chained; never null
+     */
+    public TalonSRX reverseSensor(boolean flip);
 
     /**
      * Set the soft limit for forward motion, which will disable the motor when the sensor is out of range.
@@ -131,6 +202,16 @@ public interface TalonSRX extends LimitedMotor {
      * @return this object so that methods can be chained; never null
      */
     public TalonSRX enableBrakeMode(boolean brake);
+
+    /**
+     * The Talon SRX can be set to honor a ramp rate to prevent instantaneous changes in throttle. This ramp rate is in effect
+     * regardless of which mode is selected (throttle, slave, or closed-loop). For example, setting the ramp rate to
+     * <code>6.0</code> will limit the maximum voltage change within any second to be less than or equal to 6.0 volts.
+     *
+     * @param rampRate maximum change in voltage per second, in volts / second
+     * @return this object so that methods can be chained; never null
+     */
+    public TalonSRX setVoltageRampRate(double rampRate);
 
     /**
      * Get the faults currently associated with the Talon controller. These state of these faults may change at any time based
@@ -208,6 +289,72 @@ public interface TalonSRX extends LimitedMotor {
      * @return <code>true</code> if the controller is alive, or <code>false</code> if it has been disabled after expiring.
      */
     public boolean isAlive();
+
+    /**
+     * The type of feedback sensor used by this Talon controller.
+     */
+    public enum FeedbackDevice {
+        /**
+         * Use Quadrature Encoder.
+         */
+        QUADRATURE_ENCODER(0), /**
+                                * Analog potentiometer, 0-3.3V
+                                */
+        ANALOG_POTENTIOMETER(2), /**
+                                  * Analog encoder or any other analog device, 0-3.3V
+                                  */
+        ANALOG_ENCODER(3), /**
+                            * Encoder that increments position per rising edge (and never decrements) on Quadrature-A.
+                            */
+        ENCODER_RISING(4), /**
+                            * Encoder that increments position per falling edge (and never decrements) on Quadrature-A.
+                            */
+        ENCODER_FALLING(5);
+
+        public int value;
+
+        public static FeedbackDevice valueOf(int value) {
+            for (FeedbackDevice mode : values()) {
+                if (mode.value == value) {
+                    return mode;
+                }
+            }
+            return null;
+        }
+
+        private FeedbackDevice(int value) {
+            this.value = value;
+        }
+
+        public int value() {
+            return this.value;
+        }
+    }
+
+    /**
+     * Types of status frame rates.
+     */
+    public enum StatusFrameRate {
+        GENERAL(0), FEEDBACK(1), QUADRATURE_ENCODER(2), ANALOG_TEMPERATURE_BATTERY_VOLTAGE(3);
+        public int value;
+
+        public static StatusFrameRate valueOf(int value) {
+            for (StatusFrameRate mode : values()) {
+                if (mode.value == value) {
+                    return mode;
+                }
+            }
+            return null;
+        }
+
+        private StatusFrameRate(int value) {
+            this.value = value;
+        }
+
+        public int value() {
+            return this.value;
+        }
+    }
 
     /**
      * The set of possible faults that this module can trigger.
