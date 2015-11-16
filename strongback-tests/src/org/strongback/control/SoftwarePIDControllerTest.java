@@ -29,7 +29,7 @@ import edu.wpi.first.wpilibj.HLUsageReporting;
  * @author Randall Hauch
  *
  */
-public class PIDControllerTest {
+public class SoftwarePIDControllerTest {
 
     private static class SystemModel {
         protected final DoubleBiFunction model;
@@ -64,7 +64,7 @@ public class PIDControllerTest {
 
     private static boolean print = false;
     private SystemModel model;
-    private PIDController controller;
+    private SoftwarePIDController controller;
     private edu.wpi.first.wpilibj.PIDController wpi;
 
     @Before
@@ -76,11 +76,11 @@ public class PIDControllerTest {
     public void shouldUseProportionalOnly() {
         model = simple();
         // model.print = true;
-        controller = new PIDController(model::getActualValue, model::setValue).withGains(0.9, 0.0, 0.0)
-                                                                              .inputRange(-1.0, 1.0)
-                                                                              .outputRange(-1.0, 1.0)
-                                                                              .tolerance(0.02)
-                                                                              .setpoint(0.5);
+        controller = new SoftwarePIDController(model::getActualValue, model::setValue).withGains(0.9, 0.0, 0.0)
+                                                                              .withInputRange(-1.0, 1.0)
+                                                                              .withOutputRange(-1.0, 1.0)
+                                                                              .withTolerance(0.02)
+                                                                              .withTarget(0.5);
         assertThat(runController(10)).isLessThan(5);
         assertThat(model.getActualValue() - 0.5 < 0.02).isTrue();
     }
@@ -89,11 +89,11 @@ public class PIDControllerTest {
     public void shouldUseProportionalAndDifferential() {
         model = simple();
         // model.print = true;
-        controller = new PIDController(model::getActualValue, model::setValue).withGains(0.7, 0.0, 0.3)
-                                                                              .inputRange(-1.0, 1.0)
-                                                                              .outputRange(-1.0, 1.0)
-                                                                              .tolerance(0.02)
-                                                                              .setpoint(0.5);
+        controller = new SoftwarePIDController(model::getActualValue, model::setValue).withGains(0.7, 0.0, 0.3)
+                                                                              .withInputRange(-1.0, 1.0)
+                                                                              .withOutputRange(-1.0, 1.0)
+                                                                              .withTolerance(0.02)
+                                                                              .withTarget(0.5);
         assertThat(runController(10)).isLessThan(5);
         assertThat(model.getActualValue() - 0.5 < 0.02).isTrue();
     }
@@ -103,11 +103,11 @@ public class PIDControllerTest {
         model = simple();
         model.setValue(0.2);
         // model.print = true;
-        controller = new PIDController(model::getActualValue, model::setValue).withGains(0.9, 0.0, 0.0)
-                                                                              .inputRange(-1.0, 1.0)
-                                                                              .outputRange(-1.0, 1.0)
-                                                                              .tolerance(0.02)
-                                                                              .setpoint(0.5);
+        controller = new SoftwarePIDController(model::getActualValue, model::setValue).withGains(0.9, 0.0, 0.0)
+                                                                              .withInputRange(-1.0, 1.0)
+                                                                              .withOutputRange(-1.0, 1.0)
+                                                                              .withTolerance(0.02)
+                                                                              .withTarget(0.5);
         assertThat(runController(10)).isLessThan(5);
         assertThat(model.getActualValue() - 0.5 < 0.02).isTrue();
     }
@@ -117,11 +117,11 @@ public class PIDControllerTest {
         model = simple();
         model.setValue(0.2);
         // model.print = true;
-        controller = new PIDController(model::getActualValue, model::setValue).withGains(0.7, 0.0, 0.3)
-                                                                              .inputRange(-1.0, 1.0)
-                                                                              .outputRange(-1.0, 1.0)
-                                                                              .tolerance(0.02)
-                                                                              .setpoint(0.5);
+        controller = new SoftwarePIDController(model::getActualValue, model::setValue).withGains(0.7, 0.0, 0.3)
+                                                                              .withInputRange(-1.0, 1.0)
+                                                                              .withOutputRange(-1.0, 1.0)
+                                                                              .withTolerance(0.02)
+                                                                              .withTarget(0.5);
         assertThat(runController(10)).isLessThan(5);
         assertThat(model.getActualValue() - 0.5 < 0.02).isTrue();
     }
@@ -131,22 +131,37 @@ public class PIDControllerTest {
         model = simple();
         model.setValue(0.2);
         // model.print = true;
-        controller = new PIDController(model::getActualValue, model::setValue).withGains(0.9, 0.0, 0.0)
-                                                                              .withProfile("two", 1.2, 0.0, 2.0)
-                                                                              .withProfile("three", 1.3, 0.0, 3.0)
-                                                                              .inputRange(-1.0, 1.0)
-                                                                              .outputRange(-1.0, 1.0)
-                                                                              .tolerance(0.02)
-                                                                              .setpoint(0.5);
-        assertThat(controller.getProfileNames()).containsOnly(PIDController.DEFAULT_PROFILE,"two","three");
-        assertThat(controller.getCurrentProfile()).isEqualTo(PIDController.DEFAULT_PROFILE);
+        controller = new SoftwarePIDController(model::getActualValue, model::setValue).withGains(0.9, 0.0, 0.0)
+                                                                              .withProfile(1, 1.2, 0.0, 2.0)
+                                                                              .withProfile(3, 1.3, 0.0, 3.0)
+                                                                              .withInputRange(-1.0, 1.0)
+                                                                              .withOutputRange(-1.0, 1.0)
+                                                                              .withTolerance(0.02)
+                                                                              .withTarget(0.5);
+        assertThat(controller.getProfiles()).containsOnly(SoftwarePIDController.DEFAULT_PROFILE, 1, 3);
+        assertThat(controller.getCurrentProfile()).isEqualTo(SoftwarePIDController.DEFAULT_PROFILE);
         assertGains(controller.getGainsForCurrentProfile(), 0.9, 0.0, 0.0, 0.0);
-        assertGains(controller.getGainsFor("two"), 1.2, 0.0, 2.0, 0.0);
-        assertGains(controller.getGainsFor("three"), 1.3, 0.0, 3.0, 0.0);
-        controller.useProfile("two");
+        assertGains(controller.getGainsFor(1), 1.2, 0.0, 2.0, 0.0);
+        assertGains(controller.getGainsFor(3), 1.3, 0.0, 3.0, 0.0);
+        controller.useProfile(1);
         assertGains(controller.getGainsForCurrentProfile(), 1.2, 0.0, 2.0, 0.0);
-        controller.useProfile("three");
+        controller.useProfile(3);
         assertGains(controller.getGainsForCurrentProfile(), 1.3, 0.0, 3.0, 0.0);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldFailToUseNonExistantProfile() {
+        model = simple();
+        model.setValue(0.2);
+        // model.print = true;
+        controller = new SoftwarePIDController(model::getActualValue, model::setValue).withGains(0.9, 0.0, 0.0)
+                                                                              .withProfile(1, 1.2, 0.0, 2.0)
+                                                                              .withProfile(3, 1.3, 0.0, 3.0)
+                                                                              .withInputRange(-1.0, 1.0)
+                                                                              .withOutputRange(-1.0, 1.0)
+                                                                              .withTolerance(0.02)
+                                                                              .withTarget(0.5);
+        controller.useProfile(44);
     }
 
     @Test
@@ -187,7 +202,7 @@ public class PIDControllerTest {
         return counter;
     }
 
-    protected void assertGains( Gains gains, double p, double i, double d, double f ) {
+    protected void assertGains(Gains gains, double p, double i, double d, double f) {
         assertThat(gains.getP()).isEqualTo(p);
         assertThat(gains.getI()).isEqualTo(i);
         assertThat(gains.getD()).isEqualTo(d);
