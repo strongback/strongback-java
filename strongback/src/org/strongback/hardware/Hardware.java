@@ -32,6 +32,7 @@ import org.strongback.components.TwoAxisAccelerometer;
 import org.strongback.components.ui.FlightStick;
 import org.strongback.components.ui.Gamepad;
 import org.strongback.components.ui.InputDevice;
+import org.strongback.control.TalonController;
 import org.strongback.function.DoubleToDoubleFunction;
 import org.strongback.util.Values;
 
@@ -524,6 +525,19 @@ public class Hardware {
          * Creates a {@link TalonSRX} motor controlled by a Talon SRX with built-in current sensor and position (angle) sensor.
          * The {@link CANTalon} object passed into this method should be already configured by the calling code.
          *
+         * @param deviceNumber the CAN device number; may not be null
+         * @param pulsesPerDegree the number of encoder pulses per degree of revolution of the final shaft
+         * @return a {@link TalonSRX} motor; never null
+         */
+        public static TalonSRX talonSRX(int deviceNumber, double pulsesPerDegree) {
+            CANTalon talon = new CANTalon(deviceNumber);
+            return new HardwareTalonSRX(talon, pulsesPerDegree);
+        }
+
+        /**
+         * Creates a {@link TalonSRX} motor controlled by a Talon SRX with built-in current sensor and position (angle) sensor.
+         * The {@link CANTalon} object passed into this method should be already configured by the calling code.
+         *
          * @param talon the already configured {@link CANTalon} instance; may not be null
          * @param pulsesPerDegree the number of encoder pulses per degree of revolution of the final shaft
          * @return a {@link TalonSRX} motor; never null
@@ -531,6 +545,25 @@ public class Hardware {
         public static TalonSRX talonSRX(CANTalon talon, double pulsesPerDegree) {
             if (talon == null) throw new IllegalArgumentException("The CANTalon reference may not be null");
             return new HardwareTalonSRX(talon, pulsesPerDegree);
+        }
+    }
+
+    /**
+     * Factory method for hardware-based controllers.
+     */
+    public static final class Controllers {
+
+        /**
+         * Create a component that manages and uses the hardware-based PID controller on the Talon SRX with the given CAN device
+         * number.
+         *
+         * @param deviceNumber the CAN device number; may not be null
+         * @param pulsesPerDegree the number of encoder pulses per degree of revolution of the final shaft
+         * @return the interface for managing and using the Talon SRX hardware-based PID controller; never null
+         */
+        public static TalonController talonController(int deviceNumber, double pulsesPerDegree) {
+            CANTalon talon = new CANTalon(deviceNumber);
+            return new HardwareTalonController(talon, pulsesPerDegree);
         }
     }
 

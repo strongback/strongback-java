@@ -17,6 +17,9 @@
 package org.strongback.mock;
 
 import org.strongback.components.Fuse;
+import org.strongback.components.TalonSRX;
+import org.strongback.control.Controller;
+import org.strongback.control.PIDController;
 
 /**
  * Factory for mock components.
@@ -230,7 +233,7 @@ public class Mock {
     }
 
     /**
-     * Create a stopped mock Talon SRX motor.
+     * Create a stopped mock {@link TalonSRX} motor.
      *
      * @return the mock TalonSRX motor; never null
      */
@@ -239,12 +242,28 @@ public class Mock {
     }
 
     /**
-     * Create a running mock Talon SRX motor.
+     * Create a running mock {@link TalonSRX} motor.
      *
      * @param speed the initial speed
      * @return the mock TalonSRX motor; never null
      */
     public static MockTalonSRX runningTalonSRX(double speed) {
         return new MockTalonSRX(speed);
+    }
+
+    /**
+     * Create a mock {@link Controller}.
+     * @return the mock controller; never null
+     */
+    public static MockController controller() {
+        return new MockController();
+    }
+
+    /**
+     * Create a mock {@link PIDController}.
+     * @return the mock controller; never null
+     */
+    public static MockPIDController pidController() {
+        return new MockPIDController();
     }
 }

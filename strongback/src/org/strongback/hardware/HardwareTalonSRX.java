@@ -21,6 +21,8 @@ import org.strongback.components.AngleSensor;
 import org.strongback.components.CurrentSensor;
 import org.strongback.components.Switch;
 import org.strongback.components.TalonSRX;
+import org.strongback.components.TemperatureSensor;
+import org.strongback.components.VoltageSensor;
 
 import edu.wpi.first.wpilibj.CANTalon;
 import edu.wpi.first.wpilibj.CANTalon.ControlMode;
@@ -33,20 +35,28 @@ import edu.wpi.first.wpilibj.CANTalon.ControlMode;
  * @see CANTalon
  */
 @Immutable
-final class HardwareTalonSRX implements TalonSRX {
+class HardwareTalonSRX implements TalonSRX {
 
-    private final CANTalon talon;
-    private final AngleSensor encoder;
-    private final Switch forwardLimitSwitch;
-    private final Switch reverseLimitSwitch;
-    private final CurrentSensor current;
+    protected final CANTalon talon;
+    protected final AngleSensor encoder;
+    protected final Switch forwardLimitSwitch;
+    protected final Switch reverseLimitSwitch;
+    protected final CurrentSensor outputCurrent;
+    protected final VoltageSensor outputVoltage;
+    protected final VoltageSensor busVoltage;
+    protected final TemperatureSensor temperature;
+    protected final Faults instantaneousFaults;
+    protected final Faults stickyFaults;
 
     HardwareTalonSRX(CANTalon talon, double pulsesPerDegree) {
         this.talon = talon;
 
         this.forwardLimitSwitch = talon::isRevLimitSwitchClosed;
         this.reverseLimitSwitch = talon::isFwdLimitSwitchClosed;
-        this.current = talon::getOutputCurrent;
+        this.outputCurrent = talon::getOutputCurrent;
+        this.outputVoltage = talon::getOutputVoltage;
+        this.busVoltage = talon::getBusVoltage;
+        this.temperature = talon::getTemp;
         this.encoder = new AngleSensor() {
             private int zero = 0;
 
@@ -59,6 +69,66 @@ final class HardwareTalonSRX implements TalonSRX {
             public AngleSensor zero() {
                 zero = talon.getEncPosition();
                 return this;
+            }
+        };
+        instantaneousFaults = new Faults() {
+            @Override
+            public Switch forwardLimitSwitch() {
+                return ()->talon.getFaultForLim() != 0;
+            }
+            @Override
+            public Switch reverseLimitSwitch() {
+                return ()->talon.getFaultRevLim() != 0;
+            }
+            @Override
+            public Switch forwardSoftLimit() {
+                return ()->talon.getFaultForSoftLim() != 0;
+            }
+            @Override
+            public Switch reverseSoftLimit() {
+                return ()->talon.getFaultRevSoftLim() != 0;
+            }
+            @Override
+            public Switch hardwareFailure() {
+                return ()->talon.getFaultHardwareFailure() != 0;
+            }
+            @Override
+            public Switch overTemperature() {
+                return ()->talon.getFaultOverTemp() != 0;
+            }
+            @Override
+            public Switch underVoltage() {
+                return ()->talon.getFaultUnderVoltage() != 0;
+            }
+        };
+        stickyFaults = new Faults() {
+            @Override
+            public Switch forwardLimitSwitch() {
+                return ()->talon.getStickyFaultForLim() != 0;
+            }
+            @Override
+            public Switch reverseLimitSwitch() {
+                return ()->talon.getStickyFaultRevLim() != 0;
+            }
+            @Override
+            public Switch forwardSoftLimit() {
+                return ()->talon.getStickyFaultForSoftLim() != 0;
+            }
+            @Override
+            public Switch reverseSoftLimit() {
+                return ()->talon.getStickyFaultRevSoftLim() != 0;
+            }
+            @Override
+            public Switch hardwareFailure() {
+                return ()->talon.getFaultHardwareFailure() != 0;    // no sticky version!
+            }
+            @Override
+            public Switch overTemperature() {
+                return ()->talon.getStickyFaultOverTemp() != 0;
+            }
+            @Override
+            public Switch underVoltage() {
+                return ()->talon.getStickyFaultUnderVoltage() != 0;
             }
         };
     }
@@ -99,6 +169,117 @@ final class HardwareTalonSRX implements TalonSRX {
 
     @Override
     public CurrentSensor getCurrentSensor() {
-        return current;
+        return outputCurrent;
+    }
+
+    @Override
+    public VoltageSensor getVoltageSensor() {
+        return outputVoltage;
+    }
+
+    @Override
+    public VoltageSensor getBusVoltageSensor() {
+        return busVoltage;
+    }
+
+    @Override
+    public TemperatureSensor getTemperatureSensor() {
+        return temperature;
+    }
+
+    @Override
+    public TalonSRX setForwardSoftLimit(int forwardLimit) {
+        talon.setForwardSoftLimit(forwardLimit);
+        return this;
+    }
+
+    @Override
+    public TalonSRX enableForwardSoftLimit(boolean enable) {
+        talon.enableForwardSoftLimit(enable);
+        return this;
+    }
+
+    @Override
+    public TalonSRX setReverseSoftLimit(int reverseLimit) {
+        talon.setReverseSoftLimit(reverseLimit);
+        return this;
+    }
+
+    @Override
+    public TalonSRX enableReverseSoftLimit(boolean enable) {
+        talon.enableReverseSoftLimit(enable);
+        return this;
+    }
+
+    @Override
+    public TalonSRX enableLimitSwitch(boolean forward, boolean reverse) {
+        talon.enableLimitSwitch(forward, reverse);
+        return this;
+    }
+
+    @Override
+    public TalonSRX enableBrakeMode(boolean brake) {
+        talon.enableBrakeMode(brake);
+        return this;
+    }
+
+    @Override
+    public TalonSRX setForwardLimitSwitchNormallyOpen(boolean normallyOpen) {
+        talon.ConfigFwdLimitSwitchNormallyOpen(normallyOpen);
+        return this;
+    }
+
+    @Override
+    public TalonSRX setReverseLimitSwitchNormallyOpen(boolean normallyOpen) {
+        talon.ConfigRevLimitSwitchNormallyOpen(normallyOpen);
+        return this;
+    }
+
+    @Override
+    public Faults faults() {
+        return instantaneousFaults;
+    }
+
+    @Override
+    public Faults stickyFaults() {
+        return stickyFaults;
+    }
+
+    @Override
+    public TalonSRX clearStickyFaults() {
+        talon.clearStickyFaults();
+        return this;
+    }
+
+    @Override
+    public long getFirmwareVersion() {
+        return talon.GetFirmwareVersion();
+    }
+
+    @Override
+    public boolean isSafetyEnabled() {
+        return talon.isSafetyEnabled();
+    }
+
+    @Override
+    public TalonSRX setSafetyEnabled(boolean enabled) {
+        talon.setSafetyEnabled(enabled);
+        return this;
+    }
+
+    @Override
+    public double getExpiration() {
+        return talon.getExpiration();
+    }
+
+    @Override
+    public TalonSRX setExpiration(double timeout) {
+        talon.setExpiration(timeout);
+        return this;
+    }
+
+    @Override
+    public boolean isAlive() {
+        return talon.isAlive();
     }
 }
