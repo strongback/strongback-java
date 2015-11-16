@@ -16,6 +16,8 @@
 
 package org.strongback.mock;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.strongback.components.Fuse;
 import org.strongback.components.TalonSRX;
 import org.strongback.control.Controller;
@@ -27,6 +29,8 @@ import org.strongback.control.PIDController;
  * @author Randall Hauch
  */
 public class Mock {
+
+    private static final AtomicLong CAN_DEVICE_ID_GENERATOR = new AtomicLong();
 
     /**
      * Create a mock power panel.
@@ -235,10 +239,31 @@ public class Mock {
     /**
      * Create a stopped mock {@link TalonSRX} motor.
      *
+     * @param deviceId the CAN device ID
+     * @return the mock TalonSRX motor; never null
+     */
+    public static MockTalonSRX stoppedTalonSRX(int deviceId) {
+        return runningTalonSRX(deviceId, 0.0);
+    }
+
+    /**
+     * Create a running mock {@link TalonSRX} motor.
+     *
+     * @param deviceId the CAN device ID
+     * @param speed the initial speed
+     * @return the mock TalonSRX motor; never null
+     */
+    public static MockTalonSRX runningTalonSRX(int deviceId, double speed) {
+        return new MockTalonSRX(deviceId, speed);
+    }
+
+    /**
+     * Create a stopped mock {@link TalonSRX} motor.
+     *
      * @return the mock TalonSRX motor; never null
      */
     public static MockTalonSRX stoppedTalonSRX() {
-        return new MockTalonSRX(0.0);
+        return stoppedTalonSRX(nextDeviceId());
     }
 
     /**
@@ -248,11 +273,16 @@ public class Mock {
      * @return the mock TalonSRX motor; never null
      */
     public static MockTalonSRX runningTalonSRX(double speed) {
-        return new MockTalonSRX(speed);
+        return runningTalonSRX(nextDeviceId(), speed);
+    }
+
+    protected static int nextDeviceId() {
+        return (int)CAN_DEVICE_ID_GENERATOR.getAndIncrement();
     }
 
     /**
      * Create a mock {@link Controller}.
+     *
      * @return the mock controller; never null
      */
     public static MockController controller() {
@@ -261,6 +291,7 @@ public class Mock {
 
     /**
      * Create a mock {@link PIDController}.
+     *
      * @return the mock controller; never null
      */
     public static MockPIDController pidController() {

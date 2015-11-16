@@ -16,9 +16,11 @@
 
 package org.strongback.hardware;
 
+import java.util.function.DoubleSupplier;
+
 import org.strongback.annotation.Immutable;
-import org.strongback.components.AngleSensor;
 import org.strongback.components.CurrentSensor;
+import org.strongback.components.Gyroscope;
 import org.strongback.components.Switch;
 import org.strongback.components.TalonSRX;
 import org.strongback.components.TemperatureSensor;
@@ -37,8 +39,90 @@ import edu.wpi.first.wpilibj.CANTalon.ControlMode;
 @Immutable
 class HardwareTalonSRX implements TalonSRX {
 
+    protected static final Gyroscope NO_OP_GYRO = new Gyroscope() {
+
+        @Override
+        public double getAngle() {
+            return 0;
+        }
+
+        @Override
+        public double getRate() {
+            return 0;
+        }
+        @Override
+        public Gyroscope zero() {
+            // do nothing
+            return this;
+        }
+    };
+
+    protected static Gyroscope encoderGyroscope(DoubleSupplier positionInPulses, DoubleSupplier velocityInPulsesPerCycle,
+            double pulsesPerDegree, DoubleSupplier cyclesPeriodInSeconds) {
+        if ( pulsesPerDegree <= 0.0000001d && pulsesPerDegree >= 0.0000001d ) return null;
+        return new Gyroscope() {
+            private double zero = 0.0;
+
+            @Override
+            public double getAngle() {
+                // Units: (pulses) x (degrees/pulse) = degrees
+                return (positionInPulses.getAsDouble() - zero) / pulsesPerDegree;
+            }
+
+            @Override
+            public double getRate() {
+                // Units: (pulses/cycle) x (degrees/pulse) x (cycles/second) = (degrees/second)
+                return velocityInPulsesPerCycle.getAsDouble() / pulsesPerDegree / cyclesPeriodInSeconds.getAsDouble();
+            }
+
+            @Override
+            public Gyroscope zero() {
+                zero = positionInPulses.getAsDouble();
+                return this;
+            }
+        };
+    }
+
+    protected static Gyroscope analogGyroscope(DoubleSupplier analogPosition, DoubleSupplier changeInVoltsPerCycle,
+            double analogRange, double analogTurnsPerVolt, double voltageRange, DoubleSupplier cyclesPeriodInSeconds) {
+        if ( analogTurnsPerVolt <= 0.0000001d && analogTurnsPerVolt >= 0.0000001d ) return null;
+        return new Gyroscope() {
+            private double zero = 0.0;
+
+            @Override
+            public double getAngle() {
+                // Units: (0-1023) / 1023 x (turns/volt) x (volts) x (degrees/turn) = degrees
+                return (analogPosition.getAsDouble() - zero) / analogRange * analogTurnsPerVolt * voltageRange * 360.0;
+            }
+
+            @Override
+            public double getRate() {
+                // Units: (0-1023)/cycle / 1023 x (turns/volt) x (volts) x (degrees/turn) x (cycles/second) = (degrees/second)
+                return changeInVoltsPerCycle.getAsDouble() / analogRange * analogTurnsPerVolt * voltageRange * 360.0
+                        / cyclesPeriodInSeconds.getAsDouble();
+            }
+
+            @Override
+            public Gyroscope zero() {
+                zero = analogPosition.getAsDouble();
+                return this;
+            }
+        };
+    }
+
+    private static final double DEFAULT_ANALOG_RATE = 0.100;
+    private static final double DEFAULT_QUADRATURE_RATE = 0.100;
+    private static final double DEFAULT_FEEDBACK_RATE = 0.020;
+
     protected final CANTalon talon;
-    protected final AngleSensor encoder;
+    protected final Gyroscope encoderInput;
+    protected final Gyroscope analogInput;
+    protected final Gyroscope selectedEncoderInput;
+    protected final Gyroscope selectedAnalogInput;
+    protected volatile Gyroscope selectedInput = NO_OP_GYRO;
+    protected volatile double quadratureRateInSeconds = DEFAULT_QUADRATURE_RATE;
+    protected volatile double analogRateInSeconds = DEFAULT_ANALOG_RATE;
+    protected volatile double feedbackRateInSeconds = DEFAULT_FEEDBACK_RATE;
     protected final Switch forwardLimitSwitch;
     protected final Switch reverseLimitSwitch;
     protected final CurrentSensor outputCurrent;
@@ -48,7 +132,7 @@ class HardwareTalonSRX implements TalonSRX {
     protected final Faults instantaneousFaults;
     protected final Faults stickyFaults;
 
-    HardwareTalonSRX(CANTalon talon, double pulsesPerDegree) {
+    HardwareTalonSRX(CANTalon talon, double pulsesPerDegree, double analogTurnsOverVoltageRange) {
         this.talon = talon;
 
         this.forwardLimitSwitch = talon::isRevLimitSwitchClosed;
@@ -57,80 +141,103 @@ class HardwareTalonSRX implements TalonSRX {
         this.outputVoltage = talon::getOutputVoltage;
         this.busVoltage = talon::getBusVoltage;
         this.temperature = talon::getTemp;
-        this.encoder = new AngleSensor() {
-            private int zero = 0;
-
-            @Override
-            public double getAngle() {
-                return (talon.getEncPosition() - zero) / pulsesPerDegree;
-            }
-
-            @Override
-            public AngleSensor zero() {
-                zero = talon.getEncPosition();
-                return this;
-            }
-        };
-        instantaneousFaults = new Faults() {
-            @Override
-            public Switch forwardLimitSwitch() {
-                return ()->talon.getFaultForLim() != 0;
-            }
-            @Override
-            public Switch reverseLimitSwitch() {
-                return ()->talon.getFaultRevLim() != 0;
-            }
-            @Override
-            public Switch forwardSoftLimit() {
-                return ()->talon.getFaultForSoftLim() != 0;
-            }
-            @Override
-            public Switch reverseSoftLimit() {
-                return ()->talon.getFaultRevSoftLim() != 0;
-            }
-            @Override
-            public Switch hardwareFailure() {
-                return ()->talon.getFaultHardwareFailure() != 0;
-            }
-            @Override
-            public Switch overTemperature() {
-                return ()->talon.getFaultOverTemp() != 0;
-            }
-            @Override
-            public Switch underVoltage() {
-                return ()->talon.getFaultUnderVoltage() != 0;
-            }
-        };
-        stickyFaults = new Faults() {
+        this.encoderInput = encoderGyroscope(talon::getEncPosition,
+                                             talon::getEncVelocity,
+                                             pulsesPerDegree,
+                                             () -> quadratureRateInSeconds);
+        this.analogInput = analogGyroscope(talon::getAnalogInPosition,
+                                           talon::getAnalogInVelocity,
+                                           1023,
+                                           analogTurnsOverVoltageRange / 3.3,
+                                           3.3,
+                                           () -> analogRateInSeconds);
+        this.selectedEncoderInput = encoderGyroscope(talon::getPosition,
+                                             talon::getSpeed,
+                                             pulsesPerDegree,
+                                             () -> feedbackRateInSeconds);
+        this.selectedAnalogInput = analogGyroscope(talon::getPosition,
+                                           talon::getSpeed,
+                                           1023,
+                                           analogTurnsOverVoltageRange / 3.3,
+                                           3.3,
+                                           () -> feedbackRateInSeconds);
+        this.instantaneousFaults = new Faults() {
             @Override
             public Switch forwardLimitSwitch() {
-                return ()->talon.getStickyFaultForLim() != 0;
+                return () -> talon.getFaultForLim() != 0;
             }
+
             @Override
             public Switch reverseLimitSwitch() {
-                return ()->talon.getStickyFaultRevLim() != 0;
+                return () -> talon.getFaultRevLim() != 0;
             }
+
             @Override
             public Switch forwardSoftLimit() {
-                return ()->talon.getStickyFaultForSoftLim() != 0;
+                return () -> talon.getFaultForSoftLim() != 0;
             }
+
             @Override
             public Switch reverseSoftLimit() {
-                return ()->talon.getStickyFaultRevSoftLim() != 0;
+                return () -> talon.getFaultRevSoftLim() != 0;
             }
+
             @Override
             public Switch hardwareFailure() {
-                return ()->talon.getFaultHardwareFailure() != 0;    // no sticky version!
+                return () -> talon.getFaultHardwareFailure() != 0;
             }
+
             @Override
             public Switch overTemperature() {
-                return ()->talon.getStickyFaultOverTemp() != 0;
+                return () -> talon.getFaultOverTemp() != 0;
             }
+
             @Override
             public Switch underVoltage() {
-                return ()->talon.getStickyFaultUnderVoltage() != 0;
+                return () -> talon.getFaultUnderVoltage() != 0;
             }
         };
+        this.stickyFaults = new Faults() {
+            @Override
+            public Switch forwardLimitSwitch() {
+                return () -> talon.getStickyFaultForLim() != 0;
+            }
+
+            @Override
+            public Switch reverseLimitSwitch() {
+                return () -> talon.getStickyFaultRevLim() != 0;
+            }
+
+            @Override
+            public Switch forwardSoftLimit() {
+                return () -> talon.getStickyFaultForSoftLim() != 0;
+            }
+
+            @Override
+            public Switch reverseSoftLimit() {
+                return () -> talon.getStickyFaultRevSoftLim() != 0;
+            }
+
+            @Override
+            public Switch hardwareFailure() {
+                return () -> talon.getFaultHardwareFailure() != 0; // no sticky version!
+            }
+
+            @Override
+            public Switch overTemperature() {
+                return () -> talon.getStickyFaultOverTemp() != 0;
+            }
+
+            @Override
+            public Switch underVoltage() {
+                return () -> talon.getStickyFaultUnderVoltage() != 0;
+            }
+        };
+    }
+
+    @Override
+    public int getDeviceID() {
+        return talon.getDeviceID();
     }
 
     @Override
@@ -153,8 +260,65 @@ class HardwareTalonSRX implements TalonSRX {
     }
 
     @Override
-    public AngleSensor getAngleSensor() {
-        return encoder;
+    public Gyroscope getEncoderInput() {
+        return encoderInput;
+    }
+
+    @Override
+    public Gyroscope getAnalogInput() {
+        return analogInput;
+    }
+
+    @Override
+    public Gyroscope getSelectedSensor() {
+        return selectedInput;
+    }
+
+    @Override
+    public TalonSRX setFeedbackDevice(FeedbackDevice device) {
+        talon.setFeedbackDevice(edu.wpi.first.wpilibj.CANTalon.FeedbackDevice.valueOf(device.value()));
+        switch(device) {
+            case ANALOG_POTENTIOMETER:
+            case ANALOG_ENCODER:
+                selectedInput = selectedAnalogInput;
+                break;
+            case QUADRATURE_ENCODER:
+                selectedInput = selectedEncoderInput;
+                break;
+            case ENCODER_FALLING:
+            case ENCODER_RISING:
+                // for 2015 the Talon SRX firmware did not support the falling or rising mode ...
+                selectedInput = NO_OP_GYRO;
+                break;
+        }
+        return this;
+    }
+
+    @Override
+    public TalonSRX setStatusFrameRate(StatusFrameRate frameRate, int periodMillis) {
+        talon.setStatusFrameRateMs(edu.wpi.first.wpilibj.CANTalon.StatusFrameRate.valueOf(frameRate.value()), periodMillis);
+        double rateInSeconds = periodMillis / 1000.0;
+        switch(frameRate) {
+            case FEEDBACK:
+                feedbackRateInSeconds = rateInSeconds;
+                break;
+            case QUADRATURE_ENCODER:
+                quadratureRateInSeconds = rateInSeconds;
+                break;
+            case ANALOG_TEMPERATURE_BATTERY_VOLTAGE:
+                analogRateInSeconds = rateInSeconds;
+                break;
+            case GENERAL:
+                // do nothing
+                break;
+        }
+        return this;
+    }
+
+    @Override
+    public TalonSRX reverseSensor(boolean flip) {
+        talon.reverseSensor(flip);
+        return this;
     }
 
     @Override
@@ -232,6 +396,12 @@ class HardwareTalonSRX implements TalonSRX {
     @Override
     public TalonSRX setReverseLimitSwitchNormallyOpen(boolean normallyOpen) {
         talon.ConfigRevLimitSwitchNormallyOpen(normallyOpen);
+        return this;
+    }
+
+    @Override
+    public TalonSRX setVoltageRampRate(double rampRate) {
+        talon.setVoltageRampRate(rampRate);
         return this;
     }
 

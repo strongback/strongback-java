@@ -19,7 +19,72 @@ package org.strongback.control;
 import org.strongback.components.TalonSRX;
 
 /**
- * The Talon SRX Proportional Integral Differential (PID) controller with optional support for feed forward.
+ * A hardware-based Proportional Integral Differential (PID) controller that runs on the Talon SRX motor controller. The
+ * controller's input is wired as a sensor on the Talon SRX device, and specified via the
+ * {@link #setFeedbackDevice(FeedbackDevice)} method. The controller's mode of control is set via the
+ * {@link #setControlMode(ControlMode)}.
+ * <h2>Important usage notes</h2>
+ * <p>
+ * This section outlines some useful and frequently used features of the TalonController.
+ * <h3>Ramp rate</h3>
+ * <p>
+ * The Talon SRX can be set to honor a ramp rate to prevent instantaneous changes in throttle. This ramp rate is in effect
+ * regardless of which mode is selected (throttle, slave, or closed-loop).
+ *
+ * <pre>
+ * controller.setVoltageRampRate(6.0); // Allow throttle changes up to 6.0V per second
+ * </pre>
+ *
+ * <h3>Feedback device</h3>
+ * <p>
+ * The analog and quadrature signals are available all the time in all modes (throttle, slave, or closed-loop), but the Talon
+ * SRX requires the robot application to "pick" a particular feedback device for soft limit and closed-loop features. The Talon
+ * SRX defaults to the {@link org.strongback.components.TalonSRX.FeedbackDevice#QUADRATURE_ENCODER quadrature encoder}.
+ *
+ * <pre>
+ * controller.setFeedbackDevice(FeedbackDevice.ANALOG_ENCODER);
+ * </pre>
+ *
+ * <p>
+ * In order for limit switches and closed-loop features to function correctly, the sensor and motor have to be “in-phase”. This
+ * means that the sensor position must move in a <i>positive</i> direction as the motor controller drives <i>positive</i>
+ * throttle. To test this, first drive the motor manually (using a human input device), and watch the sensor position either in
+ * the roboRIO Web-based Configuration Self-Test, or by calling {@link #getSelectedSensor()} and printing it to console. If the
+ * "Sensor Position" moves in a negative direction while Talon SRX throttle is positive (blinking green), then use the
+ * {@link #reverseSensor(boolean)} so that the Talon negates the sensor reading. Then re-test to confirm sensed position moves
+ * in a positive direction with positive motor drive.
+ * <p>
+ * In the special case of using the {@link org.strongback.components.TalonSRX.FeedbackDevice#ENCODER_RISING} feedback device,
+ * {@link #reverseSensor(boolean)} should be called with <code>false</code>, since a rising encoder is guaranteed to be positive
+ * since it increments per rising edge, and never decrements.
+ *
+ * <h3>Soft limits</h3>
+ * <p>
+ * Soft limits can be used to disable motor drive when the position value read from the feedback device is outside of a
+ * specified range. Forward throttle will be disabled when {@link #enableForwardSoftLimit(boolean)} is set to <code>true</code>
+ * and the sensor position is greater than the {@link #setForwardSoftLimit(int)} value. Reverse throttle will be disabled when
+ * {@link #enableReverseSoftLimit(boolean)} is set to <code>true</code> and the sensor position is less than the
+ * {@link #setReverseSoftLimit(int)}.
+ *
+ * <h3>Control modes</h3>
+ * <p>
+ * The closed-loop logic is the same regardless of which feedback sensor or closed-loop mode is selected.
+ *
+ *
+ * <h3>Follower mode</h3>
+ * <p>
+ * Any Talon SRX on CAN bus can be instructed to "follow" the drive output of another Talon SRX. This is done by putting a Talon
+ * SRX into "follower" mode and specifying the device ID of the "lead Talon". The follower Talon will then mirror the output of
+ * the leader, which can be in any mode: closed-loop, voltage percent (duty-cycle), or even following yet another Talon SRX.
+ *
+ * <pre>
+ * leaderController = ...
+ * followerController.setControlMode(ControlMode.FOLLOWER);
+ * followerController.withTarget(leaderController.getDeviceID());
+ * </pre>
+ *
+ * The {@link #reverseOutput(boolean)} method can be used to invert the output of a follower Talon. This may be useful if a
+ * follower and leader Talon are wired out of phase with each other.
  */
 public interface TalonController extends PIDController, TalonSRX {
 
@@ -55,22 +120,18 @@ public interface TalonController extends PIDController, TalonSRX {
         /**
          * Control the motor by directly setting the desired position (in ticks or an analog value) for the motor's encoder.
          */
-        POSITION(1),
-        /**
-         * Control the motor's speed in position change every 10 milliseconds.
-         */
-        SPEED(2),
-        /**
-         * Control the motor by directly setting the current to be sent to the motor.
-         */
-        CURRENT(3),
-        /**
-         * Control the motor by directly setting the voltage to be sent to the motor.
-         */
-        VOLTAGE(4),
-        /**
-         * Control the motor by following another Talon SRX device.
-         */
+        POSITION(1), /**
+                      * Control the motor's speed in position change every 10 milliseconds.
+                      */
+        SPEED(2), /**
+                   * Control the motor by directly setting the current to be sent to the motor.
+                   */
+        CURRENT(3), /**
+                     * Control the motor by directly setting the voltage to be sent to the motor.
+                     */
+        VOLTAGE(4), /**
+                     * Control the motor by following another Talon SRX device.
+                     */
         FOLLOWER(5);
 
         private final int value;
@@ -94,83 +155,6 @@ public interface TalonController extends PIDController, TalonSRX {
     }
 
     /**
-     * The type of control sensor used by this Talon controller.
-     */
-    public enum FeedbackDevice {
-        /**
-         * Use Quadrature Encoder.
-         */
-        QUADRATURE_ENCODER(0),
-        /**
-         * Analog potentiometer, 0-3.3V
-         */
-        ANALOG_POTENTIOMETER(2),
-        /**
-         * Analog encoder, 0-3.3V
-         */
-        ANALOG_ENCODER(3),
-        /**
-         * Encoder that increment position per rising edge on Quadrature-A.
-         */
-        ENCODER_RISING(4),
-        /**
-         * Encoder that increment position per falling edge on Quadrature-A.
-         */
-        ENCODER_FALLING(5);
-
-        public int value;
-
-        public static FeedbackDevice valueOf(int value) {
-            for (FeedbackDevice mode : values()) {
-                if (mode.value == value) {
-                    return mode;
-                }
-            }
-            return null;
-        }
-
-        private FeedbackDevice(int value) {
-            this.value = value;
-        }
-
-        public int value() {
-            return this.value;
-        }
-    }
-
-    /**
-     * Types of status frame rates.
-     */
-    public enum StatusFrameRate {
-        GENERAL(0), FEEDBACK(1), QUADRATURE_ENCODER(2), ANALOG_TEMP_VBAT(3);
-        public int value;
-
-        public static StatusFrameRate valueOf(int value) {
-            for (StatusFrameRate mode : values()) {
-                if (mode.value == value) {
-                    return mode;
-                }
-            }
-            return null;
-        }
-
-        private StatusFrameRate(int value) {
-            this.value = value;
-        }
-
-        public int value() {
-            return this.value;
-        }
-    }
-
-    /**
-     * Get the CAN device ID.
-     *
-     * @return the device ID.
-     */
-    public int getDeviceID();
-
-    /**
      * Get this controller's current control mode.
      *
      * @return the control mode; never null
@@ -185,32 +169,13 @@ public interface TalonController extends PIDController, TalonSRX {
      */
     public TalonController setControlMode(ControlMode mode);
 
-    /**
-     * Set the feedback device for this controller.
-     *
-     * @param device the feedback device; may not be null
-     * @return this object so that methods can be chained; never null
-     */
+    @Override
     public TalonController setFeedbackDevice(FeedbackDevice device);
 
-    /**
-     * Set the status frame rate for this controller.
-     *
-     * @param frameRate the status frame rate; may not be null
-     * @param periodMillis frame rate period in milliseconds
-     * @return this object so that methods can be chained; never null
-     */
+    @Override
     public TalonController setStatusFrameRate(StatusFrameRate frameRate, int periodMillis);
 
-    /**
-     * Flips the sign (multiplies by negative one) the sensor values going into the talon.
-     *
-     * This only affects position and velocity closed loop control. Allows for situations where you may have a sensor flipped
-     * and going in the wrong direction.
-     *
-     * @param flip <code>true</code> if sensor input should be flipped, or <code>false</code> if not.
-     * @return this object so that methods can be chained; never null
-     */
+    @Override
     public TalonController reverseSensor(boolean flip);
 
     /**
@@ -288,18 +253,13 @@ public interface TalonController extends PIDController, TalonSRX {
      * @return this object so that methods can be chained; never null
      * @see #useProfile(int)
      */
-    public TalonController withProfile(int profile, double p, double i, double d, double feedForward, int izone, double closeLoopRampRate);
+    public TalonController withProfile(int profile, double p, double i, double d, double feedForward, int izone,
+            double closeLoopRampRate);
 
     @Override
     public Gains getGainsForCurrentProfile();
 
-    /**
-     * Set the voltage ramp rate for the current profile of this controller. It limits the rate at which the throttle will
-     * change. Affects all modes.
-     *
-     * @param rampRate Maximum change in voltage, in volts / second
-     * @return this object so that methods can be chained; never null
-     */
+    @Override
     public TalonController setVoltageRampRate(double rampRate);
 
     @Override
