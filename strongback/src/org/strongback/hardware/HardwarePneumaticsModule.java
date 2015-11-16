@@ -16,6 +16,7 @@
 
 package org.strongback.hardware;
 
+import org.strongback.annotation.ThreadSafe;
 import org.strongback.components.CurrentSensor;
 import org.strongback.components.PneumaticsModule;
 import org.strongback.components.Relay;
@@ -29,7 +30,8 @@ import edu.wpi.first.wpilibj.Compressor;
  *
  * @author Randall Hauch
  */
-public class HardwarePneumaticsModule implements PneumaticsModule {
+@ThreadSafe
+class HardwarePneumaticsModule implements PneumaticsModule {
 
     private final Compressor pcm;
     private final Relay closedLoop;

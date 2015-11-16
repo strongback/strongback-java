@@ -49,7 +49,9 @@ public interface PIDController extends Controller {
      * @param d the differential gain
      * @return this object so that methods can be chained; never null
      */
-    public PIDController withGains(double p, double i, double d);
+    public default PIDController withGains(double p, double i, double d) {
+        return withGains(p, i, d, 0.0);
+    }
 
     /**
      * Set the control gains on this controller's current profile.
@@ -60,7 +62,9 @@ public interface PIDController extends Controller {
      * @param feedForward the feed-forward gain
      * @return this object so that methods can be chained; never null
      */
-    public PIDController withGains(double p, double i, double d, double feedForward);
+    public default PIDController withGains(double p, double i, double d, double feedForward) {
+        return withProfile(getCurrentProfile(), p, i, d, 0.0);
+    }
 
     /**
      * Get the set of profile numbers.
@@ -82,7 +86,9 @@ public interface PIDController extends Controller {
      * @return this object so that methods can be chained; never null
      * @throws IllegalArgumentException if the profile name is null
      */
-    public PIDController withProfile(int profile, double p, double i, double d);
+    public default PIDController withProfile(int profile, double p, double i, double d) {
+        return withProfile(profile,p,i,d,0.0);
+    }
 
     /**
      * Set the control gains for the specified profile, which may or may not be the current profile. Profile numbers start from
