@@ -16,12 +16,18 @@
 
 package org.strongback.control;
 
+import org.strongback.command.UnmanagedControllerCommand;
+import org.strongback.command.Requirable;
+
 /**
- * A basic controller.
+ * A simple controller that can manage a component (typically a motor) based upon a desired {@link #withTarget(double) target value}
+ * and {@link #withTolerance(double) tolerance}.
  *
  * @author Randall Hauch
+ * @see PIDController
+ * @see UnmanagedControllerCommand
  */
-public interface Controller {
+public interface Controller extends Requirable {
 
     /**
      * Calculate the next controller output. This usually involves reading one or more inputs and computing the output based
@@ -34,28 +40,62 @@ public interface Controller {
     public boolean computeOutput();
 
     /**
-     * Determines whether the supplied value is within the tolerance of the setpoint.
+     * Determines whether the supplied value is within the {@link #getTolerance() tolerance} of the {@link #getTarget() target}.
      *
      * @param value the proposed value
-     * @return <code>true</code> if the proposed value is within the tolerance of the setpoint, or <code>false</code> otherwise
+     * @return <code>true</code> if the proposed value is within the tolerance of the target, or <code>false</code> otherwise
      */
-    public boolean checkTolerance(double value);
+    public default boolean checkTolerance(double value) {
+        return Math.abs(value) <= (getTarget() - getTolerance());
+    }
+
+    /**
+     * Determines whether the input to the controller is currently within the {@link #getTolerance() tolerance} of the
+     * {@link #getTarget() target}.
+     *
+     * @return <code>true</code> if the current value is within the tolerance of the target, or <code>false</code> otherwise
+     */
+    public default boolean isWithinTolerance() {
+        return checkTolerance(getValue());
+    }
+
+    /**
+     * Get the current measured value for this controller.
+     * @return the current value
+     */
+    public double getValue();
 
     /**
      * Sets the target value for this controller.
      *
-     * @param setpoint the desired setpoint that this controller will use as a target
+     * @param target the desired setpoint that this controller will use as a target
      * @return this object so that methods can be chained; never null
+     * @see #getTarget()
      */
-    public Controller setpoint(double setpoint);
+    public Controller withTarget(double target);
+
+    /**
+     * Get the target value for this controller.
+     * @return the target value
+     * @see #withTarget(double)
+     */
+    public double getTarget();
 
     /**
      * Sets the absolute tolerance for this controller.
      *
      * @param tolerance the maximum absolute error which is tolerable in the units of the input object
      * @return this object so that methods can be chained; never null
+     * @see #getTolerance()
      */
-    public Controller tolerance(double tolerance);
+    public Controller withTolerance(double tolerance);
+
+    /**
+     * Get the absolute tolerance for this controller.
+     * @return the target value
+     * @see #withTolerance(double)
+     */
+    public double getTolerance();
 
     /**
      * Reset any error values stored from previous {@link #computeOutput() executions}.

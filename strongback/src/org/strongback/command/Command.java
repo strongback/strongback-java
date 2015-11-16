@@ -23,7 +23,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import org.strongback.Strongback;
-import org.strongback.control.PIDController;
+import org.strongback.control.Controller;
 import org.strongback.util.Collections;
 
 /**
@@ -150,30 +150,209 @@ public abstract class Command {
     }
 
     /**
-     * Create a command that uses the supplied PID controller to move within the specified tolerance of the specified setpoint.
+     * Create a command that uses the unmanaged {@link Controller} to move toward the specified target using controller's
+     * {@link Controller#getTolerance() tolerance}. The controller is <em>not</em> automatically and continuously measuring the
+     * input and computing and applying the correct output, and only does so when this command is executing. The given
+     * initializer will be called when the command is initialized and should be used to update the controller's target,
+     * tolerance, and other controller settings.
      *
-     * @param controller the PID+FF controller; may not be null
-     * @param setpoint the desired value for the input to the controller
-     * @param tolerance the absolute tolerance for how close the controller should come before completing the command
+     * @param controller the controller; may not be null
+     * @param initializer the function that runs when the command is started and configures the controller's
+     *        {@link Controller#withTarget(double) target}, {@link Controller#withTolerance(double) tolerance}, and any other
+     *        controller settings
      * @return the command; never null
      */
-    public static Command use(PIDController controller, double setpoint, double tolerance) {
-        return new ControllerCommand(controller, setpoint, tolerance, controller);
+    public static Command use(Controller controller, Runnable initializer) {
+        return new UnmanagedControllerCommand(controller, initializer, controller);
     }
 
     /**
-     * Create a command that uses the supplied PID controller to move within the specified tolerance of the specified setpoint,
-     * timing out if the command takes longer than {@code durationInSeconds}.
+     * Create a command that uses the unmanaged {@link Controller} to move toward the specified target using controller's
+     * {@link Controller#getTolerance() tolerance}. The controller is <em>not</em> automatically and continuously measuring the
+     * input and computing and applying the correct output, and only does so when this command is executing. The given
+     * initializer will be called when the command is initialized and should be used to update the controller's target,
+     * tolerance, and other controller settings.
      *
-     * @param durationInSeconds the maximum duration in seconds that the command should execute; must be non-negative, and 0.0
-     *        equates to forever
-     * @param controller the PID+FF controller; may not be null
+     * @param controller the controller; may not be null
+     * @param setpoint the desired value for the input to the controller
+     * @return the command; never null
+     */
+    public static Command use(Controller controller, double setpoint) {
+        return new UnmanagedControllerCommand(controller, () -> controller.withTarget(setpoint), controller);
+    }
+
+    /**
+     * Create a command that uses the unmanaged {@link Controller} to move with the specified tolerance of the given target. The
+     * controller is <em>not</em> automatically and continuously measuring the input and computing and applying the correct
+     * output, and only does so when this command is executing. The given initializer will be called when the command is
+     * initialized and should be used to update the controller's target, tolerance, and other controller settings.
+     *
+     * @param controller the controller; may not be null
      * @param setpoint the desired value for the input to the controller
      * @param tolerance the absolute tolerance for how close the controller should come before completing the command
      * @return the command; never null
      */
-    public static Command use(double durationInSeconds, PIDController controller, double setpoint, double tolerance) {
-        return new ControllerCommand(durationInSeconds, controller, setpoint, tolerance, controller);
+    public static Command use(Controller controller, double setpoint, double tolerance) {
+        return new UnmanagedControllerCommand(controller, () -> controller.withTarget(setpoint).withTolerance(tolerance),
+                controller);
+    }
+
+    /**
+     * Create a command that uses the unmanaged {@link Controller} to move toward the controller's
+     * {@link Controller#withTarget(double) target} using the current tolerance, timing out if the command takes longer than
+     * {@code durationInSeconds}. The controller is <em>not</em> automatically and continuously measuring the input and
+     * computing and applying the correct output, and only does so when this command is executing. The given initializer will be
+     * called when the command is initialized and should be used to update the controller's target, tolerance, and other
+     * controller settings.
+     *
+     * @param durationInSeconds the maximum duration in seconds that the command should execute; must be non-negative, and 0.0
+     *        equates to forever
+     * @param controller the controller; may not be null
+     * @param setpoint the desired value for the input to the controller
+     * @return the command; never null
+     */
+    public static Command use(double durationInSeconds, Controller controller, double setpoint) {
+        return new UnmanagedControllerCommand(durationInSeconds, controller, () -> controller.withTarget(setpoint), controller);
+    }
+
+    /**
+     * Create a command that uses the unmanaged {@link Controller} to move toward the controller's
+     * {@link Controller#withTarget(double) target}, timing out if the command takes longer than {@code durationInSeconds}. The
+     * controller is <em>not</em> automatically and continuously measuring the input and computing and applying the correct
+     * output, and only does so when this command is executing. The given initializer will be called when the command is
+     * initialized and should be used to update the controller's target, tolerance, and other controller settings.
+     *
+     * @param durationInSeconds the maximum duration in seconds that the command should execute; must be non-negative, and 0.0
+     *        equates to forever
+     * @param controller the controller; may not be null
+     * @param setpoint the desired value for the input to the controller
+     * @param tolerance the absolute tolerance for how close the controller should come before completing the command
+     * @return the command; never null
+     */
+    public static Command use(double durationInSeconds, Controller controller, double setpoint, double tolerance) {
+        return new UnmanagedControllerCommand(durationInSeconds, controller,
+                () -> controller.withTarget(setpoint).withTolerance(tolerance), controller);
+    }
+
+    /**
+     * Create a command that uses the unmanaged {@link Controller} to move toward the specified target using controller's
+     * {@link Controller#getTolerance() tolerance}, timing out if the command takes longer than {@code durationInSeconds}. The
+     * controller is <em>not</em> automatically and continuously measuring the input and computing and applying the correct
+     * output, and only does so when this command is executing. The given initializer will be called when the command is
+     * initialized and should be used to update the controller's target, tolerance, and other controller settings.
+     *
+     * @param durationInSeconds the maximum duration in seconds that the command should execute; must be non-negative, and 0.0
+     *        equates to forever
+     * @param controller the controller; may not be null
+     * @param initializer the function that runs when the command is started and configures the controller's
+     *        {@link Controller#withTarget(double) target}, {@link Controller#withTolerance(double) tolerance}, and any other
+     *        controller settings
+     * @return the command; never null
+     */
+    public static Command use(double durationInSeconds, Controller controller, Runnable initializer) {
+        return new UnmanagedControllerCommand(durationInSeconds, controller, initializer, controller);
+    }
+
+    /**
+     * Create a command that reuses the automatically running {@link Controller} to move toward the specified target using
+     * controller's {@link Controller#getTolerance() tolerance}. The controller automatically and continuously measures the
+     * input and computing and applies the correct output, even when this command is not executing. The given initializer will
+     * be called when the command is initialized and should be used to update the controller's target, tolerance, and other
+     * controller settings.
+     *
+     * @param controller the controller; may not be null
+     * @param initializer the function that runs when the command is started and configures the controller's
+     *        {@link Controller#withTarget(double) target}, {@link Controller#withTolerance(double) tolerance}, and any other
+     *        controller settings
+     * @return the command; never null
+     */
+    public static Command reuse(Controller controller, Runnable initializer) {
+        return new ControllerCommand(controller, initializer, controller);
+    }
+
+    /**
+     * Create a command that reuses the automatically running {@link Controller} to move toward the specified target using
+     * controller's {@link Controller#getTolerance() tolerance}. The controller automatically and continuously measures the
+     * input and computing and applies the correct output, even when this command is not executing. The given initializer will
+     * be called when the command is initialized and should be used to update the controller's target, tolerance, and other
+     * controller settings.
+     *
+     * @param controller the controller; may not be null
+     * @param setpoint the desired value for the input to the controller
+     * @return the command; never null
+     */
+    public static Command reuse(Controller controller, double setpoint) {
+        return new ControllerCommand(controller, () -> controller.withTarget(setpoint), controller);
+    }
+
+    /**
+     * Create a command that uses the automatically running {@link Controller} to move with the specified tolerance of the given
+     * target. The controller automatically and continuously measures the input and computing and applies the correct output,
+     * even when this command is not executing. The given initializer will be called when the command is initialized and should
+     * be used to update the controller's target, tolerance, and other controller settings.
+     *
+     * @param controller the controller; may not be null
+     * @param setpoint the desired value for the input to the controller
+     * @param tolerance the absolute tolerance for how close the controller should come before completing the command
+     * @return the command; never null
+     */
+    public static Command reuse(Controller controller, double setpoint, double tolerance) {
+        return new ControllerCommand(controller, () -> controller.withTarget(setpoint).withTolerance(tolerance), controller);
+    }
+
+    /**
+     * Create a command that uses the automatically running {@link Controller} to move toward the controller's
+     * {@link Controller#withTarget(double) target} using the current tolerance, timing out if the command takes longer than
+     * {@code durationInSeconds}. The controller automatically and continuously measures the input and computing and applies the
+     * correct output, even when this command is not executing. The given initializer will be called when the command is
+     * initialized and should be used to update the controller's target, tolerance, and other controller settings.
+     *
+     * @param durationInSeconds the maximum duration in seconds that the command should execute; must be non-negative, and 0.0
+     *        equates to forever
+     * @param controller the controller; may not be null
+     * @param setpoint the desired value for the input to the controller
+     * @return the command; never null
+     */
+    public static Command reuse(double durationInSeconds, Controller controller, double setpoint) {
+        return new ControllerCommand(durationInSeconds, controller, () -> controller.withTarget(setpoint), controller);
+    }
+
+    /**
+     * Create a command that uses the automatically running {@link Controller} to move toward the controller's
+     * {@link Controller#withTarget(double) target}, timing out if the command takes longer than {@code durationInSeconds}. The
+     * controller automatically and continuously measures the input and computing and applies the correct output, even when this
+     * command is not executing. The given initializer will be called when the command is initialized and should be used to
+     * update the controller's target, tolerance, and other controller settings.
+     *
+     * @param durationInSeconds the maximum duration in seconds that the command should execute; must be non-negative, and 0.0
+     *        equates to forever
+     * @param controller the controller; may not be null
+     * @param setpoint the desired value for the input to the controller
+     * @param tolerance the absolute tolerance for how close the controller should come before completing the command
+     * @return the command; never null
+     */
+    public static Command reuse(double durationInSeconds, Controller controller, double setpoint, double tolerance) {
+        return new ControllerCommand(durationInSeconds, controller,
+                () -> controller.withTarget(setpoint).withTolerance(tolerance), controller);
+    }
+
+    /**
+     * Create a command that uses the automatically running {@link Controller} to move toward the specified target using
+     * controller's {@link Controller#getTolerance() tolerance}, timing out if the command takes longer than
+     * {@code durationInSeconds}. The controller automatically and continuously measures the input and computing and applies the
+     * correct output, even when this command is not executing. The given initializer will be called when the command is
+     * initialized and should be used to update the controller's target, tolerance, and other controller settings.
+     *
+     * @param durationInSeconds the maximum duration in seconds that the command should execute; must be non-negative, and 0.0
+     *        equates to forever
+     * @param controller the controller; may not be null
+     * @param initializer the function that runs when the command is started and configures the controller's
+     *        {@link Controller#withTarget(double) target}, {@link Controller#withTolerance(double) tolerance}, and any other
+     *        controller settings
+     * @return the command; never null
+     */
+    public static Command reuse(double durationInSeconds, Controller controller, Runnable initializer) {
+        return new ControllerCommand(durationInSeconds, controller, initializer, controller);
     }
 
     /**
