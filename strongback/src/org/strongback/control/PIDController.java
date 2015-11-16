@@ -16,6 +16,10 @@
 
 package org.strongback.control;
 
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.DoubleConsumer;
@@ -65,16 +69,25 @@ import edu.wpi.first.wpilibj.tables.ITableListener;
  * recorder.register("Azimuth Control", controller.detailedChannels());
  * </pre>
  *
+ * <h2>Profiles</h2> Each PIDController instance is able to have 1 or more independent sets of PID gains, called
+ * <em>profiles</em>. One of these profiles is always in use, and by default it is the "default" profile. Additional profiles
+ * can be {@link #withProfile(String, double, double, double, double) defined}, and then while in operation the gains for the
+ * controller can be switched to any of the named profiles.
+ *
  * @author Randall Hauch
  */
 @ThreadSafe
 public class PIDController implements LiveWindowSendable, Requirable, Controller {
+
+    public static String DEFAULT_PROFILE = "default";
 
     private final DoubleSupplier source;
     private final DoubleConsumer output;
     private final AtomicBoolean enabled = new AtomicBoolean(true);
     private volatile Target target = new Target();
     private volatile Gains gains = new Gains(0.0, 0.0, 0.0, 0.0);
+    private final Map<String, Gains> gainsByProfile = new ConcurrentHashMap<>();
+    private volatile String currentProfile = DEFAULT_PROFILE;
     private volatile double lastInput = 0.0d;
     private volatile double error = 0.0d;
     private volatile double totalError = 0.0d;
@@ -108,6 +121,7 @@ public class PIDController implements LiveWindowSendable, Requirable, Controller
         if (source == null) throw new IllegalArgumentException("The source may not be null");
         if (output == null) throw new IllegalArgumentException("The output may not be null");
         this.gains = new Gains(0.0, 0.0, 0.0, 0.0);
+        this.gainsByProfile.put(currentProfile, gains); // add the gains as the default profile
         this.source = source;
         this.output = output;
     }
@@ -158,7 +172,7 @@ public class PIDController implements LiveWindowSendable, Requirable, Controller
     }
 
     /**
-     * Set the gains for this controller.
+     * Set the control gains on this controller's current profile.
      *
      * @param p the proportional gain
      * @param i the integral gain
@@ -170,7 +184,7 @@ public class PIDController implements LiveWindowSendable, Requirable, Controller
     }
 
     /**
-     * Set the gains for this controller.
+     * Set the control gains on this controller's current profile.
      *
      * @param p the proportional gain
      * @param i the integral gain
@@ -179,14 +193,115 @@ public class PIDController implements LiveWindowSendable, Requirable, Controller
      * @return this object so that methods can be chained; never null
      */
     public PIDController withGains(double p, double i, double d, double feedForward) {
-        Gains gains = new Gains(p, i, d, feedForward);
-        this.gains = gains;
-        onTable(table -> {
-            table.putNumber("p", gains.p);
-            table.putNumber("i", gains.i);
-            table.putNumber("d", gains.d);
-            table.putNumber("f", gains.feedForward);
-        });
+        synchronized (this) {
+            withProfile(currentProfile, p, i, d, feedForward);
+        }
+        return this;
+    }
+
+    /**
+     * Get the set of profile names.
+     *
+     * @return the profile names; never null and never empty.
+     */
+    public Set<String> getProfileNames() {
+        return Collections.unmodifiableSet(gainsByProfile.keySet());
+    }
+
+    /**
+     * Set the control gains for the named profile, which may or may not be the current profile.
+     *
+     * @param profileName the name of the profile; may not be null, and may be an existing or new profile
+     * @param p the proportional gain
+     * @param i the integral gain
+     * @param d the differential gain
+     * @return this object so that methods can be chained; never null
+     * @throws IllegalArgumentException if the profile name is null
+     */
+    public PIDController withProfile(String profileName, double p, double i, double d) {
+        return withProfile(profileName, p, i, d, 0.0);
+    }
+
+    /**
+     * Set the control gains for the named profile, which may or may not be the current profile.
+     *
+     * @param profileName the name of the profile; may not be null, and may be an existing or new profile
+     * @param p the proportional gain
+     * @param i the integral gain
+     * @param d the differential gain
+     * @param feedForward the feed-forward gain
+     * @return this object so that methods can be chained; never null
+     * @throws IllegalArgumentException if the profile name is null
+     */
+    public PIDController withProfile(String profileName, double p, double i, double d, double feedForward) {
+        if (profileName == null) throw new IllegalArgumentException("The profile name may not be null");
+        synchronized (this) {
+            Gains newGains = this.gainsByProfile.compute(profileName, (key, gains) -> {
+                return new Gains(p, i, d, feedForward);
+            });
+            if (profileName.equals(this.currentProfile)) {
+                this.gains = newGains;
+                onTable(table -> {
+                    table.putNumber("p", gains.p);
+                    table.putNumber("i", gains.i);
+                    table.putNumber("d", gains.d);
+                    table.putNumber("f", gains.feedForward);
+                    table.putString("profile", profileName);
+                });
+            }
+        }
+        return this;
+    }
+
+    /**
+     * Get the name of the current profile.
+     *
+     * @return the current profile name; never null
+     */
+    public String getCurrentProfile() {
+        return this.currentProfile;
+    }
+
+    /**
+     * Get the gains of the current profile.
+     *
+     * @return the current profile gains; never null
+     */
+    public Gains getGainsForCurrentProfile() {
+        return this.gains;
+    }
+
+    /**
+     * Get the gains for the named profile.
+     *
+     * @param profileName the name of the profile
+     * @return the gains for the named profile; may be null if the profile does not exist
+     */
+    public Gains getGainsFor(String profileName) {
+        return this.gainsByProfile.get(profileName);
+    }
+
+    /**
+     * Use the profile with the given name.
+     *
+     * @param profileName the name of the profile
+     * @return this object so that methods can be chained; never null
+     * @throws IllegalArgumentException if the profile does not exist
+     */
+    public PIDController useProfile(String profileName) {
+        Gains gains = this.gainsByProfile.get(profileName);
+        if (gains == null) throw new IllegalArgumentException("No profile named '" + profileName + "' exists");
+        synchronized (this) {
+            this.gains = gains;
+            this.currentProfile = profileName;
+            onTable(table -> {
+                table.putNumber("p", gains.p);
+                table.putNumber("i", gains.i);
+                table.putNumber("d", gains.d);
+                table.putNumber("f", gains.feedForward);
+                table.putString("profile", profileName);
+            });
+        }
         return this;
     }
 
@@ -361,10 +476,10 @@ public class PIDController implements LiveWindowSendable, Requirable, Controller
     public DataRecordable errorChannels() {
         return (recorder, name) -> {
             basicChannels().registerWith(recorder, name);
-            recorder.register(name + " error(P)", () -> gains.p * error);
-            recorder.register(name + " error(I)", () -> gains.i * totalError);
-            recorder.register(name + " error(D)", () -> gains.d * (error - prevError));
-            recorder.register(name + " error(F)", () -> target.setpoint * gains.feedForward);
+            recorder.register(name + " error(P)", () -> currentP() * error);
+            recorder.register(name + " error(I)", () -> currentI() * totalError);
+            recorder.register(name + " error(D)", () -> currentD() * (error - prevError));
+            recorder.register(name + " error(F)", () -> currentFeedForward() * target.setpoint);
         };
     }
 
@@ -396,26 +511,81 @@ public class PIDController implements LiveWindowSendable, Requirable, Controller
         return (recorder, name) -> {
             errorChannels().registerWith(recorder, name);
             recorder.register(name + " tolerance", () -> target.tolerance);
-            recorder.register(name + " gain(P)", () -> gains.p);
-            recorder.register(name + " gain(I)", () -> gains.i);
-            recorder.register(name + " gain(D)", () -> gains.d);
-            recorder.register(name + " gain(F)", () -> gains.feedForward);
+            recorder.register(name + " gain(P)", this::currentP);
+            recorder.register(name + " gain(I)", this::currentI);
+            recorder.register(name + " gain(D)", this::currentD);
+            recorder.register(name + " gain(F)", this::currentFeedForward);
             recorder.register(name + " error total", () -> totalError);
         };
     }
 
-    protected static final class Gains {
+    protected double currentP() {
+        return gains.p;
+    }
+
+    protected double currentI() {
+        return gains.i;
+    }
+
+    protected double currentD() {
+        return gains.d;
+    }
+
+    protected double currentFeedForward() {
+        return gains.feedForward;
+    }
+
+    /**
+     * A set of gains.
+     */
+    public static final class Gains {
         protected final double p;
         protected final double i;
         protected final double d;
         protected final double feedForward;
 
-        public Gains(double p, double i, double d, double feedForward) {
+        protected Gains(double p, double i, double d, double feedForward) {
             this.p = p;
             this.i = i;
             this.d = d;
             this.feedForward = feedForward;
         };
+
+        /**
+         * Get the proportional gain.
+         *
+         * @return the proportional gain.
+         */
+        public double getP() {
+            return p;
+        }
+
+        /**
+         * Get the integral gain.
+         *
+         * @return the integral gain.
+         */
+        public double getI() {
+            return i;
+        }
+
+        /**
+         * Get the differential gain.
+         *
+         * @return the differential gain.
+         */
+        public double getD() {
+            return d;
+        }
+
+        /**
+         * Get the feed forward gain.
+         *
+         * @return the feed forward gain.
+         */
+        public double getFeedForward() {
+            return feedForward;
+        }
     }
 
     @Immutable
@@ -504,7 +674,12 @@ public class PIDController implements LiveWindowSendable, Requirable, Controller
     }
 
     protected void valueChanged(ITable table, String key, Object value, boolean isNew) {
-        if (key.equals("p") || key.equals("i") || key.equals("d") || key.equals("f")) {
+        if (key.equals("profile")) {
+            String profileName = table.getString("profile");
+            if (gainsByProfile.containsKey(profileName)) {
+                useProfile(profileName);
+            }
+        } else if (key.equals("p") || key.equals("i") || key.equals("d") || key.equals("f")) {
             Gains gains = this.gains;
             if (gains.p != table.getNumber("p", 0.0) || gains.i != table.getNumber("i", 0.0)
                     || gains.d != table.getNumber("d", 0.0) || gains.feedForward != table.getNumber("f", 0.0)) {
@@ -544,6 +719,7 @@ public class PIDController implements LiveWindowSendable, Requirable, Controller
             table.putNumber("f", gains.feedForward);
             table.putNumber("setpoint", target.setpoint);
             table.putBoolean("enabled", isEnabled());
+            table.putString("profile", getCurrentProfile());
             table.addTableListener(listener, false);
         }
     }
