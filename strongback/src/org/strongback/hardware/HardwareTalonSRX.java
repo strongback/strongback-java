@@ -18,6 +18,7 @@ package org.strongback.hardware;
 
 import java.util.function.DoubleSupplier;
 
+import org.strongback.Strongback;
 import org.strongback.annotation.Immutable;
 import org.strongback.components.CurrentSensor;
 import org.strongback.components.Gyroscope;
@@ -280,10 +281,20 @@ class HardwareTalonSRX implements TalonSRX {
         switch(device) {
             case ANALOG_POTENTIOMETER:
             case ANALOG_ENCODER:
-                selectedInput = selectedAnalogInput;
+                if ( selectedAnalogInput != null ) {
+                    selectedInput = selectedAnalogInput;
+                } else {
+                    Strongback.logger(getClass()).error("Unable to use the analog input for feedback, since the Talon SRX (device " + getDeviceID() + ") was not instantiated with an analog input. Check how this device was created using Strongback's Hardware class.");
+                    selectedInput = NO_OP_GYRO;
+                }
                 break;
             case QUADRATURE_ENCODER:
-                selectedInput = selectedEncoderInput;
+                if ( selectedEncoderInput != null ) {
+                    selectedInput = selectedEncoderInput;
+                } else {
+                    Strongback.logger(getClass()).error("Unable to use the quadrature encoder input for feedback, since the Talon SRX (device " + getDeviceID() + ") was not instantiated with an encoder input. Check how this device was created using Strongback's Hardware class.");
+                    selectedInput = NO_OP_GYRO;
+                }
                 break;
             case ENCODER_FALLING:
             case ENCODER_RISING:
@@ -297,16 +308,16 @@ class HardwareTalonSRX implements TalonSRX {
     @Override
     public TalonSRX setStatusFrameRate(StatusFrameRate frameRate, int periodMillis) {
         talon.setStatusFrameRateMs(edu.wpi.first.wpilibj.CANTalon.StatusFrameRate.valueOf(frameRate.value()), periodMillis);
-        double rateInSeconds = periodMillis / 1000.0;
+        double periodInSeconds = periodMillis / 1000.0;
         switch(frameRate) {
             case FEEDBACK:
-                feedbackRateInSeconds = rateInSeconds;
+                feedbackRateInSeconds = periodInSeconds;
                 break;
             case QUADRATURE_ENCODER:
-                quadratureRateInSeconds = rateInSeconds;
+                quadratureRateInSeconds = periodInSeconds;
                 break;
             case ANALOG_TEMPERATURE_BATTERY_VOLTAGE:
-                analogRateInSeconds = rateInSeconds;
+                analogRateInSeconds = periodInSeconds;
                 break;
             case GENERAL:
                 // do nothing
