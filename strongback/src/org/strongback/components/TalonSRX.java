@@ -297,18 +297,27 @@ public interface TalonSRX extends LimitedMotor {
         /**
          * Use Quadrature Encoder.
          */
-        QUADRATURE_ENCODER(0), /**
-                                * Analog potentiometer, 0-3.3V
-                                */
-        ANALOG_POTENTIOMETER(2), /**
-                                  * Analog encoder or any other analog device, 0-3.3V
-                                  */
-        ANALOG_ENCODER(3), /**
-                            * Encoder that increments position per rising edge (and never decrements) on Quadrature-A.
-                            */
-        ENCODER_RISING(4), /**
-                            * Encoder that increments position per falling edge (and never decrements) on Quadrature-A.
-                            */
+        QUADRATURE_ENCODER(0),
+
+        /**
+         * Analog potentiometer or any other analog device, 0-3.3V
+         */
+        ANALOG_POTENTIOMETER(2),
+
+        /**
+         * Analog encoder or any other analog device, 0-3.3V
+         */
+        ANALOG_ENCODER(3),
+
+        /**
+         * Encoder that increments position per rising edge (and never decrements) on Quadrature-A.
+         */
+        ENCODER_RISING(4),
+
+        /**
+         * Encoder that increments position per falling edge (and never decrements) on Quadrature-A.
+         * Note: Was not supported in 2015 firmware, per the <a href="https://www.ctr-electronics.com/Talon%20SRX%20Software%20Reference%20Manual.pdf">Talon SRX Software Reference Manual</a>, section 21.3
+         */
         ENCODER_FALLING(5);
 
         public int value;
@@ -335,7 +344,65 @@ public interface TalonSRX extends LimitedMotor {
      * Types of status frame rates.
      */
     public enum StatusFrameRate {
-        GENERAL(0), FEEDBACK(1), QUADRATURE_ENCODER(2), ANALOG_TEMPERATURE_BATTERY_VOLTAGE(3);
+        /**
+         * The General Status frame has a default period of 10ms, and provides:
+         * <ul>
+         * <li>Closed Loop Error - the closed-loop target minus actual position/velocity.</li>
+         * <li>Throttle - the current 10bit motor output duty cycle (-1023 full reverse to +1023 full forward).</li>
+         * <li>Forward Limit Switch Pin State</li>
+         * <li>Reverse Limit Switch Pin State</li>
+         * <li>Fault bits</li>
+         * <li>Applied Control Mode</li>
+         * </ul>
+         */
+        GENERAL(0),
+
+        /**
+         * The Feedback Status frame has a default period of 20ms, and provides:
+         * <ul>
+         * <li>Sensor Position - position of the selected sensor</li>
+         * <li>Sensor Velocity - velocity of the selected sensor</li>
+         * <li>Motor Current</li>
+         * <li>Sticky Faults</li>
+         * <li>Brake Neutral State</li>
+         * <li>Motor Control Profile Select</li>
+         * </ul>
+         */
+        FEEDBACK(1),
+
+        /**
+         * The Quadrature Encoder Status frame has a default period of 100ms, and provides:
+         * <ul>
+         * <li>Encoder Position - position of the quadrature sensor</li>
+         * <li>Encoder Velocity - velocity of the selected sensor</li>
+         * <li>Number of rising edges counted on the Index Pin.</li>
+         * <li>Quad A pin state.</li>
+         * <li>Quad B pin state.</li>
+         * <li>Quad Index pin state.</li>
+         * </ul>
+         * The quadrature decoder is always engaged, whether the feedback device is selected or not, and whether a quadrature
+         * encoder is actually wired or not. This means that the Quadrature Encoder signals are always available in programming
+         * API regardless of how the Talon is used. The 100ms update rate is sufficient for logging, instrumentation and
+         * debugging. If a faster update rate is required the robot application can select the appropriate sensor and leverage
+         * the Sensor Position and Sensor Velocity sent over the {@link #FEEDBACK} frame every 20ms (by default).
+         */
+        QUADRATURE_ENCODER(2),
+
+        /**
+         * The Analog, Temperature, and Battery Voltage status frame has a default period of 100ms, and provides:
+         * <ul>
+         * <li>Analog Position - position of the analog sensor</li>
+         * <li>Analog Velocity - velocity of the analog sensor</li>
+         * <li>Temperature</li>
+         * <li>Battery Voltage</li>
+         * </ul>
+         * The Analog to Digital Converter is always engaged, whether the feedback device is selected or not, and whether an
+         * analog sensor is actually wired or not. This means that the Analog In signals are always available in programming API
+         * regardless of how the Talon is used. The 100ms update rate is sufficient for logging, instrumentation and debugging.
+         * If a faster update rate is required the robot application can select the appropriate sensor and leverage the Sensor
+         * Position and Sensor Velocity sent over the {@link #FEEDBACK} frame every 20ms (by default).
+         */
+        ANALOG_TEMPERATURE_BATTERY_VOLTAGE(3);
         public int value;
 
         public static StatusFrameRate valueOf(int value) {

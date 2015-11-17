@@ -116,12 +116,13 @@ class HardwareTalonController extends HardwareTalonSRX implements TalonControlle
 
     @Override
     public double getTarget() {
-        return talon.getSetpoint();
+        double targetPosition = talon.getSetpoint();
+        return this.selectedInput.angleInDegreesFromRawPosition(targetPosition);
     }
 
     @Override
-    public Controller withTarget(double target) {
-        talon.set(target);
+    public TalonController withTarget(double angleInDegrees) {
+        talon.set(this.selectedInput.rawPositionForAngleInDegrees(angleInDegrees));
         return this;
     }
 
@@ -131,7 +132,7 @@ class HardwareTalonController extends HardwareTalonSRX implements TalonControlle
     }
 
     @Override
-    public Controller withTolerance(double tolerance) {
+    public TalonController withTolerance(double tolerance) {
         this.tolerance = tolerance;
         return this;
     }

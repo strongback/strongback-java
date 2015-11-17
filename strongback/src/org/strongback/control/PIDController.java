@@ -41,6 +41,12 @@ public interface PIDController extends Controller {
      */
     public static int DEFAULT_PROFILE = 0;
 
+    @Override
+    public PIDController withTarget(double target);
+
+    @Override
+    public PIDController withTolerance(double tolerance);
+
     /**
      * Set the control gains on this controller's current profile.
      *
