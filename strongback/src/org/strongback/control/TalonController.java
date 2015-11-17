@@ -16,6 +16,7 @@
 
 package org.strongback.control;
 
+import org.strongback.annotation.Experimental;
 import org.strongback.components.TalonSRX;
 
 /**
@@ -85,7 +86,12 @@ import org.strongback.components.TalonSRX;
  *
  * The {@link #reverseOutput(boolean)} method can be used to invert the output of a follower Talon. This may be useful if a
  * follower and leader Talon are wired out of phase with each other.
+ * <p>
+ * This class is currently experimental. It certainly works as a simple motor, but most of this interface exposes functionality
+ * of the Talon SRX motor controller, including various input sensors. Little beyond setting and reading the speed has been
+ * tested.
  */
+@Experimental
 public interface TalonController extends PIDController, TalonSRX {
 
     /**

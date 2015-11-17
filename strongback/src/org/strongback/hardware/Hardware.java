@@ -16,6 +16,7 @@
 
 package org.strongback.hardware;
 
+import org.strongback.annotation.Experimental;
 import org.strongback.components.Accelerometer;
 import org.strongback.components.AngleSensor;
 import org.strongback.components.DistanceSensor;
@@ -547,6 +548,7 @@ public class Hardware {
          * @param pulsesPerDegree the number of encoder pulses per degree of revolution of the final shaft; may be 0 if unused
          * @return a {@link TalonSRX} motor; never null
          */
+        @Experimental
         public static TalonSRX talonSRX(int deviceNumber, double pulsesPerDegree) {
             return talonSRX(deviceNumber, pulsesPerDegree, 0.0d);
         }
@@ -565,9 +567,24 @@ public class Hardware {
          *        be 0 if unused
          * @return a {@link TalonSRX} motor; never null
          */
+        @Experimental
         public static TalonSRX talonSRX(int deviceNumber, double pulsesPerDegree, double analogTurnsOverVoltageRange) {
             CANTalon talon = new CANTalon(deviceNumber);
             return talonSRX(talon, pulsesPerDegree, analogTurnsOverVoltageRange);
+        }
+
+        /**
+         * Creates a {@link TalonSRX} motor controlled by a Talon SRX. The {@link CANTalon} object passed into this method
+         * should be already configured by the calling code.
+         * <p>
+         * The resulting {@link TalonSRX} will have a null {@link TalonSRX#getEncoderInput()} and a null
+         * {@link TalonSRX#getAnalogInput()}, and the {@link TalonSRX#getSelectedSensor()} will always return 0.
+         *
+         * @param talon the already configured {@link CANTalon} instance; may not be null
+         * @return a {@link TalonSRX} motor; never null
+         */
+        public static TalonSRX talonSRX(CANTalon talon) {
+            return talonSRX(talon, 0.0, 0.0d);
         }
 
         /**
@@ -582,6 +599,7 @@ public class Hardware {
          * @param pulsesPerDegree the number of encoder pulses per degree of revolution of the final shaft
          * @return a {@link TalonSRX} motor; never null
          */
+        @Experimental
         public static TalonSRX talonSRX(CANTalon talon, double pulsesPerDegree) {
             return talonSRX(talon, pulsesPerDegree, 0.0d);
         }
@@ -601,6 +619,7 @@ public class Hardware {
          *        be 0 if unused
          * @return a {@link TalonSRX} motor; never null
          */
+        @Experimental
         public static TalonSRX talonSRX(CANTalon talon, double pulsesPerDegree, double analogTurnsOverVoltageRange) {
             if (talon == null) throw new IllegalArgumentException("The CANTalon reference may not be null");
             return new HardwareTalonSRX(talon, pulsesPerDegree, analogTurnsOverVoltageRange);
@@ -644,6 +663,7 @@ public class Hardware {
          *        be 0 if unused
          * @return the interface for managing and using the Talon SRX hardware-based PID controller; never null
          */
+        @Experimental
         public static TalonController talonController(int deviceNumber, double pulsesPerDegree,
                 double analogTurnsOverVoltageRange) {
             CANTalon talon = new CANTalon(deviceNumber);
