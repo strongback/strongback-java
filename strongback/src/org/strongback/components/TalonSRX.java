@@ -16,11 +16,18 @@
 
 package org.strongback.components;
 
+import org.strongback.annotation.Experimental;
+
 /**
  * A motor controlled by a Talon SRX with built-in current sensor, position (angle) sensor, and optional external limit switches
  * wired into the SRX so that it can automatically stop the forward and reverse directions when the limit switches are
  * triggered.
+ * <p>
+ * This class is currently experimental. It certainly works as a simple motor, but most of this interface exposes functionality
+ * of the Talon SRX motor controller, including various input sensors. Little beyond setting and reading the speed has been
+ * tested.
  */
+@Experimental
 public interface TalonSRX extends LimitedMotor {
 
     @Override
@@ -315,8 +322,10 @@ public interface TalonSRX extends LimitedMotor {
         ENCODER_RISING(4),
 
         /**
-         * Encoder that increments position per falling edge (and never decrements) on Quadrature-A.
-         * Note: Was not supported in 2015 firmware, per the <a href="https://www.ctr-electronics.com/Talon%20SRX%20Software%20Reference%20Manual.pdf">Talon SRX Software Reference Manual</a>, section 21.3
+         * Encoder that increments position per falling edge (and never decrements) on Quadrature-A. Note: Was not supported in
+         * 2015 firmware, per the
+         * <a href="https://www.ctr-electronics.com/Talon%20SRX%20Software%20Reference%20Manual.pdf">Talon SRX Software
+         * Reference Manual</a>, section 21.3
          */
         ENCODER_FALLING(5);
 
