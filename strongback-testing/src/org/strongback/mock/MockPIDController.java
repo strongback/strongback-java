@@ -37,6 +37,18 @@ public class MockPIDController extends MockController implements PIDController {
     }
 
     @Override
+    public MockPIDController withTarget(double target) {
+        super.withTarget(target);
+        return this;
+    }
+
+    @Override
+    public MockPIDController withTolerance(double tolerance) {
+        super.withTolerance(tolerance);
+        return this;
+    }
+
+    @Override
     public Set<Integer> getProfiles() {
         return Collections.unmodifiableSet(profiles.keySet());
     }

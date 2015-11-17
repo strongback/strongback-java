@@ -567,7 +567,7 @@ public class Hardware {
          */
         public static TalonSRX talonSRX(int deviceNumber, double pulsesPerDegree, double analogTurnsOverVoltageRange) {
             CANTalon talon = new CANTalon(deviceNumber);
-            return new HardwareTalonSRX(talon, pulsesPerDegree, analogTurnsOverVoltageRange);
+            return talonSRX(talon, pulsesPerDegree, analogTurnsOverVoltageRange);
         }
 
         /**

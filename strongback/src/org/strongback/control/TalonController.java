@@ -172,6 +172,25 @@ public interface TalonController extends PIDController, TalonSRX {
     @Override
     public TalonController setFeedbackDevice(FeedbackDevice device);
 
+    /**
+     * Get the current target angle for this controller as defined by the selected input sensor in degrees.
+     * @return the target angle in degrees as defined by the selected input sensor
+     * @see #withTarget(double)
+     */
+    @Override
+    public double getTarget();
+
+    /**
+     * Sets the target angle for the controller's selected input sensor in degrees.
+     *
+     * @param angleInDegrees the desired angle in degrees that this controller will use as a target as defined by the selected
+     *        input sensor
+     * @return this object so that methods can be chained; never null
+     * @see #getTarget()
+     */
+    @Override
+    public TalonController withTarget(double angleInDegrees);
+
     @Override
     public TalonController setStatusFrameRate(StatusFrameRate frameRate, int periodMillis);
 
