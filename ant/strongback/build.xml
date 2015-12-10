@@ -55,6 +55,13 @@
 		<mkdir dir="${dist.dir}" />
 		<mkdir dir="${build.jars}" />
 
+        <echo>Copying jars from ${strongback.classpath} to ${build.jars}.</echo>
+        <copy todir="${build.jars}" flatten="true">
+            <path>
+                <pathelement path="${strongback.classpath}"/>
+            </path>
+        </copy>
+
 		<jar destfile="${dist.jar}" update="false">
 			<manifest>
 				<attribute name="Main-Class" value="edu.wpi.first.wpilibj.RobotBase"/>
@@ -68,14 +75,6 @@
 				<include name="**/*.jar" />
 			</zipgroupfileset>
 		</jar>
-
-		<echo>Copying jars from ${strongback.classpath} to ${build.jars}.</echo>
-		<copy todir="${build.jars}" flatten="true">
-			<file file="${dist.jar}"/>
-			<path>
-				<pathelement path="${strongback.classpath}"/>
-			</path>
-		</copy>
 	</target>
 
     <!-- Check if there are any JUnit Tests -->
