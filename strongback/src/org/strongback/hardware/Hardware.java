@@ -16,6 +16,7 @@
 
 package org.strongback.hardware;
 
+import org.strongback.annotation.Experimental;
 import org.strongback.components.Accelerometer;
 import org.strongback.components.AngleSensor;
 import org.strongback.components.DistanceSensor;
@@ -32,6 +33,7 @@ import org.strongback.components.TwoAxisAccelerometer;
 import org.strongback.components.ui.FlightStick;
 import org.strongback.components.ui.Gamepad;
 import org.strongback.components.ui.InputDevice;
+import org.strongback.control.TalonController;
 import org.strongback.function.DoubleToDoubleFunction;
 import org.strongback.util.Values;
 
@@ -43,6 +45,7 @@ import edu.wpi.first.wpilibj.AnalogPotentiometer;
 import edu.wpi.first.wpilibj.AnalogTrigger;
 import edu.wpi.first.wpilibj.BuiltInAccelerometer;
 import edu.wpi.first.wpilibj.CANTalon;
+import edu.wpi.first.wpilibj.CANTalon.ControlMode;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
@@ -521,16 +524,151 @@ public class Hardware {
         }
 
         /**
-         * Creates a {@link TalonSRX} motor controlled by a Talon SRX with built-in current sensor and position (angle) sensor.
-         * The {@link CANTalon} object passed into this method should be already configured by the calling code.
+         * Creates a {@link TalonSRX} motor controlled by a Talon SRX with no sensors wired as inputs.
+         * <p>
+         * The resulting {@link TalonSRX} will have a null {@link TalonSRX#getAnalogInput()} and a null
+         * {@link TalonSRX#getEncoderInput()}.
+         *
+         * @param deviceNumber the CAN device number for the Talon SRX; may not be null
+         * @return a {@link TalonSRX} motor; never null
+         */
+        public static TalonSRX talonSRX(int deviceNumber) {
+            return talonSRX(deviceNumber, 0.0d, 0.0d);
+        }
+
+        /**
+         * Creates a {@link TalonSRX} motor controlled by a Talon SRX with an optional quadrature encoder and no analog input
+         * wired into the Talon.
+         * <p>
+         * The resulting {@link TalonSRX} will have a non-null {@link TalonSRX#getEncoderInput()} when the
+         * <code>pulsesPerDegree</code> is non-zero. But the resulting {@link TalonSRX} will always have a null
+         * {@link TalonSRX#getAnalogInput()}.
+         *
+         * @param deviceNumber the CAN device number for the Talon SRX; may not be null
+         * @param pulsesPerDegree the number of encoder pulses per degree of revolution of the final shaft; may be 0 if unused
+         * @return a {@link TalonSRX} motor; never null
+         */
+        @Experimental
+        public static TalonSRX talonSRX(int deviceNumber, double pulsesPerDegree) {
+            return talonSRX(deviceNumber, pulsesPerDegree, 0.0d);
+        }
+
+        /**
+         * Creates a {@link TalonSRX} motor controlled by a Talon SRX with an optional quadrature encoder and no an analog 3.3V
+         * input wired into the Talon.
+         * <p>
+         * The resulting {@link TalonSRX} will have a non-null {@link TalonSRX#getEncoderInput()} when the
+         * <code>pulsesPerDegree</code> is non-zero. Likewise, the resulting {@link TalonSRX} will have a non-null
+         * {@link TalonSRX#getAnalogInput()} when the <code>analogTurnsOverVoltageRange</code> is non-zero.
+         *
+         * @param deviceNumber the CAN device number for the Talon SRX; may not be null
+         * @param pulsesPerDegree the number of encoder pulses per degree of revolution of the final shaft; may be 0 if unused
+         * @param analogTurnsOverVoltageRange the number of turns of an analog pot or analog encoder over the 0-3.3V range; may
+         *        be 0 if unused
+         * @return a {@link TalonSRX} motor; never null
+         */
+        @Experimental
+        public static TalonSRX talonSRX(int deviceNumber, double pulsesPerDegree, double analogTurnsOverVoltageRange) {
+            CANTalon talon = new CANTalon(deviceNumber);
+            return talonSRX(talon, pulsesPerDegree, analogTurnsOverVoltageRange);
+        }
+
+        /**
+         * Creates a {@link TalonSRX} motor controlled by a Talon SRX. The {@link CANTalon} object passed into this method
+         * should be already configured by the calling code.
+         * <p>
+         * The resulting {@link TalonSRX} will have a null {@link TalonSRX#getEncoderInput()} and a null
+         * {@link TalonSRX#getAnalogInput()}, and the {@link TalonSRX#getSelectedSensor()} will always return 0.
+         *
+         * @param talon the already configured {@link CANTalon} instance; may not be null
+         * @return a {@link TalonSRX} motor; never null
+         */
+        public static TalonSRX talonSRX(CANTalon talon) {
+            return talonSRX(talon, 0.0, 0.0d);
+        }
+
+        /**
+         * Creates a {@link TalonSRX} motor controlled by a Talon SRX with an optional (angle) sensor. The {@link CANTalon}
+         * object passed into this method should be already configured by the calling code.
+         * <p>
+         * The resulting {@link TalonSRX} will have a non-null {@link TalonSRX#getEncoderInput()} when the
+         * <code>pulsesPerDegree</code> is non-zero. But the resulting {@link TalonSRX} will always have a null
+         * {@link TalonSRX#getAnalogInput()}.
          *
          * @param talon the already configured {@link CANTalon} instance; may not be null
          * @param pulsesPerDegree the number of encoder pulses per degree of revolution of the final shaft
          * @return a {@link TalonSRX} motor; never null
          */
+        @Experimental
         public static TalonSRX talonSRX(CANTalon talon, double pulsesPerDegree) {
+            return talonSRX(talon, pulsesPerDegree, 0.0d);
+        }
+
+        /**
+         * Creates a {@link TalonSRX} motor controlled by a Talon SRX with and optional quadrature encoder and/or an analog 3.3V
+         * input wired into the Talon. The {@link CANTalon} object passed into this method should be already configured by the
+         * calling code.
+         * <p>
+         * The resulting {@link TalonSRX} will have a non-null {@link TalonSRX#getEncoderInput()} when the
+         * <code>pulsesPerDegree</code> is non-zero. Likewise, the resulting {@link TalonSRX} will have a non-null
+         * {@link TalonSRX#getAnalogInput()} when the <code>analogTurnsOverVoltageRange</code> is non-zero.
+         *
+         * @param talon the already configured {@link CANTalon} instance; may not be null
+         * @param pulsesPerDegree the number of encoder pulses per degree of revolution of the final shaft
+         * @param analogTurnsOverVoltageRange the number of turns of an analog pot or analog encoder over the 0-3.3V range; may
+         *        be 0 if unused
+         * @return a {@link TalonSRX} motor; never null
+         */
+        @Experimental
+        public static TalonSRX talonSRX(CANTalon talon, double pulsesPerDegree, double analogTurnsOverVoltageRange) {
             if (talon == null) throw new IllegalArgumentException("The CANTalon reference may not be null");
-            return new HardwareTalonSRX(talon, pulsesPerDegree);
+            return new HardwareTalonSRX(talon, pulsesPerDegree, analogTurnsOverVoltageRange);
+        }
+
+        /**
+         * Creates a {@link TalonSRX} motor controller that follows another Talon SRX. The resulting TalonSRX will have neither
+         * a {@link TalonSRX#getAnalogInput()} or a {@link TalonSRX#getEncoderInput()}.
+         *
+         * @param deviceNumber the CAN device number for the Talon SRX; may not be null
+         * @param leader the Talon SRX that is to be followed; may not be null
+         * @param reverse <code>true</code> if the resulting Talon should have inverted output compared to the leader, or
+         *        <code>false</code> if the output should exactly match the leader
+         * @return a {@link TalonSRX} motor controller that follows the leader; never null
+         */
+        public static TalonSRX talonSRX(int deviceNumber, TalonSRX leader, boolean reverse) {
+            CANTalon talon = new CANTalon(deviceNumber);
+            talon.changeControlMode(ControlMode.Follower);
+            talon.set(leader.getDeviceID());
+            talon.reverseOutput(reverse);
+            return talonSRX(talon, 0.0d, 0.0d);
+        }
+    }
+
+    /**
+     * Factory method for hardware-based controllers.
+     */
+    public static final class Controllers {
+
+        /**
+         * Create a component that manages and uses the hardware-based PID controller on the Talon SRX with a quadrature encoder
+         * and/or an analog 3.3V input sensor wired into the Talon.
+         * <p>
+         * The resulting {@link TalonSRX} will have a non-null {@link TalonSRX#getEncoderInput()} when the
+         * <code>pulsesPerDegree</code> is non-zero. Likewise, the resulting {@link TalonSRX} will have a non-null
+         * {@link TalonSRX#getAnalogInput()} when the <code>analogTurnsOverVoltageRange</code> is non-zero.
+         *
+         * @param deviceNumber the CAN device number; may not be null
+         * @param pulsesPerDegree the number of encoder pulses per degree of revolution of the final shaft
+         * @param analogTurnsOverVoltageRange the number of turns of an analog pot or analog encoder over the 0-3.3V range; may
+         *        be 0 if unused
+         * @return the interface for managing and using the Talon SRX hardware-based PID controller; never null
+         */
+        @Experimental
+        public static TalonController talonController(int deviceNumber, double pulsesPerDegree,
+                double analogTurnsOverVoltageRange) {
+            CANTalon talon = new CANTalon(deviceNumber);
+            HardwareTalonController c = new HardwareTalonController(talon, pulsesPerDegree, analogTurnsOverVoltageRange);
+            return c;
         }
     }
 

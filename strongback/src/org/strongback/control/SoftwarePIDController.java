@@ -146,6 +146,7 @@ public class SoftwarePIDController implements LiveWindowSendable, PIDController 
      * @return the {@link Executable} object that can be registered with an {@link Executor} (typically Strongback's
      *         {@link Strongback#executor() central executor}); never null and always the same instance for this controller
      */
+    @Override
     public Executable executable() {
         return executable;
     }
@@ -224,9 +225,8 @@ public class SoftwarePIDController implements LiveWindowSendable, PIDController 
     @Override
     public SoftwarePIDController withProfile(int profile, double p, double i, double d, double feedForward) {
         synchronized (this) {
-            Gains newGains = this.gainsByProfile.compute(profile, (key, gains) -> {
-                return new Gains(p, i, d, feedForward);
-            });
+            Gains newGains = new Gains(p, i, d, feedForward);
+            this.gainsByProfile.put(profile, newGains);
             if (profile == this.currentProfile) {
                 this.gains = newGains;
                 onTable(table -> {
@@ -524,10 +524,7 @@ public class SoftwarePIDController implements LiveWindowSendable, PIDController 
         return gains.feedForward;
     }
 
-    /**
-     * A set of gains.
-     */
-    private static final class Gains implements PIDController.Gains {
+    protected static final class Gains implements PIDController.Gains {
         protected final double p;
         protected final double i;
         protected final double d;
@@ -540,41 +537,21 @@ public class SoftwarePIDController implements LiveWindowSendable, PIDController 
             this.feedForward = feedForward;
         };
 
-        /**
-         * Get the proportional gain.
-         *
-         * @return the proportional gain.
-         */
         @Override
         public double getP() {
             return p;
         }
 
-        /**
-         * Get the integral gain.
-         *
-         * @return the integral gain.
-         */
         @Override
         public double getI() {
             return i;
         }
 
-        /**
-         * Get the differential gain.
-         *
-         * @return the differential gain.
-         */
         @Override
         public double getD() {
             return d;
         }
 
-        /**
-         * Get the feed forward gain.
-         *
-         * @return the feed forward gain.
-         */
         @Override
         public double getFeedForward() {
             return feedForward;
