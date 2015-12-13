@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/strongback/strongback-java.svg?branch=1.0.x)](https://travis-ci.org/strongback/strongback-java)
 # Introducing Strongback
 
 Strongback is a new open source software library that makes your robot code lighter and stronger. You use it along with the [WPILib library](https://wpilib.screenstepslive.com/s/4485/m/13809) on your [FIRST Robotics Competition](http://www.usfirst.org/roboticsprograms/frc) robot's RoboRIO, but Strongback's APIs and functionality mean you need less code to do more. Plus, Strongback makes it easier for you to test your code without robot hardware and can record real-time data while you operate your robot for later post-processing.
