@@ -28,7 +28,7 @@ import org.strongback.components.TemperatureSensor;
 import org.strongback.components.VoltageSensor;
 
 import edu.wpi.first.wpilibj.CANTalon;
-import edu.wpi.first.wpilibj.CANTalon.ControlMode;
+import edu.wpi.first.wpilibj.CANTalon.TalonControlMode;
 
 /**
  * Talon speed controller with position and current sensor
@@ -217,7 +217,7 @@ class HardwareTalonSRX implements TalonSRX {
         this.outputCurrent = talon::getOutputCurrent;
         this.outputVoltage = talon::getOutputVoltage;
         this.busVoltage = talon::getBusVoltage;
-        this.temperature = talon::getTemp;
+        this.temperature = talon::getTemperature;
         this.encoderInput = encoderInput(talon::getEncPosition,
                                              talon::getEncVelocity,
                                              pulsesPerDegree,
@@ -321,13 +321,13 @@ class HardwareTalonSRX implements TalonSRX {
 
     @Override
     public double getSpeed() {
-        talon.changeControlMode(ControlMode.PercentVbus);
+        talon.changeControlMode(TalonControlMode.PercentVbus);
         return talon.get();
     }
 
     @Override
     public TalonSRX setSpeed(double speed) {
-        talon.changeControlMode(ControlMode.PercentVbus);
+        talon.changeControlMode(TalonControlMode.PercentVbus);
         talon.set(speed);
         return this;
     }

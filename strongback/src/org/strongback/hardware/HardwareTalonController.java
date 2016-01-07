@@ -27,6 +27,7 @@ import org.strongback.control.PIDController;
 import org.strongback.control.TalonController;
 
 import edu.wpi.first.wpilibj.CANTalon;
+import edu.wpi.first.wpilibj.CANTalon.TalonControlMode;
 
 /**
  * A hardware-based Talon SRX PID controller.
@@ -167,7 +168,7 @@ class HardwareTalonController extends HardwareTalonSRX implements TalonControlle
 
     @Override
     public TalonController setControlMode(ControlMode mode) {
-        talon.changeControlMode(edu.wpi.first.wpilibj.CANTalon.ControlMode.valueOf(mode.value()));
+        talon.changeControlMode(TalonControlMode.valueOf(mode.value()));
         return this;
     }
 
