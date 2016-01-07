@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.DoubleConsumer;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 
 import org.strongback.DataRecordable;
 import org.strongback.DataRecorder;
@@ -43,14 +44,12 @@ import edu.wpi.first.wpilibj.tables.ITableListener;
  * <p>
  * There are two ways to use this controller:
  * <ol>
- * <li>Manually - a controller instance is used within or as a subsystem, but it is only run when it is used by commands.
- * The controller's {@link #withTarget(double) target}, {@link #withTolerance(double) tolerance}, and other settings are
- * typically modified
- * , typically with
- * commands.
+ * <li>Manually - a controller instance is used within or as a subsystem, but it is only run when it is used by commands. The
+ * controller's {@link #withTarget(double) target}, {@link #withTolerance(double) tolerance}, and other settings are typically
+ * modified , typically with commands.
  * <li>With commands - a controller instance is used within or as a subsystem, and one or more command classes are created to
- * use this by setting the {@link #withTarget(double) setpoint} (and optionally the gains, input and output ranges, and tolerance)
- * and calling {@link #computeOutput()}; or</li>
+ * use this by setting the {@link #withTarget(double) setpoint} (and optionally the gains, input and output ranges, and
+ * tolerance) and calling {@link #computeOutput()}; or</li>
  * <li>Continuous execution - a controller instance is registered with an {@link Executor} (typically Strongback's
  * {@link Strongback#executor() built-in executor}) to continuously execute and generate the output based upon the input and
  * current setpoint. The setpoint, gains, input and output ranges, and tolerance can all be changed at any time, including.</li>
@@ -79,10 +78,10 @@ import edu.wpi.first.wpilibj.tables.ITableListener;
  *
  * <h2>Profiles</h2>
  * <p>
- * Each {@link SoftwarePIDController} instance is able to have 1 or more independent sets of PID gains, called
- * <em>profiles</em>. One of these profiles is always in use, and by default it is the "default" profile. Additional profiles
- * can be {@link #withProfile(int, double, double, double, double) defined}, and then while in operation the gains for the
- * controller can be switched to any of the named profiles.
+ * Each {@link SoftwarePIDController} instance is able to have 1 or more independent sets of PID gains, called <em>profiles</em>
+ * . One of these profiles is always in use, and by default it is the "default" profile. Additional profiles can be
+ * {@link #withProfile(int, double, double, double, double) defined}, and then while in operation the gains for the controller
+ * can be switched to any of the named profiles.
  *
  * @author Randall Hauch
  */
@@ -91,8 +90,13 @@ public class SoftwarePIDController implements LiveWindowSendable, PIDController 
 
     public static int DEFAULT_PROFILE = 0;
 
+    public enum SourceType {
+        DISTANCE, RATE;
+    }
+
     private final DoubleSupplier source;
     private final DoubleConsumer output;
+    private final SourceType sourceType;
     private final AtomicBoolean enabled = new AtomicBoolean(true);
     private volatile Target target = new Target();
     private volatile Gains gains = new Gains(0.0, 0.0, 0.0, 0.0);
@@ -124,12 +128,30 @@ public class SoftwarePIDController implements LiveWindowSendable, PIDController 
      * {@link #withTarget(double) setpoint}, {@link #withTolerance(double) tolerance}, and whether the inputs are
      * {@link #continuousInputs(boolean) continuous} (e.g., they wrap around continuously).
      *
+     * @param sourceType the type of source values; may not be null
      * @param source the source from which the inputs are to be read; may not be null
      * @param output the output to which the calculated output is to be send; may not be null
      */
-    public SoftwarePIDController(DoubleSupplier source, DoubleConsumer output) {
+    public SoftwarePIDController(Supplier<SourceType> sourceType, DoubleSupplier source, DoubleConsumer output) {
+        this(sourceType.get(),source,output);
+    }
+
+    /**
+     * Create a new PID+FF controller that uses the supplied source for inputs and sends outputs to the supplied consumer.
+     * Before using, be sure to set the {@link #withGains(double, double, double, double) PID and feed forward gains}, the
+     * {@link #withInputRange(double, double) input range}, {@link #withOutputRange(double, double) output range},
+     * {@link #withTarget(double) setpoint}, {@link #withTolerance(double) tolerance}, and whether the inputs are
+     * {@link #continuousInputs(boolean) continuous} (e.g., they wrap around continuously).
+     *
+     * @param sourceType the type of source values; may not be null
+     * @param source the source from which the inputs are to be read; may not be null
+     * @param output the output to which the calculated output is to be send; may not be null
+     */
+    public SoftwarePIDController(SourceType sourceType, DoubleSupplier source, DoubleConsumer output) {
+        if (sourceType == null) throw new IllegalArgumentException("The source type may not be null");
         if (source == null) throw new IllegalArgumentException("The source may not be null");
         if (output == null) throw new IllegalArgumentException("The output may not be null");
+        this.sourceType = sourceType;
         this.gains = new Gains(0.0, 0.0, 0.0, 0.0);
         this.gainsByProfile.put(currentProfile, gains); // add the gains as the default profile
         this.source = source;
@@ -315,8 +337,8 @@ public class SoftwarePIDController implements LiveWindowSendable, PIDController 
 
     /**
      * Sets the target value for this controller. The input range should be set prior to this call, and the setpoint value
-     * should be within the {@link #withInputRange(double, double) input range} values; otherwise, the setpoint will be capped to be
-     * within the input range.
+     * should be within the {@link #withInputRange(double, double) input range} values; otherwise, the setpoint will be capped
+     * to be within the input range.
      *
      * @param setpoint the desired setpoint that this controller will use as a target
      * @return this object so that methods can be chained; never null
@@ -395,25 +417,45 @@ public class SoftwarePIDController implements LiveWindowSendable, PIDController 
             prevError = error;
             error = target.calculateError(lastInput);
 
-            // Total error will be used in the integral term ...
-            if (gains.i != 0) {
-                double potentialIGain = (totalError + error) * gains.i;
-                if (potentialIGain < target.maxOutput) {
-                    if (potentialIGain > target.minOutput) {
-                        totalError += error;
-                    } else {
-                        totalError = target.minOutput / gains.i;
+            switch (sourceType) {
+                case RATE:
+                    // Total error will be used in the proportional term ...
+                    if (gains.p != 0) {
+                        double potentialPGain = (totalError + error) * gains.p;
+                        if (potentialPGain < target.maxOutput) {
+                            if (potentialPGain > target.minOutput) {
+                                totalError += error;
+                            } else {
+                                totalError = target.minOutput / gains.p;
+                            }
+                        } else {
+                            totalError = target.maxOutput / gains.p;
+                        }
+                        // Calculate the new result based upon PD+FF ...
+                        result = (gains.p * totalError) + (gains.d * error) + (target.setpoint * gains.feedForward);
                     }
-                } else {
-                    totalError = target.maxOutput / gains.i;
-                }
-            } else {
-                totalError = 0.0;
+                    break;
+                case DISTANCE:
+                    // Total error will be used in the integral term ...
+                    if (gains.i != 0) {
+                        double potentialIGain = (totalError + error) * gains.i;
+                        if (potentialIGain < target.maxOutput) {
+                            if (potentialIGain > target.minOutput) {
+                                totalError += error;
+                            } else {
+                                totalError = target.minOutput / gains.i;
+                            }
+                        } else {
+                            totalError = target.maxOutput / gains.i;
+                        }
+                    } else {
+                        totalError = 0.0;
+                    }
+                    // Calculate the new result based upon PID+FF ...
+                    result = (gains.p * error) + (gains.i * totalError) + (gains.d * (error - prevError))
+                            + (target.setpoint * gains.feedForward);
+                    break;
             }
-
-            // Calculate the new result based upon PID+FF ...
-            result = (gains.p * error) + (gains.i * totalError) + (gains.d * (error - prevError))
-                    + (target.setpoint * gains.feedForward);
 
             // Limit the results ...
             result = target.limitOutput(result);
@@ -645,7 +687,7 @@ public class SoftwarePIDController implements LiveWindowSendable, PIDController 
 
     protected void valueChanged(ITable table, String key, Object value, boolean isNew) {
         if (key.equals("profile")) {
-            int profile = (int) table.getNumber("profile");
+            int profile = (int) table.getNumber("profile", 0);
             if (gainsByProfile.containsKey(profile)) {
                 useProfile(profile);
             }

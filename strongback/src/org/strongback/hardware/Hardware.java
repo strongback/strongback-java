@@ -39,18 +39,19 @@ import org.strongback.util.Values;
 
 import edu.wpi.first.wpilibj.ADXL345_I2C;
 import edu.wpi.first.wpilibj.ADXL345_SPI;
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.AnalogAccelerometer;
+import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.AnalogPotentiometer;
 import edu.wpi.first.wpilibj.AnalogTrigger;
 import edu.wpi.first.wpilibj.BuiltInAccelerometer;
 import edu.wpi.first.wpilibj.CANTalon;
-import edu.wpi.first.wpilibj.CANTalon.ControlMode;
+import edu.wpi.first.wpilibj.CANTalon.TalonControlMode;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.Encoder;
-import edu.wpi.first.wpilibj.Gyro;
 import edu.wpi.first.wpilibj.I2C;
 import edu.wpi.first.wpilibj.Jaguar;
 import edu.wpi.first.wpilibj.Joystick;
@@ -60,6 +61,7 @@ import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.Ultrasonic;
 import edu.wpi.first.wpilibj.Victor;
 import edu.wpi.first.wpilibj.interfaces.Accelerometer.Range;
+import edu.wpi.first.wpilibj.interfaces.Gyro;
 
 /**
  * The factory methods that will create component implementations corresponding to physical hardware on the robot. Nested
@@ -114,13 +116,33 @@ public class Hardware {
     public static final class AngleSensors {
 
         /**
-         * Create a {@link Gyroscope} that uses a WPILib {@link Gyro} on the specified channel.
+         * Create a {@link Gyroscope} that uses a WPILib {@link AnalogGyro} on the specified channel.
          *
          * @param channel the channel the gyroscope is plugged into
          * @return the gyroscope; never null
          */
         public static Gyroscope gyroscope(int channel) {
-            Gyro gyro = new Gyro(channel);
+            return gyroscope(new AnalogGyro(channel));
+        }
+
+        /**
+         * Create a {@link Gyroscope} that uses a WPILib {@link ADXRS450_Gyro} on the specified SPI bus port.
+         *
+         * @param port the port on SPI bus into which the digital ADXRS450 gyroscope is connected
+         * @return the gyroscope; never null
+         */
+        public static Gyroscope gyroscope(SPI.Port port) {
+            return gyroscope(new ADXRS450_Gyro(port));
+        }
+
+        /**
+         * Create a {@link Gyroscope} that uses the provided WPILib {@link Gyro}. Use this method if you need to
+         * {@link Gyro#calibrate() calibrate} before using it.
+         *
+         * @param gyro the low-level WPILib gyroscope
+         * @return the gyroscope; never null
+         */
+        public static Gyroscope gyroscope(Gyro gyro) {
             return Gyroscope.create(gyro::getAngle, gyro::getRate);
         }
 
@@ -637,7 +659,7 @@ public class Hardware {
          */
         public static TalonSRX talonSRX(int deviceNumber, TalonSRX leader, boolean reverse) {
             CANTalon talon = new CANTalon(deviceNumber);
-            talon.changeControlMode(ControlMode.Follower);
+            talon.changeControlMode(TalonControlMode.Follower);
             talon.set(leader.getDeviceID());
             talon.reverseOutput(reverse);
             return talonSRX(talon, 0.0d, 0.0d);
