@@ -17,26 +17,60 @@
 package org.strongback.tools.utils;
 
 import java.io.File;
-import java.security.InvalidParameterException;
+import java.util.function.Supplier;
 
 /**
  * Utility methods for working with files
+ *
  * @author Zach Anderson
  *
  */
 public class FileUtils {
     /**
-     * Convenience method that resolves a filepath if it starts with ~
+     * Convenience method that replaces the {@code ~} character at the beginning of the supplied string with the user's home
+     * directory.
+     *
+     * @param path the path to resolve
+     * @return the path with the {@code ~} replaced with the user's home directory
+     */
+    public static final String resolveHome(String path) {
+        return resolveHome(path, () -> System.getProperty("user.home"));
+    }
+
+    /**
+     * Convenience method that resolves a file path if it starts with {@code ~}.
+     *
+     * @param path the path to resolve
+     * @param userHomeSupplier the value to be used for the home directory path; may not be null
+     * @return the path with the {@code ~} replaced with the user's home directory
+     */
+    public static final String resolveHome(String path, Supplier<String> userHomeSupplier) {
+        if (path.length() == 0) return path;
+        if (path.charAt(0) == '~') {
+            path = userHomeSupplier.get() + path.substring(1);
+        }
+        return path;
+    }
+
+    /**
+     * Convenience method that resolves a file path if it starts with {@code ~}.
+     *
      * @param path the path to resolve
      * @return an absolute {@link File} representing that path
      */
     public static final File resolvePath(String path) {
-        if(path.length()==0) throw new InvalidParameterException();
-        
-        if(path.charAt(0) == '~')
-            path = System.getProperty("user.home") + path.substring(1);
-        
-        File file = new File(path).getAbsoluteFile();
-        return file;
+        return resolvePath(path,() -> System.getProperty("user.home"));
+    }
+
+    /**
+     * Convenience method that resolves a file path if it starts with {@code ~}.
+     *
+     * @param path the path to resolve
+     * @param userHomeSupplier the value to be used for the home directory path; may not be null
+     * @return an absolute {@link File} representing that path
+     */
+    public static final File resolvePath(String path, Supplier<String> userHomeSupplier) {
+        path = resolveHome(path, userHomeSupplier);
+        return new File(path).getAbsoluteFile();
     }
 }

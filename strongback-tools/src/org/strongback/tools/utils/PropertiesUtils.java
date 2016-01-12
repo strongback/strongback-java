@@ -44,9 +44,9 @@ public class PropertiesUtils {
         props.load(new FileReader(file));
         return props;
     }
-    
+
     /**
-     * Combines multiple {@link Properties} into a single {@link Properties} without 
+     * Combines multiple {@link Properties} into a single {@link Properties} without
      * modifying any of the original {@link Properties}. If the same key is defined in two {@link Properties},
      * it will be assigned the value appearing in the latest {@link Properties} in the list.
      * @param props the {@link Properties} to concatenate
@@ -55,13 +55,13 @@ public class PropertiesUtils {
     public static Properties concat(Properties... props) {
         Properties out = new Properties();
         for(Properties prop : props) {
-            prop.forEach(out::put);
+            if ( prop != null ) prop.forEach(out::put);
         }
         return out;
     }
-    
+
     /**
-     * Replaces any ant style references <code>${property}</code> to another property in a {@link Properties} with the actual value of that property 
+     * Replaces any ant style references <code>${property}</code> to another property in a {@link Properties} with the actual value of that property
      * in depth first order.
      * @param props the {@link Properties} to modify
      * @throws InvalidPropertiesException if a referenced property is undefined or is defined in terms of itself, directly
@@ -69,47 +69,47 @@ public class PropertiesUtils {
      */
     public static void antify(Properties props) throws InvalidPropertiesException {
         Set<String> keys = props.stringPropertyNames();
-        
+
         for(String key : keys) {
             Set<String> v = new HashSet<>();
             props.setProperty(key, resolve(key, props, v));
         }
     }
-    
+
     private static String resolve(String key, Properties props, Set<String> visted) throws InvalidPropertiesException {
         if(visted.contains(key)) throw new InvalidPropertiesException(key + " is defined cyclically.");
         visted.add(key);
-        
+
         if(!props.containsKey(key)) {
             if(System.getProperty(key)!=null) return System.getProperty(key);
             throw new InvalidPropertiesException(key + " is undefined.");
         }
-        
+
         String value = props.getProperty(key);
-        
+
         //One or more of any character preceded by ${ and followed by } but not including them
         Matcher grabber = Pattern.compile("(?<=\\$\\{).+(?=\\})").matcher(value);
-        
+
         Set<String> toResolve = new HashSet<>();
         while(grabber.find()) {
             toResolve.add(grabber.group());
         }
         // No further resolution is needed
         if(toResolve.isEmpty()) return value;
-        
+
         for(String s : toResolve) {
             String resolution = resolve(s, props, visted);
             value = value.replace("${"+s+"}", resolution);
         }
-        
+
         // Set the value so it doesn't need to be resolved again later
         props.setProperty(key, value);
         return value;
     }
-    
+
     public static class InvalidPropertiesException extends Exception{
         private static final long serialVersionUID = 1L;
-        
+
         public InvalidPropertiesException(String msg) {
             super(msg);
         }
