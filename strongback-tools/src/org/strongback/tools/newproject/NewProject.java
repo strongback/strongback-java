@@ -228,16 +228,14 @@ public class NewProject {
         // Be sure to always generate the Eclipse files that are part of the installation ...
         try {
             File eclipseDir = FileUtils.resolvePath("~/strongback/java/eclipse");
-            if ( !eclipseDir.exists()) {
-                eclipseDir.mkdirs();
-                debug("Created the '" + eclipseDir + "' directory to hold generated files.");
-                // user libraries importable file ...
-                File userlibraries = new File(eclipseDir, "Strongback.userlibraries");
-                if(!userlibraries.exists()) {   // don't overwrite
-                    copyTo(userlibImportTemplate, userlibraries, (line) -> line.replaceAll("STRONGBACKHOME", strongbackPath));
-                }
-                debug("Created the '" + userlibraries + "' file for manually importing the Strongback user libraries.");
+            eclipseDir.mkdirs();
+            debug("Created the '" + eclipseDir + "' directory to hold generated files.");
+            // user libraries importable file ...
+            File userlibraries = new File(eclipseDir, "Strongback.userlibraries");
+            if(!userlibraries.exists()) {   // don't overwrite
+                copyTo(userlibImportTemplate, userlibraries, (line) -> line.replaceAll("STRONGBACKHOME", strongbackPath));
             }
+            debug("Created the '" + userlibraries + "' file for manually importing the Strongback user libraries.");
         } catch (IOException e) {
             exit(Strings.IO_EXCEPTION + e.getLocalizedMessage(), ExitCodes.IO_EXCEPT);
         }
