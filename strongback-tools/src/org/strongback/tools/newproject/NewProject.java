@@ -55,26 +55,17 @@ import org.strongback.tools.utils.Version;
  */
 public class NewProject {
 
+    private static boolean debug;
+
+    private static void debug( Object msg ) {
+        if ( debug ) System.out.println("DEBUG: " + msg);
+    }
+
     public static void main(String[] args) {
-        // Load strongback properties
-        Properties strongback = null;
-
-        try {
-            Properties stb = PropertiesUtils.load(FileUtils.resolvePath("~/strongback/strongback.properties"));
-            PropertiesUtils.antify(stb);
-            Properties wpi = PropertiesUtils.load(new File(stb.getProperty("wpilib.props")));
-            PropertiesUtils.antify(wpi);
-            strongback = PropertiesUtils.concat(stb, wpi);
-        } catch (IOException e) {
-            exit(Strings.MISSING_STRONGBK, ExitCodes.MISSING_FILE);
-        } catch (InvalidPropertiesException e) {
-            exit(Strings.BAD_PROPS + e.getLocalizedMessage(), ExitCodes.BAD_PROPS);
-        }
-        assert strongback != null;
-
+        // Parse the parameters ...
         Map<String, String> params = null;
         try {
-            params = Parser.parse(args, "npr", "v|h|nd!r|r!n!d");
+            params = Parser.parse(args, "npr", "D|v|h|i|nd!r|r!n!d");
         } catch(InvalidParameterException e) {
             System.err.println(e.getLocalizedMessage());
             System.out.println(Strings.HELP);
@@ -82,16 +73,101 @@ public class NewProject {
         }
         assert params != null;
 
+        debug = params.containsKey("D");
         if(params.containsKey("h")) {
             System.out.println(Strings.HELP);
             exit();
         }
-
         if(params.containsKey("v")) {
             System.out.println(Strings.VERSION_HEAD);
             System.out.println(Strings.VERSION);
             exit();
         }
+
+        // Resolve the Strongback installation directory ...
+        debug("Resolving '~/strongback'");
+        File strongbackDirectory = FileUtils.resolvePath("~/strongback");
+        if ( strongbackDirectory == null || !strongbackDirectory.exists()) {
+            exit("Unable to find the 'strongback' installation directory. Check the Strongback installation.", ExitCodes.BAD_ENV);
+        }
+        strongbackDirectory = strongbackDirectory.getAbsoluteFile();
+        if ( !strongbackDirectory.isDirectory() ) {
+            exit("Expecting '" + strongbackDirectory + "' to be a directory. Check the Strongback installation.",ExitCodes.BAD_ENV);
+        }
+        if ( !strongbackDirectory.canRead() ) {
+            exit("Unable to read the 'strongback' installation directory at " + strongbackDirectory,ExitCodes.BAD_ENV);
+        }
+        // replace the windows backslashes with forward slashes so i) string.replaceAll works, and ii) Eclipse paths are correct
+        final String strongbackPath = strongbackDirectory.getAbsolutePath().replaceAll("\\\\", "/");
+        debug("Resolved '~/strongback' to '" + strongbackPath + "'");
+
+        // Load the strongback properties ...
+        debug("Checking '~/strongback/strongback.properties' file");
+        File strongbackPropsFile = new File(strongbackDirectory,"/strongback.properties");
+        if ( !strongbackPropsFile.exists() ) {
+            exit("Unable to find the 'strongback.properties' file in the installation directory. Check the Strongback installation.",ExitCodes.BAD_ENV);
+        }
+        strongbackPropsFile = strongbackPropsFile.getAbsoluteFile();
+        if ( !strongbackPropsFile.isFile() ) {
+            exit("Expecting '" + strongbackPropsFile + "' to be a file but was a directory. Check the Strongback installation.",ExitCodes.BAD_ENV);
+        }
+        if ( !strongbackPropsFile.canRead() ) {
+            exit("Unable to read the '" + strongbackPropsFile + "' file. Check the Strongback installation.",ExitCodes.BAD_ENV);
+        }
+        Properties strongbackProperties = null;
+        try {
+            debug("Loading '" + strongbackPropsFile + "' file");
+            strongbackProperties = PropertiesUtils.load(strongbackPropsFile);
+            PropertiesUtils.antify(strongbackProperties);
+            debug("Loaded '" + strongbackPropsFile.getAbsoluteFile() + "' file");
+        } catch (IOException e) {
+            exit("Unable to load the '" + strongbackPropsFile + "' file: " + e.getMessage(),ExitCodes.BAD_ENV);
+        } catch (InvalidPropertiesException e) {
+            exit("Invalid property field in '" + strongbackPropsFile + "' file: " + e.getMessage(),ExitCodes.BAD_ENV);
+        }
+
+        // Resolve the WPILib installation directory ...
+        String wpiPath = strongbackProperties.getProperty("wpilib.home");
+        debug("Checking for the WPILib installation directory " + wpiPath);
+        if ( wpiPath == null ) {
+            exit("Strongback properties file '" + strongbackPropsFile + "' must specify the WPILIb directory in 'wpilib.home'",ExitCodes.BAD_ENV);
+        }
+        File wpiLibDir = new File(wpiPath).getAbsoluteFile();
+        if ( !wpiLibDir.exists() ) {
+            exit("Unable to find the '" + wpiLibDir.getName() + "' installation directory.  Make sure the 'wpilib.home' property in '" + strongbackPropsFile + "' points to a valid version of WPILib installation.",ExitCodes.BAD_ENV);
+        }
+        if ( !wpiLibDir.isDirectory() ) {
+            exit("Expecting '" + wpiLibDir + "' to be a directory but was a file. Make sure the 'wpilib.home' property in '" + strongbackPropsFile + "' points to a valid version of WPILib installation.",ExitCodes.BAD_ENV);
+        }
+        if ( !wpiLibDir.canRead() ) {
+            exit("Unable to read the '" + wpiLibDir + "' file. Check the WPILib version and file permissions.",ExitCodes.BAD_ENV);
+        }
+        debug("Found valid WPILib installation directory: " + wpiLibDir);
+
+        // Load the WPILib properties (which may not exist anymore) ...
+        debug("Looking for WPILib properties file");
+        String wpiLibPropsPath = strongbackProperties.getProperty("wpilib.props", new File(wpiLibDir,"wpilib.properties").getAbsolutePath());
+        debug("Checking '" + wpiLibPropsPath + "' file");
+        File wpiLibPropsFile = new File(wpiLibPropsPath);
+        Properties wpi = new Properties();
+        if ( wpiLibPropsFile.exists() && wpiLibPropsFile.isFile() && wpiLibPropsFile.canRead() ) {
+            wpiLibPropsFile = wpiLibPropsFile.getAbsoluteFile();
+            try {
+                debug("Loading '" + wpiLibPropsFile + "' file");
+                wpi = PropertiesUtils.load(wpiLibPropsFile);
+                PropertiesUtils.antify(wpi);
+                debug("Loaded '" + wpiLibPropsFile.getAbsoluteFile() + "' file");
+            } catch (IOException e) {
+                exit("Unable to load the '" + wpiLibPropsFile + "' file: " + e.getMessage(),ExitCodes.BAD_PROPS);
+            } catch (InvalidPropertiesException e) {
+                exit("Invalid property field in '" + wpiLibPropsFile + "' file: " + e.getMessage(),ExitCodes.BAD_PROPS);
+            }
+        } else {
+            debug("WPILib installation does not contain a properties file, so skipping this step");
+        }
+
+        final Properties strongback = PropertiesUtils.concat(strongbackProperties, wpi);
+        debug("The Strongback properties are: " + strongback);
 
         File projectRoot;
         String projectName;
@@ -104,15 +180,17 @@ public class NewProject {
             projectName = params.get("n");
             projectRoot = FileUtils.resolvePath(params.get("d") + File.separator + projectName);
         }
+        debug("The project root will be: " + projectRoot);
+        debug("The project name will be: " + projectName);
 
         if(params.containsKey("p")) {
             mainPackage = params.get("p");
         } else {
             mainPackage = "org.usfirst.frc.team"+ strongback.getProperty("team-number") +".robot";
         }
+        debug("The main package for the robot will be '" + mainPackage + "'");
 
         /* Application Begins */
-        File strongbackHome = FileUtils.resolvePath("~/strongback");
 
         // Source folders
         File src     = new File(projectRoot, "src"     + File.separator + mainPackage.replace('.', File.separatorChar));
@@ -130,6 +208,12 @@ public class NewProject {
         File userlibTemplate  = new File(strongback.getProperty("strongback.templates.dir"), "Strongback.userlibraries.template");
         File userlibImportTemplate  = new File(strongback.getProperty("strongback.templates.dir"), "Strongback.userlibraries.import.template");
 
+        // Verify templates exist
+        if(!buildTemplate.exists()) exit(Strings.MISSING_TEMPLATE + buildTemplate.getPath(), ExitCodes.MISSING_FILE);
+        if(!propsTemplate.exists()) exit(Strings.MISSING_TEMPLATE + propsTemplate.getPath(), ExitCodes.MISSING_FILE);
+        if(!robotTemplate.exists()) exit(Strings.MISSING_TEMPLATE + robotTemplate.getPath(), ExitCodes.MISSING_FILE);
+        if(!testTemplate.exists())  exit(Strings.MISSING_TEMPLATE + testTemplate.getPath(),  ExitCodes.MISSING_FILE);
+
         // Destination files
         File buildProps = new File(projectRoot, "build.properties");
         File buildXML   = new File(projectRoot, "build.xml");
@@ -139,9 +223,28 @@ public class NewProject {
         // Eclipse specific
         File project   = new File(projectRoot, ".project");
         File classpath = new File(projectRoot, ".classpath");
-        File eclipseDir = FileUtils.resolvePath("~/strongback/java/eclipse");
-        File userlibraries = new File(eclipseDir, "Strongback.userlibraries");
         File metadataDir = new File(projectRoot.getParentFile(), ".metadata");
+
+        // Be sure to always generate the Eclipse files that are part of the installation ...
+        try {
+            File eclipseDir = FileUtils.resolvePath("~/strongback/java/eclipse");
+            if ( !eclipseDir.exists()) {
+                eclipseDir.mkdirs();
+                debug("Created the '" + eclipseDir + "' directory to hold generated files.");
+                // user libraries importable file ...
+                File userlibraries = new File(eclipseDir, "Strongback.userlibraries");
+                if(!userlibraries.exists()) {   // don't overwrite
+                    copyTo(userlibImportTemplate, userlibraries, (line) -> line.replaceAll("STRONGBACKHOME", strongbackPath));
+                }
+                debug("Created the '" + userlibraries + "' file for manually importing the Strongback user libraries.");
+            }
+        } catch (IOException e) {
+            exit(Strings.IO_EXCEPTION + e.getLocalizedMessage(), ExitCodes.IO_EXCEPT);
+        }
+
+        // --------------------------
+        // PROJECT-SPECIFIC FILES ...
+        // --------------------------
 
         // If any of the files to write to already exist, give up and write message about the overwrite flag
         if(!params.containsKey("o")) {
@@ -156,12 +259,6 @@ public class NewProject {
                 if(classpath.exists()) exit(Strings.OVERWRITE_WARN + classpath.getPath(), ExitCodes.OVERWRITE);
             }
         }
-
-        // Verify templates exist
-        if(!buildTemplate.exists()) exit(Strings.MISSING_TEMPLATE + buildTemplate.getPath(), ExitCodes.MISSING_FILE);
-        if(!propsTemplate.exists()) exit(Strings.MISSING_TEMPLATE + propsTemplate.getPath(), ExitCodes.MISSING_FILE);
-        if(!robotTemplate.exists()) exit(Strings.MISSING_TEMPLATE + robotTemplate.getPath(), ExitCodes.MISSING_FILE);
-        if(!testTemplate.exists())  exit(Strings.MISSING_TEMPLATE + testTemplate.getPath(),  ExitCodes.MISSING_FILE);
 
         // Eclipse specific
         if(params.containsKey("e")) {
@@ -189,12 +286,6 @@ public class NewProject {
                 copyTo(projectTemplate,   project,   (line) -> line.replace("PROJECT_NAME", projectName));
                 copyTo(classpathTemplate, classpath, (line) -> line);
 
-                // Ensure the file for importing Eclipse userlibraries is generated ...
-                eclipseDir.mkdirs();
-                if(!userlibraries.exists()) {
-                    copyTo(userlibImportTemplate, userlibraries, (line) -> line.replaceAll("STRONGBACKHOME", strongbackHome.getAbsolutePath()));
-                }
-
                 // See if the `Strongback` user library is in the workspace ...
                 if (metadataDir.exists()) {
                     foundMetadata = true;
@@ -205,18 +296,22 @@ public class NewProject {
                             jdtPrefs.load(is);
                         }
                         if (!jdtPrefs.isEmpty() && !jdtPrefs.containsKey("org.eclipse.jdt.core.userLibrary.Strongback")) {
+                            debug("Adding the Strongback user library to the Eclipse workspace at " + metadataDir.getParent());
                             // Make a backup of the original preferences file ...
                             File jdtPrefsFileCopy = new File(jdtPrefsFile.getParentFile(),"org.eclipse.jdt.core.prefs.backup");
                             copyTo(jdtPrefsFile, jdtPrefsFileCopy, (line) -> line);
+                            debug("Created backup of " + jdtPrefsFile);
 
                             // Read in the userlibrary file and escape all the required characters ...
                             List<String> lines = Files.readAllLines(userlibTemplate.toPath(), StandardCharsets.UTF_8);
-                            String escapedContents = combineAndEscape(lines, strongbackHome.getAbsolutePath());
+                            String escapedContents = combineAndEscape(lines, strongbackPath);
+                            debug("Escaped contents of the preference file:" + System.lineSeparator() + escapedContents);
 
                             // Set the property and output the file ...
                             jdtPrefs.setProperty("org.eclipse.jdt.core.userLibrary.Strongback", escapedContents);
                             try ( OutputStream os = new FileOutputStream(jdtPrefsFile) ) {
                                 jdtPrefs.store(os,"");
+                                debug("Updated preference file");
                                 updatedMetadata = true;
                             }
                         }
@@ -243,7 +338,7 @@ public class NewProject {
             System.out.println(Strings.IMPORT_ECLIPSE);
             if ( !foundMetadata ) {
                 System.out.print(Strings.IMPORT_USERLIB);
-                System.out.println(strongbackHome.getAbsolutePath() + "/java/eclipse/Strongback.userlibraries");
+                System.out.println(strongbackDirectory.getAbsolutePath() + "/java/eclipse/Strongback.userlibraries");
             }
         }
     }
@@ -251,8 +346,10 @@ public class NewProject {
     protected static String combineAndEscape( List<String> lines, String strongbackHome ) throws IOException {
         StringBuilder sb = new StringBuilder();
         lines.forEach(str->{
+            debug("Pre-escaped line: " + str);
             String replaced = str.replaceAll("STRONGBACKHOME",strongbackHome).replaceAll("    ", "\t");
             sb.append(replaced).append("\n");
+            debug("Escaped line:     " + replaced);
         });
         return sb.toString();
     }
@@ -260,9 +357,10 @@ public class NewProject {
     protected static void copyTo(File input, File output, Function<String, String> each) throws IOException {
         BufferedReader testReader = new BufferedReader(new FileReader(input));
         BufferedWriter testWriter = new BufferedWriter(new FileWriter(output));
+        String now = new Date().toString();
         try {
             while(testReader.ready()) {
-                testWriter.write(each.apply(testReader.readLine().replace("DATE", new Date().toString())));
+                testWriter.write(each.apply(testReader.readLine().replace("DATE", now)));
                 testWriter.newLine();
             }
         } finally {
@@ -283,15 +381,12 @@ public class NewProject {
     private static final class Strings {
         public static final String LS = System.lineSeparator();
         /* Error Text */
-        public static final String BAD_PROPS        = "Error reading strongback.properties: ";
         public static final String FAILED_MKDIR     = "Failed to create project directory at: ";
         public static final String OVERWRITE_WARN   = "The file already exists, aborting job. To overwrite exisiting files run this"
                                                       + " application with the -o option. ";
         public static final String MISSING_TEMPLATE = "Cannot locate template file. Double check that the strongback folder is in"
                                                       + " the same directory as your wpilib folder. ";
         public static final String IO_EXCEPTION     = "An IO Exception occured. ";
-        public static final String MISSING_STRONGBK = "Could not locate the strongback directory. Double check that the strongback"
-                                                      + " folder is in the same directory as your wpilib folder.";
         public static final String SUCCESS          = "Successfully created new project at: ";
         public static final String UPDATED_WORKSPACE= "\nAdded the Strongback user library to your Eclipse workspace at ";
         public static final String RESTART_ECLIPSE  = "Restart this Eclipse workspace and import the project.\n";
@@ -346,6 +441,6 @@ public class NewProject {
         public static final int FAILED_MKDIR = 4;
         public static final int OVERWRITE    = 5;
         public static final int MISSING_FILE = 6;
-
+        public static final int BAD_ENV      = 7;
     }
 }
