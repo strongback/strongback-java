@@ -44,22 +44,22 @@ final class AsyncSwitchReactor implements Executable, SwitchReactor {
 
     @Override
     public void onTriggered(Switch swtch, Runnable function) {
-        listeners.getOrDefault(swtch, new Container()).addWhenTriggered(function);
+        listeners.computeIfAbsent(swtch,(s)->new Container()).addWhenTriggered(function);
     }
 
     @Override
     public void onUntriggered(Switch swtch, Runnable function) {
-        listeners.getOrDefault(swtch, new Container()).addWhenUntriggered(function);
+        listeners.computeIfAbsent(swtch,(s)->new Container()).addWhenUntriggered(function);
     }
 
     @Override
     public void whileTriggered(Switch swtch, Runnable function) {
-        listeners.getOrDefault(swtch, new Container()).addWhileTriggered(function);
+        listeners.computeIfAbsent(swtch,(s)->new Container()).addWhileTriggered(function);
     }
 
     @Override
     public void whileUntriggered(Switch swtch, Runnable function) {
-        listeners.getOrDefault(swtch, new Container()).addWhileUntriggered(function);
+        listeners.computeIfAbsent(swtch,(s)->new Container()).addWhileUntriggered(function);
     }
 
     /**
@@ -85,10 +85,10 @@ final class AsyncSwitchReactor implements Executable, SwitchReactor {
         private final AtomicReference<Listener> whileUntriggered = new AtomicReference<>();
 
         public void notifyListeners(boolean nowTriggered) {
-            notifyAtomicallyWhen(()->previouslyTriggered && nowTriggered,whenUntriggered );
-            notifyAtomicallyWhen(()->!previouslyTriggered && nowTriggered,whenTriggered );
-            notifyAtomicallyWhen(()->previouslyTriggered && !nowTriggered,whileTriggered );
-            notifyAtomicallyWhen(()->!previouslyTriggered && !nowTriggered,whileUntriggered );
+            notifyAtomicallyWhen(()->!previouslyTriggered && nowTriggered, whenTriggered);
+            notifyAtomicallyWhen(()->previouslyTriggered && !nowTriggered, whenUntriggered);
+            notifyAtomicallyWhen(()->previouslyTriggered && nowTriggered, whileTriggered);
+            notifyAtomicallyWhen(()->!previouslyTriggered && !nowTriggered, whileUntriggered);
             previouslyTriggered = nowTriggered;
         }
 
