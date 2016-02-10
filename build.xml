@@ -126,6 +126,7 @@
             <tarfileset dir="." includes="COPYRIGHT.txt" prefix="strongback"/>
             <tarfileset dir="." includes="LICENSE.txt" prefix="strongback"/>
             <tarfileset dir="." includes="README.md" prefix="strongback"/>
+            <tarfileset dir="." includes="CONTRIBUTORS.txt" prefix="strongback"/>
         </tar>
 
         <!-- Build the ZIP file (which may not maintain file permissions) -->
