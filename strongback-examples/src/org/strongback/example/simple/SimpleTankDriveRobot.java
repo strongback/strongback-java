@@ -22,6 +22,7 @@ import org.strongback.components.ui.ContinuousRange;
 import org.strongback.components.ui.FlightStick;
 import org.strongback.drive.TankDrive;
 import org.strongback.hardware.Hardware;
+import org.strongback.util.Values;
 
 import edu.wpi.first.wpilibj.IterativeRobot;
 
@@ -59,7 +60,7 @@ public class SimpleTankDriveRobot extends IterativeRobot {
         // "sensitivity" input to scale the drive speed and throttle, so we'll map it from it's native [-1,1] to a simple scale
         // factor of [0,1] ...
         FlightStick joystick = Hardware.HumanInterfaceDevices.logitechAttack3D(JOYSTICK_PORT);
-        ContinuousRange sensitivity = joystick.getThrottle().map(t -> (t + 1.0) / 2.0);
+        ContinuousRange sensitivity = joystick.getThrottle().map(Values.mapRange(-1.0,1.0).toRange(0.0, 1.0));
         driveSpeed = joystick.getPitch().scale(sensitivity::read); // scaled
         turnSpeed = joystick.getRoll().scale(sensitivity::read).invert(); // scaled and inverted
 
