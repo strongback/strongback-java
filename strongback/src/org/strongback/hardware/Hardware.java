@@ -60,6 +60,7 @@ import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.Ultrasonic;
 import edu.wpi.first.wpilibj.Victor;
+import edu.wpi.first.wpilibj.VictorSP;
 import edu.wpi.first.wpilibj.interfaces.Accelerometer.Range;
 import edu.wpi.first.wpilibj.interfaces.Gyro;
 
@@ -543,6 +544,29 @@ public class Hardware {
          */
         public static Motor victor(int channel, DoubleToDoubleFunction speedLimiter) {
             return new HardwareMotor(new Victor(channel), SPEED_LIMITER);
+        }
+
+        /**
+         * Create a motor driven by a VEX Robotics Victor SP speed controller on the specified channel. The speed output is
+         * limited to [-1.0,1.0] inclusive.
+         *
+         * @param channel the channel the controller is connected to
+         * @return a motor on the specified channel
+         */
+        public static Motor victorSP(int channel) {
+            return victorSP(channel, SPEED_LIMITER);
+        }
+
+        /**
+         * Create a motor driven by a VEX Robotics Victor SP speed controller on the specified channel, with a custom speed
+         * limiting function.
+         *
+         * @param channel the channel the controller is connected to
+         * @param speedLimiter function that will be used to limit the speed (input voltage); may not be null
+         * @return a motor on the specified channel
+         */
+        public static Motor victorSP(int channel, DoubleToDoubleFunction speedLimiter) {
+            return new HardwareMotor(new VictorSP(channel), SPEED_LIMITER);
         }
 
         /**
