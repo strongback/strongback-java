@@ -871,4 +871,32 @@ public class Hardware {
                                   () -> joystick.getRawButton(9));
         }
     }
+    /**
+     * Create a Microsoft Xbox360 gamepad controlled by the Driver Station.
+     *
+     * @param port the port on the driver station that the gamepad is plugged into
+     * @return the input device; never null
+     */
+    public static Gamepad xbox360(int port) {
+        Joystick joystick = new Joystick(port);
+        return Gamepad.create(joystick::getRawAxis,
+                              joystick::getRawButton,
+                              joystick::getPOV,
+                              () -> joystick.getRawAxis(0),
+                              () -> joystick.getRawAxis(1) * -1,
+                              () -> joystick.getRawAxis(4),
+                              () -> joystick.getRawAxis(5) * -1,
+                              () -> joystick.getRawAxis(2),
+                              () -> joystick.getRawAxis(3),
+                              () -> joystick.getRawButton(5),
+                              () -> joystick.getRawButton(6),
+                              () -> joystick.getRawButton(1),
+                              () -> joystick.getRawButton(2),
+                              () -> joystick.getRawButton(3),
+                              () -> joystick.getRawButton(4),
+                              () -> joystick.getRawButton(8),
+                              () -> joystick.getRawButton(7),
+                              () -> joystick.getRawButton(9),
+                              () -> joystick.getRawButton(10));
+    }
 }
