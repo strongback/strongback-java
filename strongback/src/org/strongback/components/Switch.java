@@ -16,6 +16,8 @@
 
 package org.strongback.components;
 
+import java.util.Objects;
+
 import org.strongback.annotation.ThreadSafe;
 
 
@@ -48,5 +50,31 @@ public interface Switch {
      */
     public static Switch neverTriggered() {
         return ()->false;
+    }
+
+    /**
+     * Return a new switch that is only triggered when <em>both</em> switches are triggered.
+     * @param switch1 the first switch; may not be null
+     * @param switch2 the second switch; may not be null
+     * @return the logical AND of the two switches; never null
+     */
+    public static Switch and( Switch switch1, Switch switch2 ) {
+        Objects.requireNonNull(switch1,"The first switch may not be null");
+        Objects.requireNonNull(switch2,"The second switch may not be null");
+        if ( switch1 == switch2 ) return switch1;
+        return ()->switch1.isTriggered() && switch2.isTriggered();
+    }
+
+    /**
+     * Return a new switch that is only triggered when <em>either</em> switch is triggered.
+     * @param switch1 the first switch; may not be null
+     * @param switch2 the second switch; may not be null
+     * @return the logical OR of the two switches; never null
+     */
+    public static Switch or( Switch switch1, Switch switch2 ) {
+        Objects.requireNonNull(switch1,"The first switch may not be null");
+        Objects.requireNonNull(switch2,"The second switch may not be null");
+        if ( switch1 == switch2 ) return switch1;
+        return ()->switch1.isTriggered() || switch2.isTriggered();
     }
 }
