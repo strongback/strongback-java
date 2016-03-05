@@ -24,9 +24,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidParameterException;
-import java.util.Arrays;
 import java.util.Map;
+import java.util.StringJoiner;
 
 import org.strongback.tools.utils.FileUtils;
 import org.strongback.tools.utils.Parser;
@@ -180,33 +181,41 @@ public class LogDecoder {
         }
     }
 
+    private static String readString(DataInputStream in) throws EOFException, IOException{
+        int len = in.readInt();
+        byte[] value = new byte[len];
+        in.read(value);
+        return new String(value,StandardCharsets.UTF_8);
+    }
+
     /* Actually converts the log */
     private static final void decode(DataInputStream in, BufferedWriter writer)
             throws BadFileFormatException, EOFException, IOException {
         // Verify Header
         printer.print(Strings.CHECK_LOG, Printer.Verbosity.VERBOSE);
-        byte[] header = new byte[3];
-        in.read(header);
-        if(!Arrays.equals(header, "log".getBytes())) throw new BadFileFormatException();
+        String header = readString(in);
+        printer.print("Found header = " + header, Printer.Verbosity.VERBOSE);
+        if(!"data-record".equals(header)) throw new BadFileFormatException();
         printer.print(Strings.SUCCESS, Printer.Verbosity.VERBOSE);
 
-        // Get the number of elements
-        int numElements = in.read();
+        // Get the number of channels
+        int numElements = in.readInt();
         printer.print(Strings.ELEMENT_COUNT + numElements, Printer.Verbosity.VERBOSE);
 
-        // Get the size of each element
+        // Get the size of each channel sample
         int[] elementSizes = new int[numElements];
         for(int i = 0; i< elementSizes.length; i++) {
-            elementSizes[i] = in.read();
+            elementSizes[i] = in.readInt();
+            printer.print("read channel " + i + " size = " + elementSizes[i], Printer.Verbosity.VERBOSE);
         }
 
-        // Write the name of each element
+        // Read and write the name of each channel
+        StringJoiner joiner = new StringJoiner(",");
         for(int i = 0; i< numElements; i++) {
-            int nameSize = in.read();
-            byte[] b = new byte[nameSize];
-            in.read(b);
-            writer.write(new String(b) + ", ");
+            joiner.add(readString(in));
         }
+        writer.write(joiner.toString());
+        printer.print("channel names = " + joiner, Printer.Verbosity.VERBOSE);
         writer.newLine();
 
         printer.print(Strings.READING_LOG, Printer.Verbosity.VERBOSE);
@@ -218,11 +227,16 @@ public class LogDecoder {
                 printer.print(Strings.READ_LINE + lineCount, Printer.Verbosity.VERBOSE);
                 in.reset();
                 for(int i = 0; i < numElements; i++) {
+                    if (i!=0) writer.write(",");
                     if(elementSizes[i]==4){
-                        writer.write(in.readInt() + ", ");
+                        int value = in.readInt();
+                        writer.write(Integer.toString(value));
+                    } else if(elementSizes[i]==2) {
+                        short value = in.readShort();
+                        writer.write(Short.toString(value));
+                    } else {
+                        throw new IOException("Unexpected size of data: " + elementSizes[i]);
                     }
-                    else if(elementSizes[i]==2)
-                        writer.write(in.readShort() + ", ");
                 }
                 writer.newLine();
                 lineCount++;

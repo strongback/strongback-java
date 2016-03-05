@@ -19,6 +19,7 @@ package org.strongback;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
@@ -33,6 +34,7 @@ final class FileDataWriter implements DataWriter {
     private MappedFileDataWriter writer;
     private long recordLength;
     private final long fileSize;
+    private final int channelCount;
 
     public FileDataWriter(Iterable<DataRecorderChannel> channels, Supplier<String> filenameGenerator, int writesPerSecond,
             int runningTimeInSeconds) {
@@ -47,6 +49,10 @@ final class FileDataWriter implements DataWriter {
         recordLength += (Short.BYTES * suppliers.size());
         fileSize = numWrites * recordLength + 1024; // add extra room for header and miscellaneous
 
+        AtomicInteger count = new AtomicInteger();
+        channels.forEach(ch->count.incrementAndGet());
+        channelCount = count.get() + 1; // adding the time sequence
+
         openIfNeeded();
     }
 
@@ -57,16 +63,16 @@ final class FileDataWriter implements DataWriter {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+            suppliers.clear();
 
             // Write the header
             writer.write("data-record");
 
             // Write the number of elements
-            writer.write(suppliers.size() + 1);
+            writer.write(channelCount);
 
-            // Write the size of each element (Infrastructure for variable length element)
-            writer.write(Integer.BYTES);
-
+            // Write the size of each channel as an integer
+            writer.write(Integer.BYTES); // size of the time channel
             channels.forEach(channel -> {
                 IntSupplier supplier = channel.getSupplier();
                 assert supplier != null;
@@ -101,6 +107,7 @@ final class FileDataWriter implements DataWriter {
             writer.close();
         } finally {
             writer = null;
+            suppliers.clear();
         }
     }
 
