@@ -140,34 +140,56 @@ public interface TalonSRX extends LimitedMotor {
     public TalonSRX reverseSensor(boolean flip);
 
     /**
-     * Set the soft limit for forward motion, which will disable the motor when the sensor is out of range.
+     * Set the soft limit for the forward throttle, in terms of the angle as measured by the {@link #getSelectedSensor()
+     * selected input sensor}. Soft limits can be used to disable motor drive when the "Sensor Position" is outside of a
+     * specified range: forward throttle will be disabled if the "Sensor Position" is greater than the forward soft limit.
+     * This takes effect only when the forward soft limit is {@link #enableForwardSoftLimit(boolean)}.
+     * <p>
+     * Soft limits can be used to disable motor drive when the “Sensor Position” is outside of a specified range. Forward
+     * throttle will be disabled if the “Sensor Position” is greater than the Forward Soft Limit. Reverse throttle will be
+     * disabled if the “Sensor Position” is less than the Reverse Soft Limit. The respective Soft Limit Enable must be enabled
+     * for this feature to take effect.
      *
-     * @param forwardLimit the sensor limit beyond which the motor's forward direction should be halted.
+     * @param forwardLimitInDegrees the angle at which the forward throttle should be disabled, where the angle in terms of the
+     *        {@link #getSelectedSensor()}
      * @return this object so that methods can be chained; never null
+     * @see #enableForwardSoftLimit(boolean)
      */
-    public TalonSRX setForwardSoftLimit(int forwardLimit);
+    public TalonSRX setForwardSoftLimit(int forwardLimitInDegrees);
 
     /**
-     * Enable the forward soft limit.
+     * Set the soft limit for the reverse throttle, in terms of the angle as measured by the {@link #getSelectedSensor()
+     * selected input sensor}. Soft limits can be used to disable motor drive when the "Sensor Position" it outside of a
+     * specified range: reverse throttle will be disabled if the "Sensor Position" is less than the reverse soft limit.
+     * This takes effect only when the reverse soft limit is {@link #enableReverseSoftLimit(boolean)}.
+     * <p>
+     * Soft limits can be used to disable motor drive when the “Sensor Position” is outside of a specified range. Forward
+     * throttle will be disabled if the “Sensor Position” is greater than the Forward Soft Limit. Reverse throttle will be
+     * disabled if the “Sensor Position” is less than the Reverse Soft Limit. The respective Soft Limit Enable must be enabled
+     * for this feature to take effect.
      *
-     * @param enable <code>true</code> if the limit is to be enabled, or <code>false</code> otherwise
+     * @param reverseLimitInDegrees the angle at which the reverse throttle should be disabled, where the angle in terms of the
+     *        {@link #getSelectedSensor()}
      * @return this object so that methods can be chained; never null
+     * @see #enableForwardSoftLimit(boolean)
+     */
+    public TalonSRX setReverseSoftLimit(int reverseLimitInDegrees);
+
+    /**
+     * Enable the soft limit for forward throttle, which is set via the {@link #setForwardSoftLimit(int)}.
+     *
+     * @param enable {@code true} if the forward throttle soft limit should be enabled
+     * @return this object so that methods can be chained; never null
+     * @see #setForwardLimitSwitchNormallyOpen(boolean)
      */
     public TalonSRX enableForwardSoftLimit(boolean enable);
 
     /**
-     * Set the soft limit for reverse motion, which will disable the motor when the sensor is out of range.
+     * Enable the soft limit for reverse throttle, which is set via the {@link #setReverseSoftLimit(int)}.
      *
-     * @param reverseLimit the sensor limit beyond which the motor's reverse direction should be halted.
+     * @param enable {@code true} if the forward throttle soft limit should be enabled
      * @return this object so that methods can be chained; never null
-     */
-    public TalonSRX setReverseSoftLimit(int reverseLimit);
-
-    /**
-     * Enable the reverse soft limit.
-     *
-     * @param enable <code>true</code> if the limit is to be enabled, or <code>false</code> otherwise
-     * @return this object so that methods can be chained; never null
+     * @see #setReverseLimitSwitchNormallyOpen(boolean)
      */
     public TalonSRX enableReverseSoftLimit(boolean enable);
 

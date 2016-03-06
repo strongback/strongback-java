@@ -212,13 +212,13 @@ public interface TalonController extends PIDController, TalonSRX {
     public TalonController reverseOutput(boolean flip);
 
     @Override
-    public TalonController setForwardSoftLimit(int forwardLimit);
-
-    @Override
     public TalonController enableForwardSoftLimit(boolean enable);
 
     @Override
-    public TalonController setReverseSoftLimit(int reverseLimit);
+    public TalonController setForwardSoftLimit(int forwardLimitInDegrees);
+
+    @Override
+    public TalonController setReverseSoftLimit(int reverseLimitInDegrees);
 
     @Override
     public TalonController enableReverseSoftLimit(boolean enable);

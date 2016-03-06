@@ -441,25 +441,33 @@ class HardwareTalonSRX implements TalonSRX {
     }
 
     @Override
-    public TalonSRX setForwardSoftLimit(int forwardLimit) {
-        talon.setForwardSoftLimit(forwardLimit);
+    public TalonSRX setForwardSoftLimit(int forwardLimitDegrees) {
+        // Compute the desired forward limit in terms of the current selected input sensor ...
+        if ( this.selectedInput != null ) {
+            double rawPosition = this.selectedInput.rawPositionForAngleInDegrees(forwardLimitDegrees);
+            talon.setForwardSoftLimit(rawPosition);
+        }
         return this;
     }
 
     @Override
-    public TalonSRX enableForwardSoftLimit(boolean enable) {
+    public HardwareTalonSRX enableForwardSoftLimit(boolean enable) {
         talon.enableForwardSoftLimit(enable);
         return this;
     }
 
     @Override
-    public TalonSRX setReverseSoftLimit(int reverseLimit) {
-        talon.setReverseSoftLimit(reverseLimit);
+    public HardwareTalonSRX setReverseSoftLimit(int reverseLimitDegrees) {
+        // Compute the desired reverse limit in terms of the current selected input sensor ...
+        if ( this.selectedInput != null ) {
+            double rawPosition = this.selectedInput.rawPositionForAngleInDegrees(reverseLimitDegrees);
+            talon.setReverseSoftLimit(rawPosition);
+        }
         return this;
     }
 
     @Override
-    public TalonSRX enableReverseSoftLimit(boolean enable) {
+    public HardwareTalonSRX enableReverseSoftLimit(boolean enable) {
         talon.enableReverseSoftLimit(enable);
         return this;
     }
