@@ -212,8 +212,8 @@ class HardwareTalonSRX implements TalonSRX {
     HardwareTalonSRX(CANTalon talon, double pulsesPerDegree, double analogTurnsOverVoltageRange) {
         this.talon = talon;
 
-        this.forwardLimitSwitch = talon::isRevLimitSwitchClosed;
-        this.reverseLimitSwitch = talon::isFwdLimitSwitchClosed;
+        this.forwardLimitSwitch = talon::isFwdLimitSwitchClosed;
+        this.reverseLimitSwitch = talon::isRevLimitSwitchClosed;
         this.outputCurrent = talon::getOutputCurrent;
         this.outputVoltage = talon::getOutputVoltage;
         this.busVoltage = talon::getBusVoltage;
