@@ -776,7 +776,7 @@ public class Hardware {
         }
 
         /**
-         * Create a Logitech Attack 3D flight stick controlled by the Driver Station.
+         * Create a Logitech Attack 3 flight stick controlled by the Driver Station.
          *
          * @param port the port on the driver station that the flight stick is plugged into
          * @return the input device; never null
@@ -792,6 +792,17 @@ public class Hardware {
                                       joystick::getThrottle, // throttle
                                       () -> joystick.getRawButton(1), // trigger
                                       () -> joystick.getRawButton(2)); // thumb
+        }
+
+        /**
+         * @deprecated Renamed due to misspelling of joystick name, see {@link #logitechAttack3(int)}
+         *
+         * @param port the port on the driver station that the flight stick is plugged into
+         * @return the input device, never null
+         */
+        @Deprecated
+        public static FlightStick logitechAttack3D(int port) {
+            return logitechAttack3(port);
         }
 
         /**
