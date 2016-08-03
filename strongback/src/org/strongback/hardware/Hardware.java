@@ -813,8 +813,6 @@ public class Hardware {
                                       () -> joystick.getRawButton(2)); // thumb
         }
 
-
-
         /**
          * Create a Microsoft SideWinder flight stick controlled by the Driver Station.
          *
