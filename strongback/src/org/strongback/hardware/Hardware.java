@@ -781,7 +781,7 @@ public class Hardware {
          * @param port the port on the driver station that the flight stick is plugged into
          * @return the input device; never null
          */
-        public static FlightStick logitechAttack3D(int port) {
+        public static FlightStick logitechAttack3(int port) {
             Joystick joystick = new Joystick(port);
             return FlightStick.create(joystick::getRawAxis,
                                       joystick::getRawButton,

@@ -59,7 +59,7 @@ public class SimpleTankDriveRobot extends IterativeRobot {
         // Set up the human input controls for teleoperated mode. We want to use the Logitech Attack 3D's throttle as a
         // "sensitivity" input to scale the drive speed and throttle, so we'll map it from it's native [-1,1] to a simple scale
         // factor of [0,1] ...
-        FlightStick joystick = Hardware.HumanInterfaceDevices.logitechAttack3D(JOYSTICK_PORT);
+        FlightStick joystick = Hardware.HumanInterfaceDevices.logitechAttack3(JOYSTICK_PORT);
         ContinuousRange sensitivity = joystick.getThrottle().map(Values.mapRange(-1.0,1.0).toRange(0.0, 1.0));
         driveSpeed = joystick.getPitch().scale(sensitivity::read); // scaled
         turnSpeed = joystick.getRoll().scale(sensitivity::read).invert(); // scaled and inverted
