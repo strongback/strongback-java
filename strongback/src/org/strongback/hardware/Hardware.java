@@ -776,7 +776,7 @@ public class Hardware {
         }
 
         /**
-         * Create a Logitech Attack 3D flight stick controlled by the Driver Station.
+         * Create a Logitech Attack 3 flight stick controlled by the Driver Station.
          *
          * @param port the port on the driver station that the flight stick is plugged into
          * @return the input device; never null
@@ -790,6 +790,25 @@ public class Hardware {
                                       () -> joystick.getTwist() * -1, // yaw is reversed
                                       joystick::getX, // roll
                                       joystick::getThrottle, // throttle
+                                      () -> joystick.getRawButton(1), // trigger
+                                      () -> joystick.getRawButton(2)); // thumb
+        }
+
+        /**
+         * Create a Logitech Extreme 3D flight stick controlled by the Driver Station.
+         *
+         * @param port the port on the driver station that the flight stick is plugged into
+         * @return the input device; never null
+         */
+        public static FlightStick logitechExtreme3D(int port) {
+            Joystick joystick = new Joystick(port);
+            return FlightStick.create(joystick::getRawAxis,
+                                      joystick::getRawButton,
+                                      joystick::getPOV,
+                                      joystick::getY, // pitch
+                                      joystick::getTwist, // yaw
+                                      joystick::getX, // roll
+                                      joystick::getThrottle, // flapper thing on bottom
                                       () -> joystick.getRawButton(1), // trigger
                                       () -> joystick.getRawButton(2)); // thumb
         }
