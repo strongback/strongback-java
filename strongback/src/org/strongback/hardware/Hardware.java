@@ -794,6 +794,12 @@ public class Hardware {
                                       () -> joystick.getRawButton(2)); // thumb
         }
 
+        /**
+         * Create a Logitech Extreme 3D flight stick controlled by the Driver Station.
+         *
+         * @param port the port on the driver station that the flight stick is plugged into
+         * @return the input device; never null
+         */
         public static FlightStick logitechExtreme3D(int port) {
             Joystick joystick = new Joystick(port);
             return FlightStick.create(joystick::getRawAxis,
