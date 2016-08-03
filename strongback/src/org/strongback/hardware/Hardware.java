@@ -794,6 +794,21 @@ public class Hardware {
                                       () -> joystick.getRawButton(2)); // thumb
         }
 
+        public static FlightStick logitechExtreme3D(int port) {
+            Joystick joystick = new Joystick(port);
+            return FlightStick.create(joystick::getRawAxis,
+                                      joystick::getRawButton,
+                                      joystick::getPOV,
+                                      joystick::getY, // pitch
+                                      joystick::getTwist, // yaw
+                                      joystick::getX, // roll
+                                      joystick::getThrottle, // flapper thing on bottom
+                                      () -> joystick.getRawButton(1), // trigger
+                                      () -> joystick.getRawButton(2)); // thumb
+        }
+
+
+
         /**
          * Create a Microsoft SideWinder flight stick controlled by the Driver Station.
          *
