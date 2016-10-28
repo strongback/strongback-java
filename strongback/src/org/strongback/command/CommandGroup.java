@@ -151,19 +151,11 @@ public class CommandGroup extends Command {
     }
 
     Type getType() {
-        if (root != null) {
-            return root.type;
-        } else {
-            return type;
-        }
+        return root != null ? root.type : type;
     }
 
     Command[] getCommands() {
-        if (root != null) {
-            return root.getCommands();
-        } else {
-            return commands;
-        }
+        return root != null ? root.getCommands() : commands;
     }
 
     /**

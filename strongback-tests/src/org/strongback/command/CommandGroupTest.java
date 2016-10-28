@@ -16,16 +16,16 @@
 
 package org.strongback.command;
 
-import static org.fest.assertions.Assertions.assertThat;
+import org.junit.Before;
+import org.junit.Test;
+import org.strongback.Logger;
 
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.strongback.Logger;
+import static org.fest.assertions.Assertions.assertThat;
 
 public class CommandGroupTest {
     private Scheduler scheduler;
