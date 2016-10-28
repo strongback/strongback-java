@@ -65,9 +65,6 @@ public class Scheduler implements Executable {
      */
     public void submit(Command command) {
         if (command != null) {
-            if (command instanceof CommandGroup) {
-                command = ((CommandGroup) command).getRoot();
-            }
             CommandRunner runner = buildRunner(command, null);
             commands.add(runner);
         }

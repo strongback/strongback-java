@@ -332,6 +332,51 @@ public class CommandGroupTest {
         }
     }
 
+    @Test
+    public void shouldExecuteComposedNamedCommandGroups() {
+        scheduler.submit(new OuterCommandGroup());
+
+        assertThat(list).isEmpty();
+
+        // First step should come from the OuterCommandGroup
+        scheduler.execute(0);
+        assertThat(list).isEqualTo(listOf("C0 init", "C0 exe", "C0 fin" ));
+        list.clear();
+
+        // Second step should come from NestedCommandGroup
+        scheduler.execute(0);
+        assertThat(list).isEqualTo(listOf("C1 init", "C1 exe", "C1 fin" ));
+        list.clear();
+
+        // Third step should come from NestedCommandGroup
+        scheduler.execute(0);
+        assertThat(list).isEqualTo(listOf("C2 init", "C2 exe", "C2 fin" ));
+        list.clear();
+
+        // Fourth step should resume the OuterCommandGroup sequence
+        scheduler.execute(0);
+        assertThat(list).isEqualTo(listOf("C3 init", "C3 exe", "C3 fin" ));
+        list.clear();
+
+        // Fifth step is empty, nothing executed
+        scheduler.execute(0);
+        assertThat(list).isEmpty();
+    }
+
+    private final class OuterCommandGroup extends CommandGroup {
+        @SuppressWarnings("synthetic-access")
+        public OuterCommandGroup() {
+            sequentially(c[0], new InnerNamedCommandGroup(), c[3]);
+        }
+
+        private final class InnerNamedCommandGroup extends CommandGroup {
+            @SuppressWarnings("synthetic-access")
+            public InnerNamedCommandGroup() {
+                sequentially(c[1], c[2]);
+            }
+        }
+    }
+
     private static final class TestCommand extends Command {
         private static int commandID = 0;
 

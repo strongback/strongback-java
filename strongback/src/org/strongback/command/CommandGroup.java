@@ -131,7 +131,7 @@ public class CommandGroup extends Command {
         SEQUENTIAL, PARRALLEL, FORK;
     }
 
-    private Command root;
+    private CommandGroup root;
     private final Command[] commands;
     private final Type type;
 
@@ -151,15 +151,19 @@ public class CommandGroup extends Command {
     }
 
     Type getType() {
-        return type;
+        if (root != null) {
+            return root.type;
+        } else {
+            return type;
+        }
     }
 
     Command[] getCommands() {
-        return commands;
-    }
-
-    Command getRoot() {
-        return root;
+        if (root != null) {
+            return root.getCommands();
+        } else {
+            return commands;
+        }
     }
 
     /**
