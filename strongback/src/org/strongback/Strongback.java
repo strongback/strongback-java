@@ -16,11 +16,9 @@
 
 package org.strongback;
 
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.LockSupport;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -28,119 +26,314 @@ import java.util.function.LongConsumer;
 import java.util.function.Supplier;
 
 import org.strongback.AsyncEventRecorder.EventWriter;
-import org.strongback.Logger.Level;
+import org.strongback.Executor.Priority;
 import org.strongback.annotation.NotImplemented;
 import org.strongback.annotation.ThreadSafe;
 import org.strongback.command.Command;
-import org.strongback.command.CommandState;
 import org.strongback.command.Scheduler;
 import org.strongback.command.Scheduler.CommandListener;
 import org.strongback.components.Clock;
 import org.strongback.components.Counter;
 import org.strongback.components.Switch;
-import org.strongback.util.Metronome;
+import org.strongback.components.ui.Gamepad;
+
+import edu.wpi.first.wpilibj.IterativeRobot;
 
 /**
  * Access point for a number of the higher-level Strongback functions. This class can be used within robot code or within unit
  * tests.
+ * <h2>Introduction</h2>
+ * <p>
+ * Strongback is an open source Java library that makes it easier for you to write and test your robot code for FIRST Robotics
+ * Competition. You use it along with WPILib for Java, and you deploy it and your codebase to your RoboRIO.
+ * <p>
+ * Strongback is:
+ * <ul>
+ * <li><b>Simple</b> - Strongback's API is simple and natural, and it uses Java 8 lambdas and fluent APIs extensively to keep
+ * your code simple and readable.</li>
+ * <li><b>Safe</b> - Strongback itself uses WPILib for Java and all of its built-in safety mechanisms, so there are no surprises
+ * and behavior remains consistent.</li>
+ * <li><b>Testable</b> - When your code uses Strongback, you can test much more of your robot code on your computer without
+ * requiring real robot hardware.</li>
+ * <li><b>Timely</b> - Strongback's commands and asynchronous functions share a single dedicated thread. This dramatically
+ * reduces context switches in the JVM, and on the dual-core RoboRIO results in consistent and reliable periods required for
+ * control system logic.</li>
+ * </ul>
  *
  * <h2>Configuration</h2>
  * <p>
- * Strongback will by default use the system logger, FPGA time (if available), and an executor that operates on a 5 millisecond
- * execution period. If these defaults are not acceptable, then the Strongback library needs to be configured programmatically
- * before you use it.
- * <p>
- * To configure Strongback, do the following once in the initialization of your robot (perhaps very early in the
- * {@link edu.wpi.first.wpilibj.IterativeRobot#robotInit()} method):
- * <ol>
- * <li>call the {@link #configure()} method to obtain the {@link Configurator} instance,</li>
- * <li>call any combination of the "use" or "set" methods on the {@link Configurator} instance,</li>
- * <li>call the {@link Configurator#initialize() initialize()} method on the {@link Configurator} instance.</li>
- * </ol>
- * After that, the configuration should not be adjusted again, and any of the other Strongback methods can be used.
- * <p>
- * For example, the following code configures Strongback to use what happen to be the default logger, time system, 5ms executor
- * (that uses busy-wait loops rather than {@link Thread#sleep(long)}), and automatically recording data and events to files on
- * the RoboRIO:
+ * Strongback is designed with sensible defaults, so you can start using it right away with almost no code. However, if the
+ * defaults are not ideal for your own robot, you can change Strongback's configuration when your robot is initialized, often in
+ * the {@link edu.wpi.first.wpilibj.IterativeRobot#robotInit()} method. For example, the following code fragment sets the log
+ * message level of detail, the amount of time between work cycles, and specifies that no measurements or events will be
+ * recorded:
  *
  * <pre>
  * Strongback.configure()
- *           .useSystemLogger(Logger.Level.INFO)
- *           .useFpgaTime()
- *           .useExecutionPeriod(5, TimeUnit.MILLISECONDS)
- *           .useExecutionWaitMode(WaitMode.BUSY)
- *           .initialize();
- * // Strongback is ready to use ...
+ *           .setLogLevel(Logger.Level.INFO)
+ *           .useExecutionPeriod(20, TimeUnit.MILLISECONDS)
+ *           .recodNoData()
+ *           .recordNoEvents();
  * </pre>
  *
- * @author Randall Hauch
+ * These happen to be the default settings, but you can easily use some or all of these methods with different parameters to
+ * alter Strongback's behavior.
+ * <p>
+ * Note that all such configuration should be performed in the robot initialization and not changed. Strongback simply will not
+ * recognize any changes when it is running.
+ *
+ * <h2>Starting and disabling</h2>
+ * <p>
+ * Strongback will only run when you tell it to {@link #start()}, so be sure to do this in your robot code. For example, if your
+ * robot extends {@link IterativeRobot} then it should start Strongback in autonomous and teleoperated modes, and should
+ * {@link #disable()} Strongback when the robot is disabled:
+ *
+ * <pre>
+ *  public void autonomousInit() {
+ *       Strongback.start();
+ *       ...
+ *   }
+ *
+ *  public void teleopInit() {
+ *       Strongback.start();
+ *       ...
+ *  }
+ *
+ *   public void disabledInit() {
+ *       Strongback.disable();
+ *       ...
+ *   }
+ * </pre>
+ *
+ * <h3>Stopping versus disabling</h3>
+ * <p>
+ * When the robot is disabled we recommend calling {@link #disable()} rather than {@link #stop()}, since {@link #disable()} will
+ * stop the execution but will keep most of the services ready to run again. You can use {@link #stop()} to completely shutdown
+ * all Strongback resources, although on most robots this will be unnecessary.
+ *
+ * <h2>Execution</h2>
+ * <p>
+ * Strongback runs all of its functionality in a separate thread on a
+ * {@link Strongback.Configurator#useExecutionPeriod(long, TimeUnit) configurable} regular interval. That means that every
+ * <em>n</em> milliseconds (where <em>n</em> is {@link Strongback.Configurator#useExecutionPeriod(long, TimeUnit)
+ * configurable}), this executor thread will perform the following functions:
+ * <ul>
+ * <li>Calling new or still-running commands</li>
+ * <li>Reacting when switches change state (optional)</li>
+ * <li>Recording data measurements (optional)</li>
+ * <li>Recording events (optional)</li>
+ * <li>Calling custom {@link Executor} implementations that you {@link #executor() register} (optional)</li>
+ * </ul>
+ * Each of these is described in more detail in the sections that follow.
+ * <p>
+ * Note that it is important for Strongback's executor thread to stay on its regular cycle so, for example, your feedback or
+ * feed-forward control logic is called with actual time intervals that match those used when computing those models. Therefore,
+ * it is important to know when your commands, switch reaction functions, and even custom {@link Executable} components take too
+ * long to execute. By default, Strongback will report such problems to System.out, but you can instead supply your own
+ * {@link Strongback.Configurator#reportExcessiveExecutionTimes handler}.
+ *
+ * <h3>Commands</h3>
+ * <p>
+ * Strongback’s command framework makes it easier to write robot code that does multiple things at once, and provide a very
+ * simple, composable, and testable way to write your robot code to control these different activities. Commands can be used in
+ * both autonomous and teleoperated modes, and typically represent actions or sequences of actions you want your robot to
+ * perform. For example, you might have a command to raise an arm on your robot to a specific angle, or another to close or open
+ * a claw, or another to shoot a game piece. When you want your robot to do one of those things you simply submit the command to
+ * Strongback for execution and forget about it. While your robot is doing other things during teleoperated or autonomous modes,
+ * Strongback will continue running your command until it completes or until another command preempts it.
+ * <p>
+ * When you use Strongback commands, you write a <em>command class</em> with logic to control the different parts of your robot.
+ * You can even create larger and more complex commands, called <em>command groups</em>, by composing them from a number of
+ * smaller, more atomic commands. Then at the appropriate time, your code creates an instance of a command and
+ * {@link #submit(Command) submits it} to Strongback's scheduler, whose job is to maintain a list of all submitted commands and,
+ * using Strongback's executor thread, periodically go through this list and give each command an opportunity to execute. The
+ * scheduler removes a command when that command tells the scheduler it has finished completes, or if/when the scheduler
+ * receives a new command that preempts it.
+ * <p>
+ * Strongback's scheduler is run once per cycle of Strongback's executor thread. And because the thread runs regularly with a
+ * constant interval, you can use this <em>time interval</em> in your control algorithms.
+ *
+ * <h3>Switch states</h3>
+ * <p>
+ * Another thing your robot probably needs to do periodically is check the state of buttons and switches so you can do things:
+ * <ul>
+ * <li>when a button is pressed or a switch is triggered;</li>
+ * <li>when a button is released or a switch is untriggered;</li>
+ * <li>while a button is pressed or a switch is triggered; or</li>
+ * <li>while a button is released or a switch is untriggered;</li>
+ * </ul>
+ * This is so useful that Strongback includes a {@link #switchReactor() switch reactor}. Simply register a {@link Switch} object
+ * and the function that you want to call when the state changes, and Strongback takes care of watching the switches, tracking
+ * their states, and calling your functions when necessary.
+ * <p>
+ * Strongback's switch reactor works only with {@link Switch}es, but a {@link Switch} is a <em>functional interface</em> that
+ * defines a single {@link Switch#isTriggered()} method. So any method that can be called frequently and that returns a
+ * {@code boolean} can be treated as a switch.
+ * <p>
+ * For example, if your robot has a firing mechanism, you might define a {@code FireRepeatedly} command that begins to fire
+ * until the {@code StopFiring} command is submitted. Say you want your robot to fire repeatedly while the driver presses and
+ * holds the {@link Gamepad}'s right button, then you can implement this with the following:
+ *
+ * <pre>
+ *   SwitchReactor reactor = Strongback.switchReactor();
+ *   Gamepad gamepad = ...
+ *   reactor.onTriggeredSubmit(gamepad.getRightTrigger(),FireRepeatedly::new);
+ *   reactor.onUnTriggeredSubmit(gamepad.getRightTrigger(),StopFiring::new);
+ * </pre>
+ *
+ * That's it! This example may look strange if you're not used to Java 8 lambdas, but it basically will create and submit a new
+ * {@code FireRepeatedly} command whenever the right trigger button (which is a {@link Switch}) is pressed, and will create and
+ * submit a new {@code StopFiring} command whenever that button is released.
+ * <p>
+ * Strongback's switch reactor is easy to use, and it's automatically checked once every other cycle of Strongback's executor
+ * thread. However, you can easily {@link Strongback.Configurator#disableSwitchReactor() disable} the {@link SwitchReactor} if
+ * you don't find it useful.
+ *
+ * <h3>Recording data</h3>
+ * <p>
+ * Strongback's data recorder runs on Strongback's executor thread and periodically records measurements of various
+ * <em>channels</em> of continuous values. The measurements and the time are appended to a data to a file on the RoboRIO. After
+ * your robot runs, you can download and post-process the file(s) to extract time histories of for each of the channels, and
+ * visualize them using tools like Excel or Tableau to visualize those histories.
+ * <p>
+ * Any function that returns a double or integer value can be registered as a named channel using Strongback's DataRecorder
+ * object accessed via the {@link #dataRecorder()} method. For example, the following fragment of code shows how you might
+ * register your robot's battery voltage, current usage, motor speeds, button/switch states, accelerometer readings, and other
+ * metrics:
+ *
+ * <pre>
+ * public void robotInit() {
+ *    ...
+ *    Motor left = Motor.compose(Hardware.Motors.talon(1), Hardware.Motors.talon(2));
+ *    Motor right = Motor.compose(Hardware.Motors.talon(3), Hardware.Motors.talon(4)).invert();
+ *    TankDrive drive = new TankDrive(left, right);
+ *
+ *    FlightStick joystick = Hardware.HumanInterfaceDevices.logitechAttack3D(1);
+ *    ContinuousRange throttle = joystick.getThrottle();
+ *    ContinuousRange sensitivity = throttle.map(t -&gt; (t + 1.0) / 2.0);
+ *    ContinuousRange driveSpeed = joystick.getPitch().scale(sensitivity::read); // scaled
+ *    ContinuousRange turnSpeed = joystick.getRoll().scale(sensitivity::read).invert(); // scaled and inverted
+ *    Switch trigger = joystick.getTrigger();
+
+ *
+ *    // Get the RoboRIO's accelerometer ...
+ *    ThreeAxisAccelerometer accel = Hardware.Accelerometers.builtIn();
+ *    Accelerometer xAccel = accel.getXDirection();
+ *    Accelerometer yAccel = accel.getYDirection();
+ *    Accelerometer zAccel = accel.getZDirection();
+ *    VoltageSensor battery = Hardware.powerPanel().getVoltageSensor();
+ *    CurrentSensor current = Hardware.powerPanel().getCurrentSensor();
+ *
+ *    Strongback.dataRecorder()
+ *              .register("Battery Volts",1000, battery)
+ *              .register("Current load", 1000, current)
+ *              .register("Left Motors",  left)
+ *              .register("Right Motors", right)
+ *              .register("Trigger",      trigger)
+ *              .register("Throttle",     1000, throttle::read)
+ *              .register("Drive Speed",  1000, driveSpeed::read)
+ *              .register("Turn Speed",   1000, turnSpeed::read)
+ *              .register("X-Accel",      1000, xAccel::getAcceleration)
+ *              .register("Y-Accel",      1000, yAccel::getAcceleration)
+ *              .register("Z-Accel",      ()-&gt;zAccel.getAcceleration()*1000));
+ * }
+ * </pre>
+ *
+ * Technically the data recorder only records integer values, but as you can see any function that returns a double can be
+ * scaled to an integer value (e.g., multiplied by 1000 and cast to an integer).
+ * <p>
+ * Strongback's data recorder makes it easy to record and measure what your robot is doing over time so you can visualize it and
+ * help improve your robot's behavior. It does take CPU and time to make these measurements, so it's not really intended to be
+ * used during competitions. So, by default Strongback does not actually record any data and you must enable it by defining
+ * {@link Strongback.Configurator#recordDataToFile(String, int) where} the data should be recorded.
+ * <p>
+ * Strongback will only record data when you ask it to, so this is an "opt-in" feature. It's very useful during testing to
+ * record and measure what your robot is doing over time so you can visualize it and help improve your robot's behavior, and you
+ * can have your robot code configure {@link Strongback.Configurator#recordDataToFile(String, int) where} the data should be
+ * written and register the various channels. After you finish a robot test, download and post-process the events file, combine
+ * it with the recorded events (see next section), and use tools like Excel or Tableau to visualize those time histories.
+ * <p>
+ * Then, for a competition there is no reason to take out any of that code. Simply call
+ * {@link Strongback.Configurator#recordNoData()} before {@link #start() starting} Strongback (perhaps based upon a
+ * SmartDashboard setting), and Strongback will not record any of the data or call any of the functions you supplied with each
+ * channel.
+ *
+ * <h3>Recording events</h3>
+ * <p>
+ * Strongback is also able to record non-continuous or infrequent <em>events</em> and the times at which they occur. These
+ * events are recorded in a file, and you can combine these with the continuous data measurements to understand how these events
+ * correlate with the measurements.
+ * <p>
+ * For example, if you want to record when a joystick button was pressed and released, you can use code like the following to
+ * record an event for each case in your robot's {@code robotInit()} method:
+ *
+ * <pre>
+ * public void robotInit() {
+ *    ...
+ *    Strongback.switchReactor().
+ *              .onTriggered(joystick.getTrigger(), ()-&gt;Strongback.eventRecorder().record("Trigger",true))
+ *              .onUnTriggered(joystick.getTrigger(), ()-&gt;Strongback.eventRecorder().record("Trigger",false));
+ *    ...
+ * }
+ * </pre>
+ * <p>
+ * It is often useful to know when various commands were submitted, when they began executing, and when the stopped executing or
+ * were preempted by other commands. To enable recording of commands, simply call
+ * {@link Strongback.Configurator#recordCommands()}.
+ * <p>
+ * Strongback will only record events when you ask it to, so this is an "opt-in" feature. It's very useful during testing, and
+ * you can have your robot code configure {@link Strongback.Configurator#recordEventsToFile(String, long) where} the events
+ * should be written as well as record various events of interest. After you finish a robot test, download and post-process the
+ * events file, combine it with the recorded data, and use tools like Excel or Tableau to visualize those time histories.
+ * <p>
+ * Then, for a competition there is no reason to take out any of that code. Simply call
+ * {@link Strongback.Configurator#recordNoEvents()} before {@link #start() starting} Strongback (perhaps based upon a
+ * SmartDashboard setting), and Strongback will do nothing with the events that you record and will not write to the files.
  */
 @ThreadSafe
 public final class Strongback {
 
+    /**
+     * A handler that can be called to {@link Strongback.Configurator#reportExcessiveExecutionTimes report} excessive execution
+     * periods.
+     */
+    @FunctionalInterface
+    public static interface ExcessiveExecutionHandler {
+        /**
+         * Notification that a cycle of Strongback's executor took longer than was prescribed in the configuration.
+         *
+         * @param actualTimeInMillis the actual execution time in milliseconds
+         * @param desiredTimeInMillis the desired execution time in milliseconds
+         */
+        void handle(long actualTimeInMillis, long desiredTimeInMillis);
+    }
+
+    /**
+     * An interface for altering the configuration of Strongback.
+     */
     public static final class Configurator {
 
+        /**
+         * The available options for how the Strongback executor thread waits between
+         * {@link Strongback.Configurator#useExecutionPeriod execution periods}.
+         *
+         * @deprecated this is no longer used and will be removed in 2.0
+         */
+        @Deprecated
         public static enum TimerMode {
-            /**
-             * The thread uses a busy loop to prevent context switching to accurately wait for the prescribed amount of time.
-             * This is a very accurate approach, but the thread remains busy the entire time. See
-             * {@link Metronome#busy(long, TimeUnit, Clock)} for details.
-             */
-            BUSY, /**
-                   * The thread uses {@link Thread#sleep(long)} to wait for the prescribed amount of time. This may not be very
-                   * accurate, but it is efficient since the thread will pause so that other work can be done by other threads.
-                   * See {@link Metronome#sleeper(long, TimeUnit, Clock)} for details.
-                   */
-            SLEEP, /**
-                    * The thread uses {@link LockSupport#parkNanos(long)} to wait for the prescribed amount of time. The
-                    * accuracy of this approach will depend a great deal upon the hardware and operating system. See
-                    * {@link Metronome#parker(long, TimeUnit, Clock)} for details.
-                    */
-            PARK;
+            BUSY, SLEEP, PARK;
         }
 
-        private Supplier<Function<String, Logger>> loggersSupplier = () -> str -> new SystemLogger().enable(Level.INFO);
-        private Supplier<Clock> timeSystemSupplier = Clock::fpgaOrSystem;
-        private TimerMode executionWaitMode = TimerMode.BUSY;
-        private long executionPeriodInNanos = TimeUnit.MILLISECONDS.toNanos(20);
-        private volatile boolean initialized = false;
-        private String dataRecorderFilenameRoot = "strongback";
-        private String eventRecorderFilenameRoot = "strongback";
-        private int estimatedRecordDurationInSeconds = 180; // 3 minutes by default
-        private long eventRecordFileSizeInBytes = 1024 * 1024 * 2; // 2 MB by default
-        private boolean recordCommandStateChanges = true;
-        private Function<Iterable<DataRecorderChannel>, DataWriter> dataWriterFactory = this::createFileDataWriter;
-        private Supplier<EventWriter> eventWriterFactory = this::createFileEventWriter;
-        private LongConsumer excessiveExecutorDelayHandler = null;
-        private Supplier<String> dataRecorderFilenameGenerator = new Supplier<String>() {
-            private Counter counter = Counter.unlimited(1);
-
-            @Override
-            public String get() {
-                return dataRecorderFilenameRoot + "-data-" + counter.get() + ".dat";
-            }
-        };
-        private Supplier<String> eventRecorderFilenameGenerator = new Supplier<String>() {
-            private Counter counter = Counter.unlimited(1);
-
-            @Override
-            public String get() {
-                return eventRecorderFilenameRoot + "-event-" + counter.get() + ".dat";
-            }
-        };
-
-        protected DataWriter createFileDataWriter(Iterable<DataRecorderChannel> channels) {
-            int writesPerSecond = (int) (((double) TimeUnit.SECONDS.toNanos(1)) / executionPeriodInNanos);
-            return new FileDataWriter(channels, dataRecorderFilenameGenerator, writesPerSecond,
-                    estimatedRecordDurationInSeconds);
-        }
-
-        protected EventWriter createFileEventWriter() {
-            return new FileEventWriter(eventRecorderFilenameGenerator, eventRecordFileSizeInBytes);
-        }
-
-        protected DataWriter createNetworkDataWriter(List<DataRecorderChannel> channels) {
-            return null;
+        /**
+         * Log messages to {@link SystemLogger System.out} at the specified level
+         *
+         * @param level the global logging level; may not be null
+         * @return this configurator so that methods can be chained together; never null
+         * @deprecated use {@link #setLogLevel(org.strongback.Logger.Level)} instead
+         */
+        @Deprecated
+        public Configurator useSystemLogger(Logger.Level level) {
+            return setLogLevel(level);
         }
 
         /**
@@ -149,55 +342,56 @@ public final class Strongback {
          * @param level the global logging level; may not be null
          * @return this configurator so that methods can be chained together; never null
          */
-        public Configurator useSystemLogger(Logger.Level level) {
+        public Configurator setLogLevel(Logger.Level level) {
             if (level == null) throw new IllegalArgumentException("The system logging level may not be null");
-            loggersSupplier = () -> (context) -> new SystemLogger().enable(level);
+            Strongback.setLogLevel(level);
             return this;
         }
 
         /**
-         * Log messages to custom {@link Logger} implementations based upon the supplied function that maps the string contexts
-         * to custom loggers.
+         * Strongback no longer supports custom loggers, so this method does nothing.
          *
-         * @param loggers the custom function that produces a logger for a context; may not be null
+         * @param loggers unused
          * @return this configurator so that methods can be chained together; never null
+         * @deprecated this is no longer used and will be removed in 2.0
          */
+        @Deprecated
         public Configurator useCustomLogger(Function<String, Logger> loggers) {
-            if (loggers == null) throw new IllegalArgumentException("The custom loggers function may not be null");
-            loggersSupplier = () -> loggers;
             return this;
         }
 
         /**
-         * Determine the time using the RoboRIO's FPGA's hardware if available, or the system time if FPGA hardware is not
-         * available.
+         * Strongback no longer supports using the FPGA time, so this method does nothing.
          *
          * @return this configurator so that methods can be chained together; never null
+         * @deprecated this is no longer used and will be removed in 2.0
          */
+        @Deprecated
         public Configurator useFpgaTime() {
-            timeSystemSupplier = Clock::fpgaOrSystem;
             return this;
         }
 
         /**
-         * Determine the time using the JRE's {@link Clock#system() time system}.
+         * Strongback always uses the JRE's {@link Clock#system() time system}, so this method is no longer necessary and does
+         * nothing.
          *
          * @return this configurator so that methods can be chained together; never null
+         * @deprecated this is no longer used and will be removed in 2.0
          */
+        @Deprecated
         public Configurator useSystemTime() {
-            timeSystemSupplier = Clock::system;
             return this;
         }
 
         /**
-         * Determine the time using a custom {@link Clock} implementation.
+         * Strongback no longer supports using custom clocks, so this method does nothing.
          *
-         * @param clock the custom time system; may not be null
+         * @param clock no longer used
          * @return this configurator so that methods can be chained together; never null
+         * @deprecated this is no longer used and will be removed in 2.0
          */
+        @Deprecated
         public Configurator useCustomTime(Clock clock) {
-            if (clock == null) throw new IllegalArgumentException("The custom time system may not be null");
-            timeSystemSupplier = () -> clock;
             return this;
         }
 
@@ -207,33 +401,67 @@ public final class Strongback {
          * @return this configurator so that methods can be chained together; never null
          */
         public Configurator recordNoData() {
-            dataWriterFactory = null;
+            ENGINE.recordData(null);
             return this;
         }
 
         /**
-         * Record data to local files that begin with the given prefix.
+         * Enable the data recorder and write the data to local files that begin with the given prefix. For example, supplying
+         * "{@code /home/lvuser/robot}" as the prefix means that the data will be recorded in files named
+         * "{@code /home/lvuser/robot-data-<counter>.dat}", where {@code <counter>} will be 1, 2, 3, etc.
+         * <p>
+         * Make sure that the user has privilege to write to the directory specified in the filename prefix. Typically the robot
+         * is run from the root directory, and the user running the code does not have privilege to write to the {@code /}
+         * directory.
+         * <p>
+         * This method sizes the files such that they can hold data for approximately 3 minutes of robot run time. Use
+         * {@link #recordDataToFile(String, int)} to specify a different estimate.
          *
-         * @param filenamePrefix the prefix for filenames; may not be null
+         * @param filenamePrefix the prefix for filenames, which includes the path to the files; may not be null
          * @return this configurator so that methods can be chained together; never null
+         * @see #recordDataToFile(String, int)
          */
         public Configurator recordDataToFile(String filenamePrefix) {
             if (filenamePrefix == null) throw new IllegalArgumentException("The filename prefix may not be null");
-            dataRecorderFilenameRoot = filenamePrefix;
-            dataWriterFactory = this::createFileDataWriter;
+            return recordDataToFile(filenamePrefix, 3 * 60);
+        }
+
+        /**
+         * Enable the data recorder and write the data to local files that begin with the given prefix. For example, supplying
+         * "{@code /home/lvuser/robot}" as the prefix means that the data will be recorded in files named
+         * "{@code /home/lvuser/robot-data-<counter>.dat}", where {@code <counter>} will be 1, 2, 3, etc.
+         * <p>
+         * Make sure that the user has privilege to write to the directory specified in the filename prefix. Typically the robot
+         * is run from the root directory, and the user running the code does not have privilege to write to the {@code /}
+         * directory.
+         * <p>
+         * This method allows a robot to estimate the total number of seconds the recorder will capture data, and this is used
+         * to compute an approximate amount of memory used to buffer the information. If the data record runs for a longer
+         * duration, when it needs additional memory it will simply flush the data and reallocate additional memory.
+         * Reallocation may cause a slight delay during {@link Strongback.Configurator#reportExcessiveExecutionTimes execution},
+         * so if that is unacceptable then specify a higher estimate. However, overestimating the duration will result in extra
+         * memory being used.
+         *
+         * @param filenamePrefix the prefix for filenames, which includes the path to the files; may not be null
+         * @param estimatedTotalNumberOfSeconds the estimated number of seconds that the data will be recorded
+         * @return this configurator so that methods can be chained together; never null
+         */
+        public Configurator recordDataToFile(String filenamePrefix, int estimatedTotalNumberOfSeconds) {
+            if (filenamePrefix == null) throw new IllegalArgumentException("The filename prefix may not be null");
+            ENGINE.recordDataToFile(filenamePrefix, estimatedTotalNumberOfSeconds);
             return this;
         }
 
         /**
-         * Record data to the network tables.
+         * This method no longer does anything.
          *
          * @return this configurator so that methods can be chained together; never null
+         * @deprecated
          */
+        @Deprecated
         @NotImplemented
         public Configurator recordDataToNetworkTables() {
-            throw new UnsupportedOperationException("Network data writer is not yet implemented");
-            // dataWriterFactory = this::createNetworkDataWriter;
-            // return this;
+            return this;
         }
 
         /**
@@ -244,36 +472,39 @@ public final class Strongback {
          */
         public Configurator recordDataTo(Function<Iterable<DataRecorderChannel>, DataWriter> customWriterFactory) {
             if (customWriterFactory == null) throw new IllegalArgumentException("The custom writer factory cannot be null");
-            dataWriterFactory = customWriterFactory;
+            ENGINE.recordData(customWriterFactory);
             return this;
         }
 
         /**
-         * Set the estimated number of seconds that the data recorder will capture. This is used to estimate by the data
-         * recorder to optimize any resources it uses.
+         * This is no longer used.
          *
-         * @param numberOfSeconds the estimated number of seconds of recorded data; must be non-negative
+         * @param numberOfSeconds unused
          * @return this configurator so that methods can be chained together; never null
+         * @deprecated
          */
+        @Deprecated
         public Configurator recordDuration(int numberOfSeconds) {
-            if (numberOfSeconds < 0) throw new IllegalArgumentException("The number of seconds may not be negative");
-            estimatedRecordDurationInSeconds = numberOfSeconds;
             return this;
         }
 
         /**
-         * Record events to local files that begin with the given prefix.
+         * Enable the recording of events and write them to local files whose paths begin with the given prefix. For example,
+         * supplying "{@code /home/lvuser/robot}" as the prefix means that the events will be recorded in files named
+         * "{@code /home/lvuser/robot-events-<counter>.dat}", where {@code <counter>} will be 1, 2, 3, etc.
+         * <p>
+         * Make sure that the user has privilege to write to the directory specified in the filename prefix. Typically the robot
+         * is run from the root directory, and the user running the code does not have privilege to write to the {@code /}
+         * directory.
          *
-         * @param filenamePrefix the prefix for filenames; may not be null
+         * @param filenamePrefix the prefix for filenames, which includes the path to the files; may not be null
          * @param sizeInBytes the size of the files in bytes; must be at least 1024 bytes
          * @return this configurator so that methods can be chained together; never null
          */
         public Configurator recordEventsToFile(String filenamePrefix, long sizeInBytes) {
             if (filenamePrefix == null) throw new IllegalArgumentException("The filename prefix may not be null");
             if (sizeInBytes < 1024) throw new IllegalArgumentException("The event file size must be at least 1024 bytes");
-            eventRecorderFilenameRoot = filenamePrefix;
-            eventRecordFileSizeInBytes = sizeInBytes;
-            eventWriterFactory = this::createFileEventWriter;
+            ENGINE.recordEventsToFile(filenamePrefix, sizeInBytes);
             return this;
         }
 
@@ -283,7 +514,7 @@ public final class Strongback {
          * @return this configurator so that methods can be chained together; never null
          */
         public Configurator recordNoEvents() {
-            eventWriterFactory = null;
+            ENGINE.recordEvents(null);
             return this;
         }
 
@@ -293,7 +524,7 @@ public final class Strongback {
          * @return this configurator so that methods can be chained together; never null
          */
         public Configurator recordCommands() {
-            recordCommandStateChanges = true;
+            ENGINE.recordCommands(true);
             return this;
         }
 
@@ -303,22 +534,48 @@ public final class Strongback {
          * @return this configurator so that methods can be chained together; never null
          */
         public Configurator recordNoCommands() {
-            recordCommandStateChanges = true;
+            ENGINE.recordCommands(false);
             return this;
         }
 
         /**
-         * Use the specified wait mode for Strongback's {@link Strongback#executor() executor}. This wait mode determines
-         * whether the executor's thread loops, sleeps, or parks until the {@link #useExecutionPeriod(long, TimeUnit) period}
-         * has elapsed.
+         * Disable the {@link Strongback#switchReactor() switch reactor} so that Strongback <em>will not</em> run it with its
+         * executor.
+         * <p>
+         * The {@link Strongback#switchReactor() switch reactor} is <em>enabled</em> by default.
          *
-         * @param mode the desired wait mode; may not be null
+         * @return this configurator so that methods can be chained together; never null
+         */
+        public Configurator disableSwitchReactor() {
+            ENGINE.useSwitchReactor(false);
+            return this;
+        }
+
+        /**
+         * Enable the {@link Strongback#switchReactor() switch reactor} so that Strongback <em>will</em> run it with its
+         * executor.
+         * <p>
+         * The {@link Strongback#switchReactor() switch reactor} is <em>enabled</em> by default, so this method need only be
+         * called if previously {@link #disableSwitchReactor() disabling} the switch reactor.
+         *
+         * @return this configurator so that methods can be chained together; never null
+         */
+        public Configurator enableSwitchReactor() {
+            ENGINE.useSwitchReactor(true);
+            return this;
+        }
+
+        /**
+         * Strongback's executor thread always uses a busy loop to wait for the next period, and so this method is no longer
+         * needed.
+         *
+         * @param mode unused
          * @return this configurator so that methods can be chained together; never null
          * @see #useExecutionPeriod(long, TimeUnit)
+         * @deprecated this is no longer used
          */
+        @Deprecated
         public Configurator useExecutionTimerMode(TimerMode mode) {
-            if (mode == null) throw new IllegalArgumentException("The execution timer mode may not be null");
-            executionWaitMode = mode;
             return this;
         }
 
@@ -343,7 +600,7 @@ public final class Strongback {
             if (TimeUnit.MILLISECONDS.toNanos(1) > unit.toNanos(interval)) {
                 throw new IllegalArgumentException("The interval must be at least 1 millisecond");
             }
-            executionPeriodInNanos = unit.toNanos(interval);
+            ENGINE.setExecutionPeriod(unit.toMillis(interval));
             return this;
         }
 
@@ -353,30 +610,48 @@ public final class Strongback {
          *
          * @param handler the receiver for notifications of excessive execution times
          * @return this configurator so that methods can be chained together; never null
+         * @deprecated use {@link Strongback.Configurator#reportExcessiveExecutionTimes} instead
          */
+        @Deprecated
         public Configurator reportExcessiveExecutionPeriods(LongConsumer handler) {
-            excessiveExecutorDelayHandler = handler;
+            ENGINE.handleExecutionDelays((actual, desired) -> {
+                handler.accept(actual);
+            });
+            return this;
+        }
+
+        /**
+         * Every time the executor takes longer than the {@link #useExecutionPeriod(long, TimeUnit) execution period} to execute
+         * each interval, report this to the given handler.
+         *
+         * @param handler the receiver for notifications of excessive execution times; may be null if the default is to be used
+         * @return this configurator so that methods can be chained together; never null
+         */
+        public Configurator reportExcessiveExecutionTimes(ExcessiveExecutionHandler handler) {
+            ENGINE.handleExecutionDelays(handler);
             return this;
         }
 
         /**
          * When the supplied condition is {@code true}, call the supplied function with this Configurator.
+         *
          * @param condition the condition that determines whether the supplied function should be called; may not be null
          * @param configure the function that will perform additional configuration
          * @return this configurator so that methods can be chained together; never null
          */
-        public Configurator when( boolean condition, Runnable configure ) {
-            return when(()->condition,configure);
+        public Configurator when(boolean condition, Runnable configure) {
+            return when(() -> condition, configure);
         }
 
         /**
          * When the supplied condition is {@code true}, call the supplied function with this Configurator.
+         *
          * @param condition the function that determines whether the supplied function should be called; may not be null
          * @param configure the function that will perform additional configuration
          * @return this configurator so that methods can be chained together; never null
          */
-        public Configurator when( BooleanSupplier condition, Runnable configure ) {
-            if ( condition != null && configure != null && condition.getAsBoolean() ) {
+        public Configurator when(BooleanSupplier condition, Runnable configure) {
+            if (condition != null && configure != null && condition.getAsBoolean()) {
                 configure.run();
             }
             return this;
@@ -384,43 +659,36 @@ public final class Strongback {
 
         /**
          * When the supplied condition is {@code true}, call the supplied function with this Configurator.
+         *
          * @param condition the condition that determines whether the supplied function should be called; may not be null
          * @param configure the function that will perform additional configuration
          * @return this configurator so that methods can be chained together; never null
          */
-        public Configurator when( boolean condition, Consumer<Configurator> configure ) {
-            return when(()->condition,configure);
+        public Configurator when(boolean condition, Consumer<Configurator> configure) {
+            return when(() -> condition, configure);
         }
 
         /**
          * When the supplied condition is {@code true}, call the supplied function with this Configurator.
+         *
          * @param condition the function that determines whether the supplied function should be called; may not be null
          * @param configure the function that will perform additional configuration
          * @return this configurator so that methods can be chained together; never null
          */
-        public Configurator when( BooleanSupplier condition, Consumer<Configurator> configure ) {
-            if ( condition != null && configure != null && condition.getAsBoolean() ) {
+        public Configurator when(BooleanSupplier condition, Consumer<Configurator> configure) {
+            if (condition != null && configure != null && condition.getAsBoolean()) {
                 configure.accept(this);
             }
             return this;
         }
 
         /**
-         * Complete the Strongback configuration and initialize Strongback so that it can be used.
+         * This method no longer does anything. Be sure to call {@link Strongback#start()}, {@link Strongback#restart()}, and
+         * {@link Strongback#shutdown()}
          */
         public synchronized void initialize() {
-            if (initialized) {
-                loggersSupplier.get()
-                               .apply("")
-                               .warn("Strongback has already been initialized. Make sure you configure and initialize Strongback only once");
-            }
-            initialized = true;
-            INSTANCE = new Strongback(this, Strongback.INSTANCE);
         }
     }
-
-    private static final Configurator CONFIG = new Configurator();
-    private static volatile Strongback INSTANCE = new Strongback(CONFIG, null);
 
     /**
      * Get the Strongback library configurator. Any configuration changes will take effect only after the
@@ -434,7 +702,7 @@ public final class Strongback {
 
     /**
      * Start the Strongback functions, including the {@link #executor() Executor}, {@link #submit(Command) command scheduler},
-     * and the {@link #dataRecorder() data recorder}. This does nothing if Strongback is already started.
+     * and the {@link #dataRecorder() data recorder}.
      * <p>
      * This is often useful to call in {@code IterativeRobot.autonomousInit()} to start Strongback and prepare for any
      * autonomous based commands and start recording data and events.
@@ -442,56 +710,76 @@ public final class Strongback {
      * @see #restart()
      */
     public static void start() {
-        INSTANCE.doStart();
+        ENGINE.start();
     }
 
     /**
-     * Ensure that Strongback is {@link #start() started} and, if it was already running, {@link #killAllCommands() kill all
-     * currently-running commands}. It is equivalent to calling both {@code #start()} <em>and</em> {@code #killAllCommands()},
-     * although it is a bit more efficient.
-     * <p>
-     * This is often useful to use in {@code IterativeRobot.teleopInit()} to ensure Strongback is running and to cancel any
-     * commands that might still be running from autonomous mode.
+     * Same as {@link #start()}.
      *
-     * @see #start
-     * @see #killAllCommands()
+     * @see #start()
+     * @deprecated
      */
+    @Deprecated
     public static void restart() {
-        INSTANCE.doRestart();
+        ENGINE.start();
     }
 
     /**
      * Stop all currently-scheduled activity and flush all recorders. This is typically called by robot code when when the robot
      * becomes disabled. Should the robot re-enable, all aspects of Strongback will continue to work as before it was disabled.
+     *
+     * @see #stop()
+     * @see #restart()
      */
     public static void disable() {
-        INSTANCE.killCommandsAndFlush();
+        ENGINE.killCommandsAndFlush();
+        ENGINE.pause();
     }
 
+    /**
+     * Stop Strongback from running commands, reading switch states, and recording data and events.
+     *
+     * @deprecated use {@link #stop()} instead
+     */
+    @Deprecated
     public static void shutdown() {
-        INSTANCE.doShutdown();
+        stop();
+    }
+
+    /**
+     * Stop Strongback from running commands, reading switch states, and recording data and events.
+     *
+     * @see #start()
+     * @see #restart()
+     * @see #killAllCommands()
+     */
+    public static void stop() {
+        ENGINE.stop();
     }
 
     /**
      * Get Strongback's automatically-configured {@link Executor} that repeatedly and efficiently performs asynchronous work on
      * a precise interval using a single separate thread. Multiple {@link Executable}s can be registered with this executor, and
      * doing so ensures that all of those {@link Executable}s are run on the same thread. This is more efficient than using
-     * multiple {@link Executor} instances, which each require their own thread.
+     * multiple threads or {@link Executor} instances that each require their own thread.
      * <p>
      * Strongback's {@link #dataRecorder() data recorder}, {@link #switchReactor() switch reactor}, and {@link #submit(Command)
      * internal scheduler} are already registered with this internal Executor, and therefore all use this single thread
      * efficiently for all asynchronous processing.
      * <p>
-     * However, care must be taken to prevent overloading the executor. Specifically, the executor must be able to perform all
+     * However, care must be taken to prevent over-working the executor. Specifically, the executor must be able to perform all
      * work for all registered {@link Executable}s during the {@link Configurator#useExecutionPeriod(long, TimeUnit) configured
      * execution interval}. If too much work is added, the executor may fall behind.
+     * <p>
+     * <b>Note:</b> As of Strongback 1.2, only register custom {@link Executable}s before {@link #start() starting} Strongback.
+     * Strongback will not recognize any custom {@link Executable}s registered after Strongback has been started until it is
+     * {@link #stop() stopped} and restarted.
      *
      * @return Strongback's executor; never null
      * @see Configurator#useExecutionPeriod(long, TimeUnit)
-     * @see Configurator#useExecutionTimerMode(org.strongback.Strongback.Configurator.TimerMode)
      */
     public static Executor executor() {
-        return INSTANCE.executables;
+        return ENGINE.getExecutor();
     }
 
     /**
@@ -502,7 +790,7 @@ public final class Strongback {
      * @see Configurator#useCustomLogger(Function)
      */
     public static Logger logger() {
-        return logger("");
+        return LOGGER;
     }
 
     /**
@@ -510,11 +798,11 @@ public final class Strongback {
      *
      * @param context the context of the logger
      * @return Strongback's logger instance; never null
-     * @see Configurator#useSystemLogger(org.strongback.Logger.Level)
-     * @see Configurator#useCustomLogger(Function)
+     * @deprecated use {@link #logger()} instead
      */
+    @Deprecated
     public static Logger logger(String context) {
-        return INSTANCE.loggers.apply(context);
+        return LOGGER;
     }
 
     /**
@@ -522,11 +810,21 @@ public final class Strongback {
      *
      * @param context the context of the logger
      * @return Strongback's logger instance; never null
-     * @see Configurator#useSystemLogger(org.strongback.Logger.Level)
-     * @see Configurator#useCustomLogger(Function)
+     * @deprecated use {@link #logger()} instead
      */
+    @Deprecated
     public static Logger logger(Class<?> context) {
-        return INSTANCE.loggers.apply(context.getName());
+        return LOGGER;
+    }
+
+    /**
+     * Set the level at which log messages should be recorded.
+     *
+     * @param level the global logging level; may not be null
+     */
+    public static void setLogLevel(Logger.Level level) {
+        if (level == null) throw new IllegalArgumentException("The system logging level may not be null");
+        LOGGER.enable(level);
     }
 
     /**
@@ -538,7 +836,7 @@ public final class Strongback {
      * @see Configurator#useCustomTime(Clock)
      */
     public static Clock timeSystem() {
-        return INSTANCE.clock;
+        return CLOCK;
     }
 
     /**
@@ -549,7 +847,9 @@ public final class Strongback {
      * @see Configurator#useExecutionTimerMode(org.strongback.Strongback.Configurator.TimerMode)
      */
     public static void submit(Command command) {
-        if (command != null) INSTANCE.scheduler.submit(command);
+        if (command != null) {
+            ENGINE.submit(command);
+        }
     }
 
     /**
@@ -605,14 +905,14 @@ public final class Strongback {
      * Kill all currently-running commands.
      */
     public static void killAllCommands() {
-        INSTANCE.scheduler.killAll();
+        ENGINE.killCommandsAndFlush();
     }
 
     /**
      * Flush all data that has been recorded but not written to disk.
      */
     public static void flushRecorders() {
-        INSTANCE.dataRecorderDriver.flush();
+        ENGINE.flushRecorders();
     }
 
     /**
@@ -630,7 +930,7 @@ public final class Strongback {
      * @see Configurator#useExecutionPeriod(long, TimeUnit)
      */
     public static SwitchReactor switchReactor() {
-        return INSTANCE.switchReactor;
+        return ENGINE.getSwitchReactor();
     }
 
     /**
@@ -650,7 +950,7 @@ public final class Strongback {
      * @see Configurator#recordNoData()
      */
     public static DataRecorder dataRecorder() {
-        return INSTANCE.dataRecorderChannels;
+        return ENGINE.getDataRecorder();
     }
 
     /**
@@ -667,7 +967,7 @@ public final class Strongback {
      * @see Configurator#recordNoEvents()
      */
     public static EventRecorder eventRecorder() {
-        return INSTANCE.eventRecorder;
+        return ENGINE.getEventRecorder();
     }
 
     /**
@@ -677,169 +977,469 @@ public final class Strongback {
      * @return the number of excessive delays
      */
     public static long excessiveExecutionTimeCounts() {
-        return INSTANCE.executorDelayCounter.get();
+        return ENGINE.getExcessiveExecutionCount();
     }
 
-    private final Function<String, Logger> loggers;
-    private final Executables executables;
-    private final ExecutorDriver executorDriver;
-    private final Clock clock;
-    private final Metronome metronome;
-    private final Scheduler scheduler;
-    private final AsyncSwitchReactor switchReactor;
-    private final DataRecorderChannels dataRecorderChannels;
-    private final DataRecorderDriver dataRecorderDriver;
-    private final EventRecorder eventRecorder;
-    private final AtomicBoolean started = new AtomicBoolean(false);
-    private final AtomicLong executorDelayCounter = new AtomicLong();
-    private final LongConsumer excessiveExecutionHandler;
-
-    private Strongback(Configurator config, Strongback previousInstance) {
-        boolean start = false;
-        if (previousInstance != null) {
-            start = previousInstance.started.get();
-            // Terminates all currently-scheduled commands and stops the executor's thread (if running) ...
-            previousInstance.doShutdown();
-            executables = previousInstance.executables;
-            switchReactor = previousInstance.switchReactor;
-            executables.unregister(previousInstance.dataRecorderDriver);
-            executables.unregister(previousInstance.eventRecorder);
-            executables.unregister(previousInstance.scheduler);
-            dataRecorderChannels = previousInstance.dataRecorderChannels;
-            excessiveExecutionHandler = previousInstance.excessiveExecutionHandler;
-        } else {
-            executables = new Executables();
-            switchReactor = new AsyncSwitchReactor();
-            executables.register(switchReactor);
-            dataRecorderChannels = new DataRecorderChannels();
-            excessiveExecutionHandler = config.excessiveExecutorDelayHandler;
-        }
-        loggers = config.loggersSupplier.get();
-        clock = config.timeSystemSupplier.get();
-        switch (config.executionWaitMode) {
-            case PARK:
-                metronome = Metronome.parker(config.executionPeriodInNanos, TimeUnit.NANOSECONDS, clock);
-                break;
-            case SLEEP:
-                metronome = Metronome.sleeper(config.executionPeriodInNanos, TimeUnit.NANOSECONDS, clock);
-                break;
-            case BUSY:
-            default:
-                metronome = Metronome.busy(config.executionPeriodInNanos, TimeUnit.NANOSECONDS, clock);
-                break;
-        }
-        // Create a new executor driver ...
-        executorDriver = new ExecutorDriver("Strongback Executor", executables, clock, metronome, loggers.apply("executor"),
-                monitorDelay(config.executionPeriodInNanos, TimeUnit.NANOSECONDS));
-
-        // Create a new event recorder ...
-        if (config.eventWriterFactory != null) {
-            eventRecorder = new AsyncEventRecorder(config.eventWriterFactory.get(), clock);
-            executables.register(eventRecorder);
-        } else {
-            eventRecorder = EventRecorder.noOp();
-        }
-
-        // Create a new scheduler that optionally records command state transitions. Note that we ignore everything in
-        // the previous instance's scheduler, since all commands would have been terminated (as intended) ...
-        CommandListener commandListener = config.recordCommandStateChanges ? this::recordCommand : this::recordNoCommands;
-        scheduler = new Scheduler(loggers.apply("scheduler"), commandListener);
-        executables.register(scheduler);
-
-        // Create a new data recorder driver ...
-        dataRecorderDriver = new DataRecorderDriver(dataRecorderChannels, config.dataWriterFactory);
-        executables.register(dataRecorderDriver);
-
-        // Start this if the previous was already started ...
-        if (previousInstance != null && start) {
-            doStart();
-        }
+    /**
+     * Determine whether Strongback is currently running.
+     *
+     * @return {@code true} if it is running, or {@code false} if it is not running
+     */
+    public static boolean isRunning() {
+        return ENGINE.isRunning();
     }
 
-    private LongConsumer monitorDelay(long executionInterval, TimeUnit unit) {
-        long intervalInMs = unit.toMillis(executionInterval);
-        return delayInMs -> {
-            if (delayInMs > intervalInMs) {
-                executorDelayCounter.incrementAndGet();
-                if (excessiveExecutionHandler != null) {
-                    try {
-                        excessiveExecutionHandler.accept(delayInMs);
-                    } catch (Throwable t) {
-                        logger().error(t, "Error with custom handler for excessive execution times");
-                    }
+    /**
+     * Log the current configuration of Strongback.
+     */
+    public static void logConfiguration() {
+        ENGINE.logConfiguration();
+    }
+
+    private static final SystemLogger LOGGER = new SystemLogger();
+    private static final Clock CLOCK = Clock.system();
+    private static final Engine ENGINE = new Engine(CLOCK, LOGGER);
+    private static final Configurator CONFIG = new Configurator();
+
+    @ThreadSafe
+    protected static final class Engine {
+        private static final Priority SCHEDULER_PRIORITY = Priority.HIGH;
+        private static final Priority SWITCH_REACTOR_PRIORITY = Priority.MEDIUM;
+        private static final Priority DATA_RECORDER_PRIORITY = Priority.MEDIUM;
+        private static final Priority EVENT_RECORDER_PRIORITY = Priority.LOW;
+
+        private final AsyncSwitchReactor switchReactor = new AsyncSwitchReactor();
+        private final DataRecorderChannels dataRecorderChannels = new DataRecorderChannels();
+        private final AtomicBoolean running = new AtomicBoolean();
+        private final AtomicLong executorDelayCounter = new AtomicLong();
+        private final Executables executables = new Executables();
+        private final Logger logger;
+        private final Clock clock;
+        private final Counter dataWriterFilenameCounter = Counter.unlimited(1);
+        private final Counter eventWriterFilenameCounter = Counter.unlimited(1);
+        private volatile Scheduler scheduler;
+        private volatile EventRecorder eventRecorder;
+        private volatile ExcessiveExecutionHandler excessiveHandler;
+        private volatile long executionPeriodInMillis = 20;
+        private volatile boolean recordCommands = true;
+        private volatile boolean useSwitchReactor = true;
+        private volatile EventWriter eventWriter;
+        private volatile Supplier<Function<Iterable<DataRecorderChannel>, DataWriter>> dataWriterFactorySupplier;
+        private volatile ExecutorDriver executor;
+        private volatile DataRecorderDriver dataRecorderDriver;
+        private volatile String eventWriterDescription = "no";
+        private volatile String dataWriterDescription = "no";
+
+        public Engine(Clock clock, Logger logger) {
+            this.clock = clock;
+            this.logger = logger;
+            handleExecutionDelays(null);
+        }
+
+        public void logConfiguration() {
+            logger.info("Strongback configuration:");
+            logger.info("  log level = " + logger);
+            logger.info("  execution period = " + executionPeriodInMillis + " milliseconds");
+            logger.info("  excessive execution period handler = " + excessiveHandler);
+            logger.info("  checking switch states = " + (useSwitchReactor ? "yes" : "no"));
+            logger.info("  recording data = " + dataWriterDescription);
+            logger.info("  recording events = " + eventWriterDescription);
+            if (eventWriter != null) {
+                logger.info("  recording commands as events = " + (recordCommands ? "yes" : "no"));
+            }
+            logger.info("");
+            logger.info("Strongback priorities during execution:");
+            logger.info("  Commands @ " + SCHEDULER_PRIORITY);
+            if (useSwitchReactor) {
+                logger.info("  Switch states @ " + SWITCH_REACTOR_PRIORITY);
+            }
+            if (dataWriterFactorySupplier != null) {
+                logger.info("  Recording data @ " + DATA_RECORDER_PRIORITY);
+            }
+            if (eventWriter != null) {
+                logger.info("  Writing events @ " + EVENT_RECORDER_PRIORITY);
+            }
+            logger.info("");
+        }
+
+        public void logRunningState() {
+            logger.info("Strongback is " + (running.get() ? "running" : "not running"));
+        }
+
+        public EventRecorder getEventRecorder() {
+            return eventRecorder != null ? eventRecorder : EventRecorder.noOp();
+        }
+
+        public DataRecorder getDataRecorder() {
+            return dataRecorderChannels;
+        }
+
+        public AsyncSwitchReactor getSwitchReactor() {
+            return switchReactor;
+        }
+
+        public Executor getExecutor() {
+            return executables;
+        }
+
+        public long getExcessiveExecutionCount() {
+            return executorDelayCounter.get();
+        }
+
+        public long getExecutionPeriod() {
+            return this.executionPeriodInMillis;
+        }
+
+        public boolean getRecordCommands() {
+            return this.recordCommands;
+        }
+
+        public ExcessiveExecutionHandler getExecutionDelayHandler() {
+            return this.excessiveHandler;
+        }
+
+        public EventWriter getEventWriter() {
+            return this.eventWriter;
+        }
+
+        public String getEventWriterDescription() {
+            return this.eventWriterDescription;
+        }
+
+        public String getDataWriterDescription() {
+            return this.dataWriterDescription;
+        }
+
+        public Function<Iterable<DataRecorderChannel>, DataWriter> getDataWriter() {
+            return this.dataWriterFactorySupplier.get();
+        }
+
+        public synchronized boolean setExecutionPeriod(long executionPeriodInMillis) {
+            if (isRunning()) {
+                logger.error("Strongback is running and is unable to change the execution period to " + executionPeriodInMillis
+                        + " milliseconds");
+                return false;
+            }
+            this.executionPeriodInMillis = executionPeriodInMillis;
+            return true;
+        }
+
+        public synchronized void useSwitchReactor(boolean enable) {
+            if (isRunning()) {
+                logger.error("Strongback is running and is unable to " + (enable ? "enable" : "disable")
+                        + " the switch reactor");
+                return;
+            }
+            this.useSwitchReactor = enable;
+        }
+
+        public synchronized boolean recordCommands(boolean record) {
+            if (isRunning()) {
+                logger.error("Strongback is running and is unable to " + (record ? "enable" : "disable")
+                        + " recording commands");
+                return false;
+            }
+            this.recordCommands = record;
+            return true;
+        }
+
+        public synchronized boolean recordEvents(EventWriter eventWriter) {
+            if (isRunning()) {
+                if (eventWriter == null) {
+                    logger.error("Strongback is running and is unable to stop recording events");
                 } else {
-                    logger().error("Unable to execute all activities within " + intervalInMs + " milliseconds!");
+                    logger.error("Strongback is running and is unable to starting recording events to a custom event writer "
+                            + eventWriter);
                 }
+                return false;
+            }
+            this.eventWriter = eventWriter;
+            if (eventWriter != null) {
+                this.eventWriterDescription = "custom (" + eventWriter + ")";
+            } else {
+                this.eventWriterDescription = "no";
+            }
+            return true;
+        }
+
+        public synchronized boolean recordEventsToFile(String filenamePrefix, long sizeInBytes) {
+            if (isRunning()) {
+                logger.error("Strongback is running and is unable to start recording events to files with the prefix '"
+                        + filenamePrefix + "'");
+                return false;
+            }
+            if (filenamePrefix == null) throw new IllegalArgumentException("The filename prefix may not be null");
+            if (sizeInBytes < 1024) throw new IllegalArgumentException("The event file size must be at least 1024 bytes");
+            Supplier<String> filenameGenerator = filenameGenerator(filenamePrefix, "event", eventWriterFilenameCounter);
+            this.eventWriter = new FileEventWriter(filenameGenerator, sizeInBytes);
+            this.eventWriterDescription = filenameGenerator + " (sized at " + sizeInBytes + " bytes)";
+            return true;
+        }
+
+        public synchronized boolean recordData(Function<Iterable<DataRecorderChannel>, DataWriter> dataWriterFactory) {
+            if (isRunning()) {
+                if (dataWriterFactory == null) {
+                    logger.error("Strongback is running and is unable to stop recording data");
+                } else {
+                    logger.error("Strongback is running and is unable to start recording data to a custom data writer "
+                            + dataWriterFactory);
+                }
+                return false;
+            }
+            this.dataWriterFactorySupplier = dataWriterFactory == null ? null : () -> dataWriterFactory;
+            if (dataWriterFactory != null) {
+                this.dataWriterDescription = "custom (" + dataWriterFactory + ")";
+            } else {
+                this.dataWriterDescription = "no";
+            }
+            return true;
+        }
+
+        public synchronized boolean recordDataToFile(String filenamePrefix, int estimatedTotalNumberOfSeconds) {
+            if (isRunning()) {
+                logger.error("Strongback is running and is unable to start recording data in files with prefix '"
+                        + filenamePrefix + "'");
+                return false;
+            }
+            if (filenamePrefix == null) throw new IllegalArgumentException("The filename prefix may not be null");
+            Supplier<String> filenameGenerator = filenameGenerator(filenamePrefix, "data", dataWriterFilenameCounter);
+            this.dataWriterFactorySupplier = () -> {
+                // Create the data writer factory ...
+                int writesPerSecond = (int) (((double) TimeUnit.SECONDS.toNanos(1)) / executionPeriodInMillis);
+                return (channels) -> {
+                    return new FileDataWriter(channels, filenameGenerator, writesPerSecond, estimatedTotalNumberOfSeconds);
+                };
+            };
+            this.dataWriterDescription = filenameGenerator + " (sized for " + estimatedTotalNumberOfSeconds + " seconds)";
+            return true;
+        }
+
+        public synchronized boolean handleExecutionDelays(ExcessiveExecutionHandler customHandler) {
+            if (isRunning()) {
+                logger.error("Strongback is running and is unable to change the handler for excessive execution periods");
+                return false;
+            }
+            if (customHandler != null) {
+                this.excessiveHandler = new ExcessiveExecutionHandler() {
+
+                    @Override
+                    public void handle(long actualTimeInMillis, long desiredTimeInMillis) {
+                        executorDelayCounter.incrementAndGet();
+                        try {
+                            customHandler.handle(actualTimeInMillis, desiredTimeInMillis);
+                        } catch (Throwable t) {
+                            logger().error(t, "Error with custom handler for excessive execution times");
+                            logger().error("Unable to execute all activities within " + desiredTimeInMillis + " milliseconds ("
+                                    + actualTimeInMillis + " ms too long)!");
+                        }
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "using " + customHandler.toString() + " (" + customHandler.getClass() + ")";
+                    }
+                };
+            } else {
+                this.excessiveHandler = new ExcessiveExecutionHandler() {
+
+                    @Override
+                    public void handle(long actualTimeInMillis, long desiredTimeInMillis) {
+                        executorDelayCounter.incrementAndGet();
+                        logger().error("Unable to execute all activities within " + desiredTimeInMillis + " milliseconds ("
+                                + actualTimeInMillis + " ms too long)!");
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "write to log";
+                    }
+                };
+            }
+            return true;
+        }
+
+        private CommandListener createCommandListener() {
+            if (recordCommands) {
+                return (command, state) -> {
+                    eventRecorder.record(command.getClass().getName(), state.ordinal());
+                };
+            }
+            return null;
+        }
+
+        public boolean isRunning() {
+            return running.get();
+        }
+
+        public void pause() {
+            executor.stop();
+        }
+
+        /**
+         * Stop the engine when not running
+         *
+         * @return {@code true} if the engine was successfully started, or {@code false} if it was already running
+         */
+        protected boolean doStart() {
+            if (running.compareAndSet(false, true)) {
+                try {
+                    executorDelayCounter.set(0);
+
+                    // Create the scheduler that runs commands ...
+                    scheduler = new Scheduler(logger, createCommandListener());
+                    executables.register(scheduler, SCHEDULER_PRIORITY);
+
+                    if (useSwitchReactor) {
+                        // Register the switch reactor ...
+                        executables.register(switchReactor, SWITCH_REACTOR_PRIORITY);
+                    }
+
+                    // Create the data recorder if needed ...
+
+                    if (dataWriterFactorySupplier != null) {
+                        dataRecorderDriver = new DataRecorderDriver(dataRecorderChannels, dataWriterFactorySupplier.get());
+                        dataRecorderDriver.start();
+                        executables.register(dataRecorderDriver, DATA_RECORDER_PRIORITY);
+                    }
+
+                    // Create the event recorder if needed ...
+                    if (eventWriter != null) {
+                        eventRecorder = new AsyncEventRecorder(eventWriter, clock);
+                        executables.register(eventRecorder, EVENT_RECORDER_PRIORITY);
+                    }
+
+                    // Now create and start the executor to run all these services ...
+                    executor = new ExecutorDriver("Strongback Executor", executables, clock, executionPeriodInMillis, logger,
+                            excessiveHandler);
+                    executor.start();
+                    return true;
+                } catch (Throwable t) {
+                    logger.error(t, "Aborting Strongback startup due to error: " + t.getMessage());
+                    stop();
+                    throw t;
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Restart the engine if it is already running, or start the engine if it is not currently running.
+         *
+         * @return {@code true} if the engine was started or already running when this method was called, or {@code false} if
+         *         the engine could not be started
+         */
+        public synchronized boolean start() {
+            if (running.get()) {
+                // Already running, so just kill any remaining commands ...
+                scheduler.killAll();
+                executorDelayCounter.set(0);
+                executor.start();
+                return true;
+            } else {
+                // Not yet running, so start it ...
+                return doStart();
+            }
+        }
+
+        public synchronized boolean submit(Command command) {
+            if (command != null) {
+                if (!running.get()) {
+                    logger.warn("Strongback is not currently running, so the command " + command
+                            + " will begin running when Strongback is started.");
+                    return false;
+                }
+                scheduler.submit(command);
+                return true;
+            }
+            return false;
+        }
+
+        public synchronized void flushRecorders() {
+            // Finally flush the data recorder ...
+            dataRecorderDriver.flush();
+        }
+
+        public synchronized void killCommandsAndFlush() {
+            if (running.get()) {
+                try {
+                    // Kill any remaining commands ...
+                    scheduler.killAll();
+                } finally {
+                    flushRecorders();
+                }
+            }
+        }
+
+        /**
+         * Stop the engine.
+         *
+         * @return {@code true} if the engine was running and successfully stopped, or {@code false} if it was not running
+         */
+        public synchronized boolean stop() {
+            if (running.compareAndSet(true, false)) {
+                try {
+                    // First stop executing immediately; at this point, no executables will run ...
+                    if (executor != null) {
+                        executor.stop();
+                    }
+                } finally {
+                    try {
+                        // Kill any remaining commands ...
+                        if (scheduler != null) {
+                            scheduler.killAll();
+                        }
+                    } finally {
+                        // Unregister the scheduler ...
+                        executables.unregister(scheduler);
+                        scheduler = null;
+
+                        // Unregister the switch reactor (but don't null it out!) ...
+                        executables.unregister(switchReactor);
+
+                        // Unregister the data recorder ...
+                        if (dataRecorderDriver != null) {
+                            try {
+                                // Finally flush the data recorder ...
+                                dataRecorderDriver.stop();
+                            } finally {
+                                executables.unregister(dataRecorderDriver);
+                                dataRecorderDriver = null;
+                            }
+                        }
+                        // Unregister the event recorder ...
+                        if (eventRecorder != null) {
+                            executables.unregister(eventRecorder);
+                            eventRecorder = null;
+                        }
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+    }
+
+    /**
+     * Create a filename generator that uses the given prefix and type name. Every time the resulting generator is called it
+     * will return a unique filename.
+     *
+     * @param filenameRoot the fully-qualified filename prefix used by the generator; may not be null
+     * @param type the type of the file, used within the generated filenames
+     * @param counter the counter used to generate unique names; may not be null
+     * @return the generator; never null
+     */
+    protected static Supplier<String> filenameGenerator(String filenameRoot, String type, Counter counter) {
+        return new Supplier<String>() {
+            @Override
+            public String get() {
+                return filenameRoot + "-" + type + "-" + counter.get() + ".dat";
+            }
+
+            @Override
+            public String toString() {
+                return filenameRoot + "-" + type + "-<counter>.dat";
             }
         };
     }
 
-    private void recordCommand(Command command, CommandState state) {
-        eventRecorder.record(command.getClass().getName(), state.ordinal());
-    }
-
-    private void recordNoCommands(Command command, CommandState state) {
-    }
-
-    private void doStart() {
-        if (!started.get()) {
-            try {
-                dataRecorderDriver.start();
-            } finally {
-                try {
-                    executorDriver.start();
-                } finally {
-                    started.set(true);
-                }
-            }
-        }
-    }
-
-    private void doRestart() {
-        if (started.get()) {
-            // Kill any remaining commands ...
-            scheduler.killAll();
-        } else {
-            try {
-                dataRecorderDriver.start();
-            } finally {
-                try {
-                    executorDriver.start();
-                } finally {
-                    started.set(true);
-                }
-            }
-        }
-    }
-
-    private void killCommandsAndFlush() {
-        if (started.get()) {
-            try {
-                // Kill any remaining commands ...
-                scheduler.killAll();
-            } finally {
-                // Finally flush the data recorder ...
-                dataRecorderDriver.flush();
-            }
-        }
-    }
-
-    private void doShutdown() {
-        try {
-            // First stop executing immediately; at this point, no executables will run ...
-            executorDriver.stop();
-        } finally {
-            try {
-                // Kill any remaining commands ...
-                scheduler.killAll();
-            } finally {
-                try {
-                    // Finally flush the data recorder ...
-                    dataRecorderDriver.stop();
-                } finally {
-                    started.set(false);
-                }
-            }
-        }
-    }
 }

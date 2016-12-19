@@ -24,21 +24,45 @@ import org.strongback.annotation.ThreadSafe;
 @ThreadSafe
 public interface Executor {
 
+    public static enum Priority {
+        HIGH, MEDIUM, LOW;
+    }
+
     /**
-     * Register an {@link Executable} task to be called repeatedly.
+     * Register a high priority {@link Executable} task so that it is called repeatedly on Strongback's executor thread.
      *
-     * @param r the executable task
-     * @return true if the executable task was registered, or false if it was null or was already registered with this executor
+     * @param task the executable task
+     * @return {@code true} if the executable task was registered for the first time as a high priority, or {@code false} if
+     *         {@code task} was null or was already registered with this executor at high priority
+     * @deprecated Use {@link #register(Executable, Priority)} instead
      */
-    public boolean register(Executable r);
+    @Deprecated
+    default boolean register(Executable task) {
+        return register(task, Priority.HIGH);
+    }
+
+    /**
+     * Register an {@link Executable} task with the given priority so that it is called repeatedly on Strongback's executor
+     * thread. If the given task is already registered with a different priority, this method reassigns it to the desired
+     * priority; if the given task is already registered with the desired priority, this method does nothing.
+     * <p>
+     * This executor runs high priority tasks every cycle, medium priority tasks slightly every other cycles, and low priority
+     * tasks every 4 cycles. All {@link Executable} tasks are called on the first cycle.
+     *
+     * @param task the executable task
+     * @param priority the priority of the executable; may not be null
+     * @return {@code true} if the executable task was registered for the first time at the given priority, or {@code false} if
+     *         {@code task} was null or was already registered with this executor at the given priority
+     */
+    public boolean register(Executable task, Priority priority);
 
     /**
      * Unregister an {@link Executable} task to no longer be called.
      *
-     * @param r the executable task
+     * @param task the executable task
      * @return true if the executable task was unregistered, or false if it was null or not registered with this executor
      */
-    public boolean unregister(Executable r);
+    public boolean unregister(Executable task);
 
     /**
      * Unregister all {@link Executable} tasks.

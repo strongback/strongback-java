@@ -26,6 +26,7 @@ import org.strongback.annotation.ThreadSafe;
 @ThreadSafe
 final class SystemLogger implements Logger {
 
+    private static final int OFF = 0;
     private static final int ERROR = 2 << 0;
     private static final int WARN = 2 << 1;
     private static final int INFO = 2 << 2;
@@ -93,7 +94,20 @@ final class SystemLogger implements Logger {
             case ERROR:
                 this.level = ERROR;
                 break;
+            case OFF:
+                this.level = OFF;
+                break;
         }
         return this;
+    }
+
+    @Override
+    public String toString() {
+        if ((this.level & TRACE) == TRACE) return "TRACE";
+        if ((this.level & DEBUG) == DEBUG) return "DEBUG";
+        if ((this.level & INFO) == INFO) return "INFO";
+        if ((this.level & WARN) == WARN) return "WARN";
+        if ((this.level & ERROR) == ERROR) return "ERROR";
+        return "OFF";
     }
 }

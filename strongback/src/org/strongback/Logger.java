@@ -27,7 +27,7 @@ import org.strongback.annotation.ThreadSafe;
 public interface Logger {
 
     public static enum Level {
-        ERROR, WARN, INFO, DEBUG, TRACE;
+        ERROR, WARN, INFO, DEBUG, TRACE, OFF;
     }
 
     /**

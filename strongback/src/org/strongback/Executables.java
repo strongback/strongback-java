@@ -16,41 +16,89 @@
 
 package org.strongback;
 
-import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.strongback.annotation.ThreadSafe;
 
 /**
  * A simple threadsafe list of {@link Executable} instances.
+ *
  * @author Randall Hauch
  */
 @ThreadSafe
-final class Executables implements Executor, Iterable<Executable> {
+final class Executables implements Executor {
 
-    private final CopyOnWriteArrayList<Executable> executables = new CopyOnWriteArrayList<>();
+    private final CopyOnWriteArrayList<Executable> highPriority = new CopyOnWriteArrayList<>();
+    private final CopyOnWriteArrayList<Executable> mediumPriority = new CopyOnWriteArrayList<>();
+    private final CopyOnWriteArrayList<Executable> lowPriority = new CopyOnWriteArrayList<>();
 
     Executables() {
     }
 
     @Override
-    public boolean register(Executable r) {
-        return executables.addIfAbsent(r);
+    public boolean register(Executable r, Priority priority) {
+        if (priority != null) {
+            unregister(r);
+            switch (priority) {
+                case HIGH:
+                    mediumPriority.remove(r);
+                    lowPriority.remove(r);
+                    return highPriority.addIfAbsent(r);
+                case MEDIUM:
+                    highPriority.remove(r);
+                    lowPriority.remove(r);
+                    return mediumPriority.addIfAbsent(r);
+                case LOW:
+                    highPriority.remove(r);
+                    mediumPriority.remove(r);
+                    return lowPriority.addIfAbsent(r);
+            }
+        }
+        return false;
     }
 
     @Override
     public boolean unregister(Executable r) {
-        return executables.remove(r);
+        if (r != null) {
+            // Remove from all
+            boolean removed = highPriority.remove(r);
+            removed = mediumPriority.remove(r) || removed;
+            removed = lowPriority.remove(r) || removed;
+            return removed;
+        }
+        return false;
     }
 
     @Override
     public void unregisterAll() {
-        executables.clear();
+        highPriority.clear();
+        mediumPriority.clear();
+        lowPriority.clear();
     }
 
-    @Override
-    public Iterator<Executable> iterator() {
-        return executables.iterator();
+    public List<Executable> lowPriorityExecutables() {
+        return lowPriority;
+    }
+
+    public List<Executable> mediumPriorityExecutables() {
+        return mediumPriority;
+    }
+
+    public List<Executable> highPriorityExecutables() {
+        return highPriority;
+    }
+
+    protected Executable[] lowPriorityExecutablesAsArrays() {
+        return lowPriority.toArray(new Executable[0]); // will be reallocated with correct size
+    }
+
+    protected Executable[] mediumPriorityExecutablesAsArrays() {
+        return mediumPriority.toArray(new Executable[0]); // will be reallocated with correct size
+    }
+
+    protected Executable[] highPriorityExecutablesAsArrays() {
+        return highPriority.toArray(new Executable[0]); // will be reallocated with correct size
     }
 
 }

@@ -19,12 +19,11 @@ package org.strongback;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.LongConsumer;
 
+import org.strongback.Strongback.ExcessiveExecutionHandler;
 import org.strongback.annotation.ThreadSafe;
 import org.strongback.components.Clock;
 import org.strongback.components.Stoppable;
-import org.strongback.util.Metronome;
 
 /**
  * An executor that invokes registered {@link Executable}s on a fixed period.
@@ -34,18 +33,21 @@ final class ExecutorDriver implements Stoppable {
 
     private final String name;
     private final Clock timeSystem;
-    private final Metronome met;
     private final Logger logger;
-    private final Iterable<Executable> executables;
+    private final Executables executables;
     private final AtomicReference<Thread> thread = new AtomicReference<>();
-    private final LongConsumer delayInformer;
+    private final ExcessiveExecutionHandler delayInformer;
+    private final long executionPeriodInMillis;
     private volatile boolean running = false;
     private volatile CountDownLatch stopped = null;
+    private final int mediumPriorityFrequency = 2;
+    private final int lowPriorityFrequency = 4;
 
-    ExecutorDriver(String name, Iterable<Executable> executables, Clock timeSystem, Metronome metronome, Logger logger, LongConsumer delayInformer ) {
+    ExecutorDriver(String name, Executables executables, Clock timeSystem, long executionPeriodInMillis, Logger logger,
+            ExcessiveExecutionHandler delayInformer) {
         this.name = name;
         this.timeSystem = timeSystem;
-        this.met = metronome;
+        this.executionPeriodInMillis = executionPeriodInMillis;
         this.logger = logger;
         this.executables = executables;
         this.delayInformer = delayInformer != null ? delayInformer : ExecutorDriver::noDelay;
@@ -87,7 +89,9 @@ final class ExecutorDriver implements Stoppable {
         CountDownLatch latch = stopped;
         // Atomically mark the thread as completed and change our reference to it ...
         Thread oldThread = thread.getAndUpdate(thread -> {
-            if (thread != null) running = false;
+            if (thread != null) {
+                running = false;
+            }
             return null;
         });
         if (oldThread != null && latch != null) {
@@ -102,21 +106,80 @@ final class ExecutorDriver implements Stoppable {
 
     private void run() {
         try {
-            long timeInMillis = 0L;
-            long lastTimeInMillis = 0L;
-            while (true) {
-                timeInMillis = timeSystem.currentTimeInMillis();
-                delayInformer.accept( timeInMillis - lastTimeInMillis);
-                for (Executable executable : executables) {
+            long startTimeInMillis = 0L;
+            long stopTimeInMillis = 0L;
+            long nextTimeInMillis = 0L;
+            int loopsUntilNextMediumPriority = mediumPriorityFrequency;
+            int loopsUntilNextLowPriority = lowPriorityFrequency;
+
+            // Get read-only arrays with the various executable items ...
+            final Executable[] highPriorityItems = executables.highPriorityExecutablesAsArrays();
+            final Executable[] mediumPriorityItems = executables.mediumPriorityExecutablesAsArrays();
+            final Executable[] lowPriorityItems = executables.lowPriorityExecutablesAsArrays();
+            final int numHighPriorityItems = highPriorityItems.length;
+            final int numMediumPriorityItems = 0;
+            final int numLowPriorityItems = 0;
+
+            while (running) {
+                // Start a new cycle ...
+                --loopsUntilNextMediumPriority;
+                --loopsUntilNextLowPriority;
+                startTimeInMillis = timeSystem.currentTimeInMillis();
+
+                // First execute the HIGH priority items ...
+                for (int i=0; i!=numHighPriorityItems; ++i) {
+                    Executable executable = highPriorityItems[i];
                     if (!running) return;
                     try {
-                        executable.execute(timeInMillis);
+                        executable.execute(timeSystem.currentTimeInMillis());
                     } catch (Throwable e) {
                         logger.error(e);
                     }
                 }
-                lastTimeInMillis = timeInMillis;
-                met.pause();
+
+                // Execute the MEDIUM priority items every other time ...
+                if (loopsUntilNextMediumPriority <= 0) {
+                    for (int i=0; i!=numMediumPriorityItems; ++i) {
+                        Executable executable = mediumPriorityItems[i];
+                        if (!running) return;
+                        try {
+                            executable.execute(timeSystem.currentTimeInMillis());
+                        } catch (Throwable e) {
+                            logger.error(e);
+                        }
+                    }
+                    // Reset the counter ...
+                    loopsUntilNextMediumPriority = mediumPriorityFrequency;
+                }
+
+                // Execute the LOW priority items every `lowPriorityFrequency` times ...
+                if (loopsUntilNextLowPriority <= 0) {
+                    for (int i=0; i!=numLowPriorityItems; ++i) {
+                        Executable executable = lowPriorityItems[i];
+                        if (!running) return;
+                        try {
+                            executable.execute(timeSystem.currentTimeInMillis());
+                        } catch (Throwable e) {
+                            logger.error(e);
+                        }
+                    }
+                    // Reset the counter ...
+                    loopsUntilNextLowPriority = lowPriorityFrequency;
+                }
+
+                // Compute the time it took to run all of these ...
+                stopTimeInMillis = timeSystem.currentTimeInMillis();
+                long durationInMillis = stopTimeInMillis - startTimeInMillis;
+                if (durationInMillis > executionPeriodInMillis) {
+                    // It took too long to run our executables ...
+                    delayInformer.handle(durationInMillis, executionPeriodInMillis);
+                } else {
+                    // Pause until our next period begins ...
+                    nextTimeInMillis = startTimeInMillis + executionPeriodInMillis;
+                    while (timeSystem.currentTimeInMillis() < nextTimeInMillis) {
+                        // busy loop ...
+                    }
+                }
             }
         } finally {
             CountDownLatch latch = stopped;
@@ -124,7 +187,7 @@ final class ExecutorDriver implements Stoppable {
         }
     }
 
-    private static void noDelay( long delay ) {
+    private static void noDelay(long actual, long desired) {
         // do nothing
     }
 }
