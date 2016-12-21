@@ -31,7 +31,9 @@ import org.strongback.components.Clock;
  * millisecond on most platforms (especially modern Linux and OS X).
  *
  * @author Randall Hauch
+ * @deprecated
  */
+@Deprecated
 public interface Metronome {
 
     /**
@@ -146,7 +148,7 @@ public interface Metronome {
 
             @Override
             public boolean pause() {
-                while (next - timeSystem.currentTimeInNanos() > 0) {
+                while (next > timeSystem.currentTimeInNanos()) {
                 }
                 next = next + periodInNanos;
                 return true;

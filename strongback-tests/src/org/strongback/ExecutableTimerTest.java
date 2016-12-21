@@ -20,19 +20,15 @@ import static org.fest.assertions.Assertions.assertThat;
 
 import java.util.concurrent.TimeUnit;
 
-import junit.framework.AssertionFailedError;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.strongback.Logger.Level;
-import org.strongback.Strongback.Configurator.TimerMode;
+
+import junit.framework.AssertionFailedError;
 
 /**
  * This test attempts to measure the timing of the {@link Strongback#executor() Strongback Executor} instance at various periods
- * using the system clock and various {@link TimerMode}s. On OS X 10.10.3, the {@link TimerMode#BUSY} is clearly the most
- * accurate down to 1 millisecond, whereas {@link TimerMode#PARK} and {@link TimerMode#SLEEP} are relatively inaccurate and
- * imprecise for intervals even as high as 20ms.
  * <p>
  * The code committed into Git are small execution rates and sample sizes to minimize the time required to run the tests. As
  * such, the results are probably not terribly meaningful. To obtain more meaningful results on your own platform, simply adjust
@@ -44,28 +40,22 @@ public class ExecutableTimerTest {
 
     @BeforeClass
     public static void beforeAll() {
-        Strongback.configure().useSystemLogger(Level.ERROR).recordNoData().recordNoEvents().initialize();
-        Strongback.start();
+        Strongback.configure().setLogLevel(Level.ERROR).recordNoData().recordNoEvents().initialize();
     }
 
     @AfterClass
     public static void afterAll() {
-        Strongback.shutdown();
+        Strongback.stop();
     }
 
     @Test
-    public void shouldMeasureAndPrintTimingHistogramUsingBusyMode() throws InterruptedException {
-        runTimer(TimerMode.BUSY, 4, 2000);
+    public void shouldMeasureAndPrintTimingHistogramFor4MillisecondPeriod() throws InterruptedException {
+        runTimer(4, 2000);
     }
 
     @Test
-    public void shouldMeasureAndPrintTimingHistogramUsingParkMode() throws InterruptedException {
-        runTimer(TimerMode.PARK, 5, 2000);
-    }
-
-    @Test
-    public void shouldMeasureAndPrintTimingHistogramUsingSleepMode() throws InterruptedException {
-        runTimer(TimerMode.SLEEP, 6, 2000);
+    public void shouldMeasureAndPrintTimingHistogramFor10MillisecondPeriod() throws InterruptedException {
+        runTimer(10, 2000);
     }
 
     /**
@@ -75,14 +65,14 @@ public class ExecutableTimerTest {
      * @param millisecondExecutionPeriod the execution period in milliseconds
      * @param sampleTimeInMilliseconds the sample time in milliseconds
      */
-    protected void runTimer(TimerMode mode, int millisecondExecutionPeriod, int sampleTimeInMilliseconds) {
+    protected void runTimer(int millisecondExecutionPeriod, int sampleTimeInMilliseconds) {
         try {
+            Strongback.stop();
             Strongback.configure()
-                      .useExecutionTimerMode(mode)
-                      .useExecutionPeriod(millisecondExecutionPeriod, TimeUnit.MILLISECONDS)
-                      .initialize();
+                      .useExecutionPeriod(millisecondExecutionPeriod, TimeUnit.MILLISECONDS);
+            Strongback.start();
             assertThat(ExecutableTimer.measureTimingAndPrint(Strongback.executor(),
-                                                             mode.toString() + " for " + millisecondExecutionPeriod + " ms",
+                                                             " for " + millisecondExecutionPeriod + " ms",
                                                              sampleTimeInMilliseconds / millisecondExecutionPeriod)
                                       .await(10, TimeUnit.SECONDS)
                                       .isComplete());

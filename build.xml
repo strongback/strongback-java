@@ -88,7 +88,6 @@
 
             <doctitle><![CDATA[<h1>Strongback Java Library</h1>]]></doctitle>
             <bottom><![CDATA[<i>Copyright &#169; ${current.year} Strongback and individual contributors. All Rights Reserved.</i>]]></bottom>
-            <tag name="todo" scope="all" description="To do:"/>
             <group title="Strongback" packages="org.strongback"/>
             <group title="Components" packages="org.strongback.components*:org.strongback.hardware*"/>
             <group title="Drives" packages="org.strongback.drive"/>
