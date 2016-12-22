@@ -1258,10 +1258,12 @@ public final class Strongback {
             return true;
         }
 
-        private CommandListener createCommandListener() {
-            if (recordCommands) {
+        private CommandListener createCommandListener(EventRecorder recorder, boolean recordCommands) {
+            if (recordCommands && recorder != null) {
                 return (command, state) -> {
-                    eventRecorder.record(command.getClass().getName(), state.ordinal());
+                    if (command != null) {
+                        recorder.record(command.getClass().getName(), state.ordinal());
+                    }
                 };
             }
             return null;
@@ -1287,13 +1289,23 @@ public final class Strongback {
                 try {
                     executorDelayCounter.set(0);
 
+                    // Create the event recorder if needed ...
+                    boolean listenToCommands = false;
+                    if (eventWriter != null) {
+                        eventRecorder = new AsyncEventRecorder(eventWriter, clock);
+                        eventRecorder.execute(CLOCK.currentTimeInMillis());
+                        listenToCommands = recordCommands;
+                    }
+
                     // Create the scheduler that runs commands ...
-                    scheduler = new Scheduler(logger, createCommandListener());
+                    scheduler = new Scheduler(logger, createCommandListener(eventRecorder,listenToCommands));
+                    scheduler.execute(CLOCK.currentTimeInMillis());
                     executables.register(scheduler, SCHEDULER_PRIORITY);
 
                     if (useSwitchReactor) {
                         // Register the switch reactor ...
                         executables.register(switchReactor, SWITCH_REACTOR_PRIORITY);
+                        switchReactor.execute(CLOCK.currentTimeInMillis());
                     }
 
                     // Create the data recorder if needed ...
@@ -1301,12 +1313,11 @@ public final class Strongback {
                     if (dataWriterFactorySupplier != null) {
                         dataRecorderDriver = new DataRecorderDriver(dataRecorderChannels, dataWriterFactorySupplier.get());
                         dataRecorderDriver.start();
+                        dataRecorderDriver.execute(CLOCK.currentTimeInMillis());
                         executables.register(dataRecorderDriver, DATA_RECORDER_PRIORITY);
                     }
 
-                    // Create the event recorder if needed ...
-                    if (eventWriter != null) {
-                        eventRecorder = new AsyncEventRecorder(eventWriter, clock);
+                    if (eventRecorder != null) {
                         executables.register(eventRecorder, EVENT_RECORDER_PRIORITY);
                     }
 
