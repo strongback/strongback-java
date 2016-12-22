@@ -50,7 +50,7 @@ final class FileDataWriter implements DataWriter {
         fileSize = numWrites * recordLength + 1024; // add extra room for header and miscellaneous
 
         AtomicInteger count = new AtomicInteger();
-        channels.forEach(ch->count.incrementAndGet());
+        channels.forEach(ch -> count.incrementAndGet());
         channelCount = count.get() + 1; // adding the time sequence
 
         openIfNeeded();
@@ -87,7 +87,7 @@ final class FileDataWriter implements DataWriter {
                 assert name != null;
                 writer.write(name);
             });
-        } else if ( writer.remaining() < recordLength) {
+        } else if (writer.remaining() < recordLength) {
             System.err.println("Insuffient space to write next all of next record, closing file");
             close();
             openIfNeeded();
@@ -103,11 +103,13 @@ final class FileDataWriter implements DataWriter {
 
     @Override
     public void close() {
-        try {
-            writer.close();
-        } finally {
-            writer = null;
-            suppliers.clear();
+        if (writer != null) {
+            try {
+                writer.close();
+            } finally {
+                writer = null;
+                suppliers.clear();
+            }
         }
     }
 
