@@ -1274,7 +1274,7 @@ public final class Strongback {
         }
 
         public synchronized void pause() {
-            if (running.get()) {
+            if (isRunning()) {
                 executor.stop();
             }
         }
@@ -1342,7 +1342,7 @@ public final class Strongback {
          *         the engine could not be started
          */
         public synchronized boolean start() {
-            if (running.get()) {
+            if (isRunning()) {
                 // Already running, so just kill any remaining commands ...
                 scheduler.killAll();
                 executorDelayCounter.set(0);
@@ -1356,7 +1356,7 @@ public final class Strongback {
 
         public synchronized boolean submit(Command command) {
             if (command != null) {
-                if (!running.get()) {
+                if (!isRunning()) {
                     logger.warn("Strongback is not currently running, so the command " + command
                             + " will begin running when Strongback is started.");
                     return false;
@@ -1368,12 +1368,14 @@ public final class Strongback {
         }
 
         public synchronized void flushRecorders() {
-            // Finally flush the data recorder ...
-            dataRecorderDriver.flush();
+            if (isRunning()) {
+                // Finally flush the data recorder ...
+                dataRecorderDriver.flush();
+            }
         }
 
         public synchronized void killCommandsAndFlush() {
-            if (running.get()) {
+            if (isRunning()) {
                 try {
                     // Kill any remaining commands ...
                     scheduler.killAll();

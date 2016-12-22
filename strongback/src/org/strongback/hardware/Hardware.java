@@ -335,12 +335,14 @@ public class Hardware {
              * use of this filter is to reject data points which errantly (due to averaging or sampling) appear within the
              * window when detecting transitions using the Rising Edge and Falling Edge functionality of the analog trigger
              */
-            FILTERED, /**
-                       * The analog output is averaged and over sampled.
-                       */
-            AVERAGED, /**
-                       * No filtering or averaging is to be used.
-                       */
+            FILTERED,
+            /**
+             * The analog output is averaged and over sampled.
+             */
+            AVERAGED,
+            /**
+             * No filtering or averaging is to be used.
+             */
             NONE;
         }
 
@@ -354,10 +356,11 @@ public class Hardware {
              * The switch is triggered only when the analog value is inside the range, and not triggered if it is outside (above
              * or below)
              */
-            IN_WINDOW, /**
-                        * The switch is triggered only when the value is above the upper limit, and not triggered if it is below
-                        * the lower limit and maintains the previous state if in between (hysteresis)
-                        */
+            IN_WINDOW,
+            /**
+             * The switch is triggered only when the value is above the upper limit, and not triggered if it is below the lower
+             * limit and maintains the previous state if in between (hysteresis)
+             */
             AVERAGED;
         }
 
@@ -764,6 +767,10 @@ public class Hardware {
 
     public static final class HumanInterfaceDevices {
 
+        private static void verifyJoystickConnected(Joystick joystick) {
+            joystick.getButtonCount();
+        }
+
         /**
          * Create an generic input device controlled by the Driver Station.
          *
@@ -772,6 +779,7 @@ public class Hardware {
          */
         public static InputDevice driverStationJoystick(int port) {
             Joystick joystick = new Joystick(port);
+            verifyJoystickConnected(joystick);
             return InputDevice.create(joystick::getRawAxis, joystick::getRawButton, joystick::getPOV);
         }
 
@@ -783,6 +791,7 @@ public class Hardware {
          */
         public static FlightStick logitechAttack3D(int port) {
             Joystick joystick = new Joystick(port);
+            verifyJoystickConnected(joystick);
             return FlightStick.create(joystick::getRawAxis,
                                       joystick::getRawButton,
                                       joystick::getPOV,
@@ -802,6 +811,7 @@ public class Hardware {
          */
         public static FlightStick logitechExtreme3D(int port) {
             Joystick joystick = new Joystick(port);
+            verifyJoystickConnected(joystick);
             return FlightStick.create(joystick::getRawAxis,
                                       joystick::getRawButton,
                                       joystick::getPOV,
@@ -821,6 +831,7 @@ public class Hardware {
          */
         public static FlightStick microsoftSideWinder(int port) {
             Joystick joystick = new Joystick(port);
+            verifyJoystickConnected(joystick);
             return FlightStick.create(joystick::getRawAxis,
                                       joystick::getRawButton,
                                       joystick::getPOV,
@@ -840,6 +851,7 @@ public class Hardware {
          */
         public static Gamepad logitechDualAction(int port) {
             Joystick joystick = new Joystick(port);
+            verifyJoystickConnected(joystick);
             return Gamepad.create(joystick::getRawAxis,
                                   joystick::getRawButton,
                                   joystick::getPOV,
@@ -869,6 +881,7 @@ public class Hardware {
          */
         public static Gamepad logitechF310(int port) {
             Joystick joystick = new Joystick(port);
+            verifyJoystickConnected(joystick);
             return Gamepad.create(joystick::getRawAxis,
                                   joystick::getRawButton,
                                   joystick::getPOV,
@@ -889,7 +902,7 @@ public class Hardware {
                                   () -> joystick.getRawButton(8),
                                   () -> joystick.getRawButton(9));
         }
-        
+
         /**
          * Create a Microsoft Xbox360 gamepad controlled by the Driver Station.
          *
@@ -898,6 +911,7 @@ public class Hardware {
          */
         public static Gamepad xbox360(int port) {
             Joystick joystick = new Joystick(port);
+            verifyJoystickConnected(joystick);
             return Gamepad.create(joystick::getRawAxis,
                                   joystick::getRawButton,
                                   joystick::getPOV,
