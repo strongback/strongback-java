@@ -1271,8 +1271,10 @@ public final class Strongback {
             return running.get();
         }
 
-        public void pause() {
-            executor.stop();
+        public synchronized void pause() {
+            if (running.get()) {
+                executor.stop();
+            }
         }
 
         /**
