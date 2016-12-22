@@ -717,9 +717,7 @@ public final class Strongback {
      * Same as {@link #start()}.
      *
      * @see #start()
-     * @deprecated
      */
-    @Deprecated
     public static void restart() {
         ENGINE.start();
     }
@@ -1368,7 +1366,7 @@ public final class Strongback {
         }
 
         public synchronized void flushRecorders() {
-            if (isRunning()) {
+            if (isRunning() && dataRecorderDriver != null) {
                 // Finally flush the data recorder ...
                 dataRecorderDriver.flush();
             }
