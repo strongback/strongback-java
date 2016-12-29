@@ -196,7 +196,7 @@ public class Mock {
      * @return the mock solenoid; never null
      */
     public static MockSolenoid manualSolenoid() {
-        return new MockSolenoid(true);
+        return new MockSolenoid(false);
     }
 
     /**
