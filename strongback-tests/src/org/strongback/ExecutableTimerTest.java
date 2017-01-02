@@ -40,7 +40,7 @@ public class ExecutableTimerTest {
 
     @BeforeClass
     public static void beforeAll() {
-        Strongback.configure().setLogLevel(Level.ERROR).recordNoData().recordNoEvents().initialize();
+        Strongback.configure().setLogLevel(Level.ERROR).recordNoData().recordNoEvents();
     }
 
     @AfterClass

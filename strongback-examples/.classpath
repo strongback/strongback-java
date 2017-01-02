@@ -4,6 +4,9 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="/libs/wpilib/java/current/lib/WPILib.jar" sourcepath="/libs/wpilib/java/current/lib/WPILib-sources.jar"/>
 	<classpathentry kind="lib" path="/libs/wpilib/java/current/lib/NetworkTables.jar" sourcepath="/libs/wpilib/java/current/lib/NetworkTables-sources.jar"/>
+	<classpathentry kind="lib" path="/libs/wpilib/java/current/lib/opencv.jar" sourcepath="/libs/wpilib/java/current/lib/opencv-sources.jar"/>
+	<classpathentry kind="lib" path="/libs/wpilib/java/current/lib/cscore.jar" sourcepath="/libs/wpilib/java/current/lib/cscore-sources.jar"/>
+	<classpathentry kind="lib" path="/libs/ctre/java/lib/TalonSRXLibJava.jar"/>
 	<classpathentry kind="lib" path="/libs/test/fest-assert-1.4.jar" sourcepath="/libs/test/fest-assert-1.4-sources.jar"/>
 	<classpathentry kind="lib" path="/libs/test/fest-util-1.1.6.jar" sourcepath="/libs/test/fest-util-1.1.6-sources.jar"/>
 	<classpathentry kind="lib" path="/libs/test/junit-4.11.jar" sourcepath="/libs/test/junit-4.11-sources.jar"/>

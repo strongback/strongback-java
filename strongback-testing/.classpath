@@ -7,5 +7,8 @@
 	<classpathentry kind="lib" path="/libs/test/metrics-core-3.1.0.jar" sourcepath="/libs/test/metrics-core-3.1.0-sources.jar"/>
 	<classpathentry kind="lib" path="/libs/wpilib/java/current/lib/WPILib.jar" sourcepath="/libs/wpilib/java/current/lib/WPILib-sources.jar"/>
 	<classpathentry kind="lib" path="/libs/wpilib/java/current/lib/NetworkTables.jar" sourcepath="/libs/wpilib/java/current/lib/NetworkTables-sources.jar"/>
+	<classpathentry kind="lib" path="/libs/wpilib/java/current/lib/opencv.jar" sourcepath="/libs/wpilib/java/current/lib/opencv-sources.jar"/>
+	<classpathentry kind="lib" path="/libs/wpilib/java/current/lib/cscore.jar" sourcepath="/libs/wpilib/java/current/lib/cscore-sources.jar"/>
+	<classpathentry kind="lib" path="/libs/ctre/java/lib/TalonSRXLibJava.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>

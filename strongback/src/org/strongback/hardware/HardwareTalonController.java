@@ -26,8 +26,8 @@ import org.strongback.control.Controller;
 import org.strongback.control.PIDController;
 import org.strongback.control.TalonController;
 
-import edu.wpi.first.wpilibj.CANTalon;
-import edu.wpi.first.wpilibj.CANTalon.TalonControlMode;
+import com.ctre.CANTalon;
+import com.ctre.CANTalon.TalonControlMode;
 
 /**
  * A hardware-based Talon SRX PID controller.
@@ -180,7 +180,7 @@ class HardwareTalonController extends HardwareTalonSRX implements TalonControlle
 
     @Override
     public TalonController setStatusFrameRate(StatusFrameRate frameRate, int periodMillis) {
-        talon.setStatusFrameRateMs(edu.wpi.first.wpilibj.CANTalon.StatusFrameRate.valueOf(frameRate.value()), periodMillis);
+        talon.setStatusFrameRateMs(CANTalon.StatusFrameRate.valueOf(frameRate.value()), periodMillis);
         return this;
     }
 

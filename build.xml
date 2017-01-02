@@ -16,6 +16,8 @@
     <property name="wpilib.dir" value="libs/wpilib"/>
     <property name="wpi.libs.dir" value="${wpilib.dir}/java/current/lib"/>
     <property file="${wpilib.dir}/wpilib.properties"/>
+    <property name="ctre.dir" value="libs/ctre"/>
+    <property name="ctre.libs.dir" value="${ctre.dir}/java/lib"/>
     <property name="build.dir" value="build"/>
 
     <target name="help">
@@ -35,8 +37,15 @@
         <echo>There are a few other targets that are automatically run when the above targets are used,</echo>
         <echo>but which you may want to run manually:</echo>
         <echo></echo>
-        <echo>   deps          Install the dependencies required to compile, run tests, and create the distribution.</echo>
-        <echo>   remove-deps   Remove the dependencies installed by `dep`</echo>
+        <echo>   deps          Install the WPILib and other dependencies required to compile, run tests, </echo>
+        <echo>                 and create the distribution. This does not affect files outside of this</echo>
+        <echo>                 `strongback-java` directory</echo>
+        <echo>   remove-deps   Remove the dependencies installed by `deps`</echo>
+        <echo></echo>
+        <echo>The following target is used during a Strongback release and is equivalent to removing</echo>
+        <echo>dependencies, cleaning, compiling, and creating the distribution:</echo>
+        <echo></echo>
+        <echo>   release       Equivalent to `ant remove-deps clean dist`</echo>
         <echo></echo>
     </target>
 
@@ -76,6 +85,7 @@
             <classpath>
                 <fileset dir="libs" includes="**/*.jar" excludes="**/*-sources.jar"/>
                 <fileset dir="${wpi.libs.dir}" includes="**/*.jar" excludes="**/*-sources.jar"/>
+                <fileset dir="${ctre.libs.dir}" includes="**/*.jar" excludes="**/*-sources.jar"/>
                 <pathelement path="${classpath}" />
             </classpath>
             <sourcefiles>
@@ -87,7 +97,7 @@
             </packageset>
 
             <doctitle><![CDATA[<h1>Strongback Java Library</h1>]]></doctitle>
-            <bottom><![CDATA[<i>Copyright &#169; ${current.year} Strongback and individual contributors. All Rights Reserved.</i>]]></bottom>
+            <bottom><![CDATA[<i>Copyright &#169; 2015-${current.year} Strongback and individual contributors. All Rights Reserved.</i>]]></bottom>
             <group title="Strongback" packages="org.strongback"/>
             <group title="Components" packages="org.strongback.components*:org.strongback.hardware*"/>
             <group title="Drives" packages="org.strongback.drive"/>
@@ -141,7 +151,9 @@
     <!-- Remove and clean dependencies -->
     <target name="remove-deps" depends="clean-downloads" description="Removes the locally-installed dependencies">
         <!-- !!!! Always remove the *local* installation; never the one in ${wpilib.dir} !!!! -->
-        <delete dir="libs/wpilib" />
+        <delete dir="${wpilib.dir}" />
+        <!-- TODO: Uncomment these when we automatically install them -->
+        <delete dir="${ctre.dir}" />
     </target>
 
     <!-- Remove and clean dependencies -->
@@ -150,7 +162,10 @@
     </target>
 
     <!-- Install Dependencies -->
-    <target name="deps" depends="download-wpilib,clean-downloads" description="Downloads and installs the dependencies required for the build">
+    <target name="deps" depends="download-wpilib,download-ctre,clean-downloads" description="Downloads and installs the dependencies required for the build">
+
+    <!-- Release -->
+    <target name="release" depends="remove-deps,clean,dist" description="Removes and installs 3rd party libraries, compiles, and builds distribution.">
     </target>
 
     <!-- Check if the WPI directory exists -->
@@ -179,7 +194,8 @@
                 </if>
             </sequential>
         </for>
-        <propertyregex property="wpilib.version" input="${javaFeatureUrl}" regexp="_([\d.]*).jar" select="\1" casesensitive="false" />
+        <!-- Grab the WPILib version, of the form "2017.1.1.rc-2" -->
+        <propertyregex property="wpilib.version" input="${javaFeatureUrl}" regexp="_([\w\d.-]*).jar" select="\1" casesensitive="false" />
         <!-- The feature URL can be converted to the plugin URL -->
         <loadresource property="javaPluginUrl">
           <propertyresource name="javaFeatureUrl"/>
@@ -213,6 +229,26 @@
             <entry  key="version" value="current"/>
             <entry  key="wpilib.version" value="${wpilib.version}"/>
         </propertyfile>
+    </target>
+
+    <!-- Download and install the CTRE library -->
+    <target name="check-for-ctre">
+        <condition property="ctre-missing">
+            <not>
+                <available file="${ctre.dir}" type="dir"/>
+            </not>
+        </condition>
+    </target>
+    <target name="download-ctre" depends="check-for-ctre" if="ctre-missing" >
+        <echo>Downloading the CTRE library and installing into '${ctre.dir}'.</echo>
+        <!-- Get and extra the ZIP file -->
+        <get src="${ctre.download.url}" dest="downloads/ctre.zip"/>
+        <!--copy file="/Users/rhauch/Downloads/CTRE_FRCLibs_NON-WINDOWS.zip" tofile="downloads/ctre.zip"/-->
+        <mkdir dir="${ctre.dir}"/>
+        <unzip src="downloads/ctre.zip" dest="${ctre.dir}">
+        </unzip>
+    </target>
+
     </target>
 
 </project>

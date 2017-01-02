@@ -49,7 +49,7 @@ public class SimpleTankDriveRobot extends IterativeRobot {
     public void robotInit() {
         // Set up Strongback using its configurator. This is entirely optional, but we won't use events so it's slightly better
         // if we turn them off. All other defaults are fine.
-        Strongback.configure().recordNoEvents().initialize();
+        Strongback.configure().recordNoEvents();
 
         // Set up the robot hardware ...
         Motor left = Motor.compose(Hardware.Motors.talon(LF_MOTOR_PORT), Hardware.Motors.talon(LR_MOTOR_PORT));

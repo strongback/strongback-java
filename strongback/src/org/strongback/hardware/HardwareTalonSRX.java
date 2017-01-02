@@ -27,8 +27,8 @@ import org.strongback.components.TalonSRX;
 import org.strongback.components.TemperatureSensor;
 import org.strongback.components.VoltageSensor;
 
-import edu.wpi.first.wpilibj.CANTalon;
-import edu.wpi.first.wpilibj.CANTalon.TalonControlMode;
+import com.ctre.CANTalon;
+import com.ctre.CANTalon.TalonControlMode;
 
 /**
  * Talon speed controller with position and current sensor
@@ -355,7 +355,7 @@ class HardwareTalonSRX implements TalonSRX {
 
     @Override
     public TalonSRX setFeedbackDevice(FeedbackDevice device) {
-        talon.setFeedbackDevice(edu.wpi.first.wpilibj.CANTalon.FeedbackDevice.valueOf(device.value()));
+        talon.setFeedbackDevice(CANTalon.FeedbackDevice.valueOf(device.value()));
         switch(device) {
             case ANALOG_POTENTIOMETER:
             case ANALOG_ENCODER:
@@ -385,7 +385,7 @@ class HardwareTalonSRX implements TalonSRX {
 
     @Override
     public TalonSRX setStatusFrameRate(StatusFrameRate frameRate, int periodMillis) {
-        talon.setStatusFrameRateMs(edu.wpi.first.wpilibj.CANTalon.StatusFrameRate.valueOf(frameRate.value()), periodMillis);
+        talon.setStatusFrameRateMs(CANTalon.StatusFrameRate.valueOf(frameRate.value()), periodMillis);
         double periodInSeconds = periodMillis / 1000.0;
         switch(frameRate) {
             case FEEDBACK:

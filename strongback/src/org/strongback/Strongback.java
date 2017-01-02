@@ -313,6 +313,20 @@ public final class Strongback {
     public static final class Configurator {
 
         /**
+         * Log messages to {@link SystemLogger System.out} at the specified level.
+         * <p>
+         * This is a convenience that simply delegates to {@link Strongback#setLogLevel(org.strongback.Logger.Level)}.
+         *
+         * @param level the global logging level; may not be null
+         * @return this configurator so that methods can be chained together; never null
+         * @see Strongback#setLogLevel(org.strongback.Logger.Level)
+         */
+        public Configurator setLogLevel(Logger.Level level) {
+            Strongback.setLogLevel(level);
+            return this;
+        }
+
+        /**
          * Turn off the data recorder so that it does not record anything.
          *
          * @return this configurator so that methods can be chained together; never null
