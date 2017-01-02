@@ -128,7 +128,11 @@
         <tar destfile="${build.dir}/strongback-${strongback.version}.tar">
             <tarfileset dir="strongback-tools/scripts" prefix="strongback/java/bin" filemode="755"/>
             <tarfileset dir="strongback/build" includes="*.jar" prefix="strongback/java/lib"/>
+            <!-- Copy all of the Strongback and 3rd party libraries needed on the robot into the `strongback/java/lib` directory -->
             <tarfileset dir="libs" includes="*.jar" prefix="strongback/java/lib"/>
+            <tarfileset dir="libs/ctre/java/lib/" includes="*.*" prefix="strongback/java/lib"/>
+            <tarfileset dir="libs/navx-mxp/roborio/java/lib/" includes="*.jar" prefix="strongback/java/lib"/>
+            <!-- End of libraries needed on the robot -->
             <tarfileset dir="strongback-testing/build" includes="*.jar" prefix="strongback/java/lib-tests"/>
             <tarfileset dir="libs/test" includes="*.jar" prefix="strongback/java/lib-tests"/>
             <tarfileset dir="strongback-tools/build" includes="*.jar" prefix="strongback/java/lib-tools"/>
@@ -142,11 +146,12 @@
             <tarfileset dir="." includes="CONTRIBUTORS.txt" prefix="strongback"/>
         </tar>
 
-        <!-- Build the ZIP file (which may not maintain file permissions) -->
+        <!-- Build the ZIP file (which may not maintain file permissions) from the TAR file -->
         <zip destfile="${build.dir}/strongback-${strongback.version}.zip">
             <tarfileset src="${build.dir}/strongback-${strongback.version}.tar"/>
         </zip>
 
+        <!-- Compress the TAR file -->
         <gzip destfile="${build.dir}/strongback-${strongback.version}.tar.gz" src="${build.dir}/strongback-${strongback.version}.tar"/>
         <delete file="${build.dir}/strongback-${strongback.version}.tar" />
 
