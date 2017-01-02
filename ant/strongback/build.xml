@@ -11,17 +11,19 @@
     <property file="${user.home}/strongback/java/ant/build.properties" />
 
     <import file="${wpilib.ant.dir}/build.xml" />
-	
-    <!-- Define the classpaths -->
-    <path id="compile.classpath">
-        <fileset dir="${strongback.home}/java/lib" includes="**/*.jar" excludes="**/*-sources.jar" />
-        <fileset dir="${user.home}/wpilib/java/${version}/lib" includes="**/*.jar" excludes="**/*-sources.jar" />
-        <pathelement path="${classpath}" />
-    </path>
 
+    <!--
+        The Strongback and 3rd party libraries are installed (via the Strongback CLI) into the
+        WPILib's `user/java/lib` directory and therefore are found, used, and deployed during the
+        WPILib's standard Ant build process.
+
+        However, WPILib's build does not support unit tests, so this file defines Ant targets
+        related only for unit testing. Thus, a robot project that uses Strongback at runtime
+        and has no tests need not use this Ant file.
+    -->
+	
     <!-- Define a classpath for unit testing -->
     <path id="junit.classpath">
-        <fileset dir="${strongback.home}/java/lib" includes="**/*.jar" excludes="**/*-sources.jar" />
         <fileset dir="${strongback.home}/java/lib-tests" includes="**/*.jar" excludes="**/*-sources.jar" />
         <pathelement location="${build.dir}" />
         <pathelement path="${classpath}" />
@@ -35,46 +37,6 @@
     <!-- Deletes the directories used by the tests-->
     <target name="clean" depends="clean-tests" description="Clean up all generated files">
         <ant antfile="${wpilib.ant.dir}/build.xml" target="clean" />
-    </target>
-
-    <target name="compile" description="Compile the source code.">
-        <mkdir dir="${build.dir}" />
-        <javac srcdir="${src.dir}" destdir="${build.dir}" includeantruntime="false">
-            <classpath refid="compile.classpath" />
-        </javac>
-        <copy todir="${build.dir}">
-            <fileset dir="${src.dir}" includes="**/*.xml,**/*.properties,**/*.txt,**/*.ico" />
-        </copy>
-        <copy todir="${build.dir}" failonerror="false" quiet="true">
-            <fileset dir="${resources.dir}" />
-        </copy>
-    </target>
-
-    <target name="jar" depends="compile">
-        <echo>Making jar ${dist.jar}.</echo>
-        <mkdir dir="${dist.dir}" />
-        <mkdir dir="${build.jars}" />
-
-        <echo>Copying jars from ${strongback.classpath} to ${build.jars}.</echo>
-        <copy todir="${build.jars}" flatten="true">
-            <path>
-                <pathelement path="${strongback.classpath}" />
-            </path>
-        </copy>
-
-        <jar destfile="${dist.jar}" update="false">
-            <manifest>
-                <attribute name="Main-Class" value="edu.wpi.first.wpilibj.RobotBase" />
-                <attribute name="Robot-Class" value="${robot.class}" />
-                <attribute name="Class-Path" value="." />
-            </manifest>
-
-            <fileset dir="${build.dir}" includes="**/*.class" />
-
-            <zipgroupfileset dir="${build.jars}">
-                <include name="**/*.jar" />
-            </zipgroupfileset>
-        </jar>
     </target>
 
     <!-- Check if there are any JUnit Tests -->
