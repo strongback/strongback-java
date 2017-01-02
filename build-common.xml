@@ -5,6 +5,7 @@
     <property file="${strongback.dir}/build.properties"/>
     <property name="wpilib.dir" value="${strongback.dir}/libs/wpilib"/>
     <property name="ctre.dir" value="${strongback.dir}/libs/ctre"/>
+    <property name="navx.dir" value="${strongback.dir}/libs/navx-mxp"/>
 
     <property name="java.compile.arg" value=""/>
     <property name="java.source.version" value="1.8"/>
@@ -19,6 +20,7 @@
     <property name="project.test.report.dir" value="${project.build.dir}/test-reports"/>
     <property name="wpi.libs.dir" value="${wpilib.dir}/java/current/lib"/>
     <property name="ctre.libs.dir" value="${ctre.dir}/java/lib"/>
+    <property name="navx.libs.dir" value="${navx.dir}/roborio/java/lib"/>
     <property name="test.libs.dir" value="${strongback.dir}/libs/test"/>
     <property name="compile.libs.dir" value="${strongback.dir}/libs"/>
     <property name="project.jar.name" value="${ant.project.name}.jar"/>
@@ -38,6 +40,7 @@
         <fileset dir="${compile.libs.dir}" includes="**/*.jar" excludes="**/*-sources.jar"/>
         <fileset dir="${wpi.libs.dir}" includes="**/*.jar" excludes="**/*-sources.jar"/>
         <fileset dir="${ctre.libs.dir}" includes="**/*.jar" excludes="**/*-sources.jar"/>
+        <fileset dir="${navx.libs.dir}" includes="**/*.jar" excludes="**/*-sources.jar"/>
     </path>
 
     <path id="test.class.path">

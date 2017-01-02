@@ -12,6 +12,7 @@
 	<classpathentry kind="lib" path="/libs/wpilib/java/current/lib/opencv.jar" sourcepath="/libs/wpilib/java/current/lib/opencv-sources.jar"/>
 	<classpathentry kind="lib" path="/libs/wpilib/java/current/lib/cscore.jar" sourcepath="/libs/wpilib/java/current/lib/cscore-sources.jar"/>
 	<classpathentry kind="lib" path="/libs/ctre/java/lib/TalonSRXLibJava.jar"/>
+	<classpathentry kind="lib" path="/libs/navx-mxp/roborio/java/lib/navx_frc.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/strongback"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/strongback-testing"/>
 	<classpathentry kind="output" path="build/classes"/>

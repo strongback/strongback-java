@@ -18,6 +18,8 @@
     <property file="${wpilib.dir}/wpilib.properties"/>
     <property name="ctre.dir" value="libs/ctre"/>
     <property name="ctre.libs.dir" value="${ctre.dir}/java/lib"/>
+    <property name="navx.dir" value="libs/navx-mxp"/>
+    <property name="navx.libs.dir" value="${navx.dir}/roborio/java/lib"/>
     <property name="build.dir" value="build"/>
 
     <target name="help">
@@ -86,6 +88,7 @@
                 <fileset dir="libs" includes="**/*.jar" excludes="**/*-sources.jar"/>
                 <fileset dir="${wpi.libs.dir}" includes="**/*.jar" excludes="**/*-sources.jar"/>
                 <fileset dir="${ctre.libs.dir}" includes="**/*.jar" excludes="**/*-sources.jar"/>
+                <fileset dir="${navx.libs.dir}" includes="**/*.jar" excludes="**/*-sources.jar"/>
                 <pathelement path="${classpath}" />
             </classpath>
             <sourcefiles>
@@ -105,6 +108,7 @@
             <group title="" packages="org.strongback.util*:org.strongback.function*:org.strongback.annotation*"/>
             <link href="http://docs.oracle.com/javase/8/docs/api/"/>
             <link offline="true" href="http://first.wpi.edu/FRC/roborio/release/docs/java/" packagelistLoc="${wpilib.dir}/java/current/javadoc"/>
+            <link offline="true" href="http://www.kauailabs.com/public_files/navx-mxp/apidocs/java/" packagelistLoc="${navx.dir}/java/docs"/>
         </javadoc>
     </target>
 
@@ -154,6 +158,7 @@
         <delete dir="${wpilib.dir}" />
         <!-- TODO: Uncomment these when we automatically install them -->
         <delete dir="${ctre.dir}" />
+        <delete dir="${navx.dir}" />
     </target>
 
     <!-- Remove and clean dependencies -->
@@ -162,7 +167,8 @@
     </target>
 
     <!-- Install Dependencies -->
-    <target name="deps" depends="download-wpilib,download-ctre,clean-downloads" description="Downloads and installs the dependencies required for the build">
+    <target name="deps" depends="download-wpilib,download-ctre,download-navx,clean-downloads" description="Downloads and installs the dependencies required for the build">
+    </target>
 
     <!-- Release -->
     <target name="release" depends="remove-deps,clean,dist" description="Removes and installs 3rd party libraries, compiles, and builds distribution.">
@@ -249,6 +255,19 @@
         </unzip>
     </target>
 
+    <!-- Download and extract the navX-MXP 3rd party library -->
+    <target name="check-for-navx">
+        <condition property="navx-missing">
+            <not>
+                <available file="${navx.dir}" type="dir"/>
+            </not>
+        </condition>
     </target>
-
+    <target name="download-navx" depends="check-for-navx" if="navx-missing" >
+        <echo>Downloading the navX-MXP library and installing into '${navx.dir}'.</echo>
+        <get src="${navx.download.url}" dest="downloads/navx.zip"/>
+        <mkdir dir="${navx.dir}"/>
+        <unzip src="downloads/navx.zip" dest="${ctre.dir}">
+        </unzip>
+    </target>
 </project>
