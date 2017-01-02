@@ -74,7 +74,7 @@ public class ExecutableTimerTest {
             assertThat(ExecutableTimer.measureTimingAndPrint(Strongback.executor(),
                                                              " for " + millisecondExecutionPeriod + " ms",
                                                              sampleTimeInMilliseconds / millisecondExecutionPeriod)
-                                      .await(10, TimeUnit.SECONDS)
+                                      .await(4, TimeUnit.SECONDS)
                                       .isComplete());
         } catch (InterruptedException e) {
             Thread.interrupted();
