@@ -362,7 +362,7 @@ class HardwareTalonSRX implements TalonSRX {
                 if ( selectedAnalogInput != null ) {
                     selectedInput = selectedAnalogInput;
                 } else {
-                    Strongback.logger(getClass()).error("Unable to use the analog input for feedback, since the Talon SRX (device " + getDeviceID() + ") was not instantiated with an analog input. Check how this device was created using Strongback's Hardware class.");
+                    Strongback.logger().error("Unable to use the analog input for feedback, since the Talon SRX (device " + getDeviceID() + ") was not instantiated with an analog input. Check how this device was created using Strongback's Hardware class.");
                     selectedInput = NO_OP_SENSOR;
                 }
                 break;
@@ -371,7 +371,7 @@ class HardwareTalonSRX implements TalonSRX {
                 if ( selectedEncoderInput != null ) {
                     selectedInput = selectedEncoderInput;
                 } else {
-                    Strongback.logger(getClass()).error("Unable to use the quadrature encoder input for feedback, since the Talon SRX (device " + getDeviceID() + ") was not instantiated with an encoder input. Check how this device was created using Strongback's Hardware class.");
+                    Strongback.logger().error("Unable to use the quadrature encoder input for feedback, since the Talon SRX (device " + getDeviceID() + ") was not instantiated with an encoder input. Check how this device was created using Strongback's Hardware class.");
                     selectedInput = NO_OP_SENSOR;
                 }
                 break;

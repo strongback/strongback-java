@@ -1,9 +1,1 @@
-Copyright 2015, Strongback and individual contributors by the @authors tag.
-
-The following have contributed to the Strongback Java codebase.
-
-Randall Hauch <rhauch@gmail.com>
-Zach Anderson <zach@speakinwebs.com>
-Nathan Brown <nathanbrown735@gmail.com>
-Adam Gausmann <adam.gausmann@gmail.com>
-Colin Hauch <colin.hauch@gmail.com>
+Copyright 2015-2017, Strongback and individual contributors identified by the @authors tags and in the CONTRIBUTORS file.

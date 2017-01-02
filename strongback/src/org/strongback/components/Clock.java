@@ -101,7 +101,7 @@ public interface Clock {
         return new Clock() {
             @Override
             public long currentTimeInMicros() {
-                return (long) (currentTimeInNanos() / 1000.0);
+                return (long) (currentTimeInNanos() / 1_000.0);
             }
 
             @Override
@@ -111,7 +111,7 @@ public interface Clock {
 
             @Override
             public long currentTimeInMillis() {
-                return System.currentTimeMillis();
+                return (long) (currentTimeInNanos() / 1_000_000.0);
             }
         };
     }

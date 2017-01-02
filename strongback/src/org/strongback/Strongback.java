@@ -22,12 +22,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.LongConsumer;
 import java.util.function.Supplier;
 
 import org.strongback.AsyncEventRecorder.EventWriter;
 import org.strongback.Executor.Priority;
-import org.strongback.annotation.NotImplemented;
 import org.strongback.annotation.ThreadSafe;
 import org.strongback.command.Command;
 import org.strongback.command.Scheduler;
@@ -108,8 +106,9 @@ import edu.wpi.first.wpilibj.IterativeRobot;
  * <h3>Stopping versus disabling</h3>
  * <p>
  * When the robot is disabled we recommend calling {@link #disable()} rather than {@link #stop()}, since {@link #disable()} will
- * stop the execution but will keep most of the services ready to run again. You can use {@link #stop()} to completely shutdown
- * all Strongback resources, although on most robots this will be unnecessary.
+ * stop things from executing but will keep most of the services ready to run again. If you prefer, you can use {@link #stop()}
+ * to completely shutdown all Strongback resources when needed, although on most robots and during most competitions
+ * {@link #disable()} should be sufficient.
  *
  * <h2>Execution</h2>
  * <p>
@@ -314,88 +313,6 @@ public final class Strongback {
     public static final class Configurator {
 
         /**
-         * The available options for how the Strongback executor thread waits between
-         * {@link Strongback.Configurator#useExecutionPeriod execution periods}.
-         *
-         * @deprecated this is no longer used and will be removed in 2.0
-         */
-        @Deprecated
-        public static enum TimerMode {
-            BUSY, SLEEP, PARK;
-        }
-
-        /**
-         * Log messages to {@link SystemLogger System.out} at the specified level
-         *
-         * @param level the global logging level; may not be null
-         * @return this configurator so that methods can be chained together; never null
-         * @deprecated use {@link #setLogLevel(org.strongback.Logger.Level)} instead
-         */
-        @Deprecated
-        public Configurator useSystemLogger(Logger.Level level) {
-            return setLogLevel(level);
-        }
-
-        /**
-         * Log messages to {@link SystemLogger System.out} at the specified level
-         *
-         * @param level the global logging level; may not be null
-         * @return this configurator so that methods can be chained together; never null
-         */
-        public Configurator setLogLevel(Logger.Level level) {
-            if (level == null) throw new IllegalArgumentException("The system logging level may not be null");
-            Strongback.setLogLevel(level);
-            return this;
-        }
-
-        /**
-         * Strongback no longer supports custom loggers, so this method does nothing.
-         *
-         * @param loggers unused
-         * @return this configurator so that methods can be chained together; never null
-         * @deprecated this is no longer used and will be removed in 2.0
-         */
-        @Deprecated
-        public Configurator useCustomLogger(Function<String, Logger> loggers) {
-            return this;
-        }
-
-        /**
-         * Strongback no longer supports using the FPGA time, so this method does nothing.
-         *
-         * @return this configurator so that methods can be chained together; never null
-         * @deprecated this is no longer used and will be removed in 2.0
-         */
-        @Deprecated
-        public Configurator useFpgaTime() {
-            return this;
-        }
-
-        /**
-         * Strongback always uses the JRE's {@link Clock#system() time system}, so this method is no longer necessary and does
-         * nothing.
-         *
-         * @return this configurator so that methods can be chained together; never null
-         * @deprecated this is no longer used and will be removed in 2.0
-         */
-        @Deprecated
-        public Configurator useSystemTime() {
-            return this;
-        }
-
-        /**
-         * Strongback no longer supports using custom clocks, so this method does nothing.
-         *
-         * @param clock no longer used
-         * @return this configurator so that methods can be chained together; never null
-         * @deprecated this is no longer used and will be removed in 2.0
-         */
-        @Deprecated
-        public Configurator useCustomTime(Clock clock) {
-            return this;
-        }
-
-        /**
          * Turn off the data recorder so that it does not record anything.
          *
          * @return this configurator so that methods can be chained together; never null
@@ -410,12 +327,13 @@ public final class Strongback {
          * "{@code /home/lvuser/robot}" as the prefix means that the data will be recorded in files named
          * "{@code /home/lvuser/robot-data-<counter>.dat}", where {@code <counter>} will be 1, 2, 3, etc.
          * <p>
-         * Make sure that the user has privilege to write to the directory specified in the filename prefix. Typically the robot
-         * is run from the root directory, and the user running the code does not have privilege to write to the {@code /}
-         * directory.
+         * <strong>Note:</strong> <em>Make sure that the user has privilege to write to the directory specified in the filename
+         * prefix.</em> Typically the robot is run from the root directory, and the user running the code does not have
+         * privilege to write to the {@code /} directory but does have privilege in the user's home directory (e.g.,
+         * {@code /home/lvuser}).
          * <p>
-         * This method sizes the files such that they can hold data for approximately 3 minutes of robot run time. Use
-         * {@link #recordDataToFile(String, int)} to specify a different estimate.
+         * This method estimates the size of the files so that each file can hold data for approximately 3 minutes of robot run
+         * time. Use {@link #recordDataToFile(String, int)} to specify a different estimate.
          *
          * @param filenamePrefix the prefix for filenames, which includes the path to the files; may not be null
          * @return this configurator so that methods can be chained together; never null
@@ -431,9 +349,10 @@ public final class Strongback {
          * "{@code /home/lvuser/robot}" as the prefix means that the data will be recorded in files named
          * "{@code /home/lvuser/robot-data-<counter>.dat}", where {@code <counter>} will be 1, 2, 3, etc.
          * <p>
-         * Make sure that the user has privilege to write to the directory specified in the filename prefix. Typically the robot
-         * is run from the root directory, and the user running the code does not have privilege to write to the {@code /}
-         * directory.
+         * <strong>Note:</strong> <em>Make sure that the user has privilege to write to the directory specified in the filename
+         * prefix.</em> Typically the robot is run from the root directory, and the user running the code does not have
+         * privilege to write to the {@code /} directory but does have privilege in the user's home directory (e.g.,
+         * {@code /home/lvuser}).
          * <p>
          * This method allows a robot to estimate the total number of seconds the recorder will capture data, and this is used
          * to compute an approximate amount of memory used to buffer the information. If the data record runs for a longer
@@ -453,18 +372,6 @@ public final class Strongback {
         }
 
         /**
-         * This method no longer does anything.
-         *
-         * @return this configurator so that methods can be chained together; never null
-         * @deprecated
-         */
-        @Deprecated
-        @NotImplemented
-        public Configurator recordDataToNetworkTables() {
-            return this;
-        }
-
-        /**
          * Record data to a custom {@link DataWriter} by supplying the factory that will create the data writer.
          *
          * @param customWriterFactory the factory for the {@link DataWriter} instance; may not be null
@@ -473,18 +380,6 @@ public final class Strongback {
         public Configurator recordDataTo(Function<Iterable<DataRecorderChannel>, DataWriter> customWriterFactory) {
             if (customWriterFactory == null) throw new IllegalArgumentException("The custom writer factory cannot be null");
             ENGINE.recordData(customWriterFactory);
-            return this;
-        }
-
-        /**
-         * This is no longer used.
-         *
-         * @param numberOfSeconds unused
-         * @return this configurator so that methods can be chained together; never null
-         * @deprecated
-         */
-        @Deprecated
-        public Configurator recordDuration(int numberOfSeconds) {
             return this;
         }
 
@@ -566,33 +461,17 @@ public final class Strongback {
         }
 
         /**
-         * Strongback's executor thread always uses a busy loop to wait for the next period, and so this method is no longer
-         * needed.
-         *
-         * @param mode unused
-         * @return this configurator so that methods can be chained together; never null
-         * @see #useExecutionPeriod(long, TimeUnit)
-         * @deprecated this is no longer used
-         */
-        @Deprecated
-        public Configurator useExecutionTimerMode(TimerMode mode) {
-            return this;
-        }
-
-        /**
          * Use the specified execution rate for Strongback's {@link Strongback#executor() executor}. The default execution rate
          * is 5 milliseconds.
          * <p>
-         * The clock that Strongback is configured to use will also affect the precision of the execution rate: the
-         * {@link #useFpgaTime() FPGA clock} will likely support rates down to around a few milliseconds, whereas the
-         * {@link #useSystemTime() system clock} may only support rates of 10-15 milliseconds. Therefore, this method does not
-         * currently allow sub-microsecond intervals.
+         * The clock that Strongback is configured to use will also affect the precision of the execution rate. This rate is
+         * measured using the JVM's {@link System#nanoTime()} method and therefore may not support periods smaller than 10 or 15
+         * milliseconds.
          *
          * @param interval the interval for calling all registered {@link Executable}s; must be positive
          * @param unit the time unit for the interval; may not be null
          * @return this configurator so that methods can be chained together; never null
-         * @see #useExecutionTimerMode(TimerMode)
-         * @throws IllegalArgumentException if {@code unit} is {@link TimeUnit#MICROSECONDS} or {@link TimeUnit#NANOSECONDS}
+         * @throws IllegalArgumentException if the interval is smaller than 1 millisecond
          */
         public Configurator useExecutionPeriod(long interval, TimeUnit unit) {
             if (interval <= 0) throw new IllegalArgumentException("The execution interval must be positive");
@@ -601,22 +480,6 @@ public final class Strongback {
                 throw new IllegalArgumentException("The interval must be at least 1 millisecond");
             }
             ENGINE.setExecutionPeriod(unit.toMillis(interval));
-            return this;
-        }
-
-        /**
-         * Every time the executor takes longer than the {@link #useExecutionPeriod(long, TimeUnit) execution period} to execute
-         * each interval, report this to the given handler.
-         *
-         * @param handler the receiver for notifications of excessive execution times
-         * @return this configurator so that methods can be chained together; never null
-         * @deprecated use {@link Strongback.Configurator#reportExcessiveExecutionTimes} instead
-         */
-        @Deprecated
-        public Configurator reportExcessiveExecutionPeriods(LongConsumer handler) {
-            ENGINE.handleExecutionDelays((actual, desired) -> {
-                handler.accept(actual);
-            });
             return this;
         }
 
@@ -683,9 +546,16 @@ public final class Strongback {
         }
 
         /**
-         * This method no longer does anything. Be sure to call {@link Strongback#start()}, {@link Strongback#restart()}, and
-         * {@link Strongback#shutdown()}
+         * This method no longer does anything.
+         * <p>
+         * Be sure to call {@link Strongback#start()} or {@link Strongback#restart()} during
+         * {@link edu.wpi.first.wpilibj.IterativeRobot#teleopInit()} and
+         * {@link edu.wpi.first.wpilibj.IterativeRobot#autonomousInit()}, and either {@link Strongback#stop()} or
+         * {@link Strongback#disable()} during {@link edu.wpi.first.wpilibj.IterativeRobot#disabledInit()}.
+         *
+         * @deprecated this is no longer needed and does nothing
          */
+        @Deprecated
         public synchronized void initialize() {
         }
     }
@@ -726,8 +596,10 @@ public final class Strongback {
      * Stop all currently-scheduled activity and flush all recorders. This is typically called by robot code when when the robot
      * becomes disabled. Should the robot re-enable, all aspects of Strongback will continue to work as before it was disabled.
      *
+     * @see #start()
      * @see #stop()
      * @see #restart()
+     * @see #killAllCommands()
      */
     public static void disable() {
         ENGINE.killCommandsAndFlush();
@@ -737,18 +609,9 @@ public final class Strongback {
     /**
      * Stop Strongback from running commands, reading switch states, and recording data and events.
      *
-     * @deprecated use {@link #stop()} instead
-     */
-    @Deprecated
-    public static void shutdown() {
-        stop();
-    }
-
-    /**
-     * Stop Strongback from running commands, reading switch states, and recording data and events.
-     *
      * @see #start()
      * @see #restart()
+     * @see #disable()
      * @see #killAllCommands()
      */
     public static void stop() {
@@ -784,34 +647,9 @@ public final class Strongback {
      * Get Strongback's global {@link Logger} implementation.
      *
      * @return Strongback's logger instance; never null
-     * @see Configurator#useSystemLogger(org.strongback.Logger.Level)
-     * @see Configurator#useCustomLogger(Function)
+     * @see #setLogLevel(org.strongback.Logger.Level)
      */
     public static Logger logger() {
-        return LOGGER;
-    }
-
-    /**
-     * Get Strongback's global {@link Logger} implementation.
-     *
-     * @param context the context of the logger
-     * @return Strongback's logger instance; never null
-     * @deprecated use {@link #logger()} instead
-     */
-    @Deprecated
-    public static Logger logger(String context) {
-        return LOGGER;
-    }
-
-    /**
-     * Get Strongback's global {@link Logger} implementation.
-     *
-     * @param context the context of the logger
-     * @return Strongback's logger instance; never null
-     * @deprecated use {@link #logger()} instead
-     */
-    @Deprecated
-    public static Logger logger(Class<?> context) {
         return LOGGER;
     }
 
@@ -829,9 +667,6 @@ public final class Strongback {
      * Get Strongback's {@link Clock time system} implementation.
      *
      * @return Strongback's time system instance; never null
-     * @see Configurator#useFpgaTime()
-     * @see Configurator#useSystemTime()
-     * @see Configurator#useCustomTime(Clock)
      */
     public static Clock timeSystem() {
         return CLOCK;
@@ -842,7 +677,6 @@ public final class Strongback {
      *
      * @param command the command to be submitted
      * @see Configurator#useExecutionPeriod(long, TimeUnit)
-     * @see Configurator#useExecutionTimerMode(org.strongback.Strongback.Configurator.TimerMode)
      */
     public static void submit(Command command) {
         if (command != null) {
@@ -943,8 +777,6 @@ public final class Strongback {
      * @see DataRecorder
      * @see Configurator#recordDataTo(Function)
      * @see Configurator#recordDataToFile(String)
-     * @see Configurator#recordDataToNetworkTables()
-     * @see Configurator#recordDuration(int)
      * @see Configurator#recordNoData()
      */
     public static DataRecorder dataRecorder() {
@@ -1296,7 +1128,7 @@ public final class Strongback {
                     }
 
                     // Create the scheduler that runs commands ...
-                    scheduler = new Scheduler(logger, createCommandListener(eventRecorder,listenToCommands));
+                    scheduler = new Scheduler(logger, createCommandListener(eventRecorder, listenToCommands));
                     scheduler.execute(CLOCK.currentTimeInMillis());
                     executables.register(scheduler, SCHEDULER_PRIORITY);
 
