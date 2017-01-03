@@ -117,8 +117,8 @@ final class ExecutorDriver implements Stoppable {
             final Executable[] mediumPriorityItems = executables.mediumPriorityExecutablesAsArrays();
             final Executable[] lowPriorityItems = executables.lowPriorityExecutablesAsArrays();
             final int numHighPriorityItems = highPriorityItems.length;
-            final int numMediumPriorityItems = 0;
-            final int numLowPriorityItems = 0;
+            final int numMediumPriorityItems = mediumPriorityItems.length;
+            final int numLowPriorityItems = lowPriorityItems.length;
 
             while (running) {
                 // Start a new cycle ...
