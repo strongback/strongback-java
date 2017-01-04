@@ -145,9 +145,9 @@ public interface TalonSRX extends LimitedMotor {
      * specified range: forward throttle will be disabled if the "Sensor Position" is greater than the forward soft limit.
      * This takes effect only when the forward soft limit is {@link #enableForwardSoftLimit(boolean)}.
      * <p>
-     * Soft limits can be used to disable motor drive when the “Sensor Position” is outside of a specified range. Forward
-     * throttle will be disabled if the “Sensor Position” is greater than the Forward Soft Limit. Reverse throttle will be
-     * disabled if the “Sensor Position” is less than the Reverse Soft Limit. The respective Soft Limit Enable must be enabled
+     * Soft limits can be used to disable motor drive when the 'Sensor Position' is outside of a specified range. Forward
+     * throttle will be disabled if the 'Sensor Position' is greater than the Forward Soft Limit. Reverse throttle will be
+     * disabled if the 'Sensor Position' is less than the Reverse Soft Limit. The respective Soft Limit Enable must be enabled
      * for this feature to take effect.
      *
      * @param forwardLimitInDegrees the angle at which the forward throttle should be disabled, where the angle in terms of the
@@ -163,9 +163,9 @@ public interface TalonSRX extends LimitedMotor {
      * specified range: reverse throttle will be disabled if the "Sensor Position" is less than the reverse soft limit.
      * This takes effect only when the reverse soft limit is {@link #enableReverseSoftLimit(boolean)}.
      * <p>
-     * Soft limits can be used to disable motor drive when the “Sensor Position” is outside of a specified range. Forward
-     * throttle will be disabled if the “Sensor Position” is greater than the Forward Soft Limit. Reverse throttle will be
-     * disabled if the “Sensor Position” is less than the Reverse Soft Limit. The respective Soft Limit Enable must be enabled
+     * Soft limits can be used to disable motor drive when the 'Sensor Position' is outside of a specified range. Forward
+     * throttle will be disabled if the 'Sensor Position' is greater than the Forward Soft Limit. Reverse throttle will be
+     * disabled if the 'Sensor Position' is less than the Reverse Soft Limit. The respective Soft Limit Enable must be enabled
      * for this feature to take effect.
      *
      * @param reverseLimitInDegrees the angle at which the reverse throttle should be disabled, where the angle in terms of the
