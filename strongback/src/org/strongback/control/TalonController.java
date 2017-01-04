@@ -47,7 +47,7 @@ import org.strongback.components.TalonSRX;
  * </pre>
  *
  * <p>
- * In order for limit switches and closed-loop features to function correctly, the sensor and motor have to be “in-phase”. This
+ * In order for limit switches and closed-loop features to function correctly, the sensor and motor have to be 'in-phase'. This
  * means that the sensor position must move in a <i>positive</i> direction as the motor controller drives <i>positive</i>
  * throttle. To test this, first drive the motor manually (using a human input device), and watch the sensor position either in
  * the roboRIO Web-based Configuration Self-Test, or by calling {@link #getSelectedSensor()} and printing it to console. If the
