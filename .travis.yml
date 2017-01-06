@@ -1,5 +1,8 @@
 sudo: false
 language: java
+before_install:
+  - ant -version
+
 install: ant deps
 script: ant test
 jdk:
