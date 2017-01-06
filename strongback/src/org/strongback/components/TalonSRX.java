@@ -349,7 +349,22 @@ public interface TalonSRX extends LimitedMotor {
          * <a href="https://www.ctr-electronics.com/Talon%20SRX%20Software%20Reference%20Manual.pdf">Talon SRX Software
          * Reference Manual</a>, section 21.3
          */
-        ENCODER_FALLING(5);
+        ENCODER_FALLING(5),
+
+        /**
+         * CTRE magnetic encoder with relative position
+         */
+        MAGNETIC_ENCODER_RELATIVE(6),
+
+        /**
+         * CTRE magnetic encoder with absolute position
+         */
+        MAGNETIC_ENCODER_ABSOLUTE(7),
+
+        /**
+         * Pulse width
+         */
+        PULSE_WIDTH(8);
 
         public int value;
 

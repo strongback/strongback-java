@@ -379,6 +379,15 @@ class HardwareTalonSRX implements TalonSRX {
                 // for 2015 the Talon SRX firmware did not support the falling or rising mode ...
                 selectedInput = NO_OP_SENSOR;
                 break;
+            case MAGNETIC_ENCODER_ABSOLUTE:
+                selectedInput = NO_OP_SENSOR;
+                break;
+            case MAGNETIC_ENCODER_RELATIVE:
+                selectedInput = NO_OP_SENSOR;
+                break;
+            case PULSE_WIDTH:
+                selectedInput = NO_OP_SENSOR;
+                break;
         }
         return this;
     }
