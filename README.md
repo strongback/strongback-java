@@ -1,7 +1,15 @@
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/strongback/strongback-cli/blob/master/LICENSE.txt)
 [![Build Status](https://travis-ci.org/strongback/strongback-java.svg?branch=master)](https://travis-ci.org/strongback/strongback-java)
+[![User chat](https://img.shields.io/badge/chat-users-brightgreen.svg)](https://gitter.im/strongback/users)
+[![Developer chat](https://img.shields.io/badge/chat-devs-brightgreen.svg)](https://gitter.im/strongback/dev)
+[![Google Group](https://img.shields.io/:mailing%20list-strongback-brightgreen.svg)](https://groups.google.com/forum/#!forum/strongback)
+[![Stack Overflow](http://img.shields.io/:stack%20overflow-strongback-brightgreen.svg)](http://stackoverflow.com/questions/tagged/strongback)
+
+Copyright Strongback Authors. Licensed under the [MIT License](https://github.com/strongback/strongback-java/blob/master/LICENSE.txt).
+
 # Using Strongback
 
-Our new [Using Strongback](https://www.gitbook.com/book/strongback/using-strongback/) online book has all the information you need to download and start using Strongback on your FRC robot, and the library is available on our [releases page](https://github.com/strongback/strongback-java/releases). Our [overview presentation](http://slides.com/strongback/using-strongback/#/) is an alternative introduction that touches on all the major features.
+Our [Using Strongback](https://www.gitbook.com/book/strongback/using-strongback/) online book has all the information you need to download and start using Strongback on your FRC robot, and the library is available on our [releases page](https://github.com/strongback/strongback-java/releases). Our [overview presentation](http://slides.com/strongback/using-strongback/#/) is an alternative introduction that touches on all the major features.
 
 If you have questions or want to get involved in the project, post to our [online discussion forums](https://github.com/strongback/strongback-java/wiki/Community).
 
