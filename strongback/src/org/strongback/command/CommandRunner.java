@@ -50,8 +50,7 @@ final class CommandRunner {
     }
 
     private static final CommandListener NO_OP_LISTENER = CommandListener.noOp();
-    private static final Context DEFAULT_CONTEXT = Context.with(NO_OP_LISTENER,
-                                                                Strongback.logger(CommandRunner.class.getName()));
+    private static final Context DEFAULT_CONTEXT = Context.with(NO_OP_LISTENER, Strongback.logger());
 
     private boolean timed = false;
     private long timeoutInMillis;

@@ -40,7 +40,7 @@ public class ExecutableTimerTest {
 
     @BeforeClass
     public static void beforeAll() {
-        Strongback.configure().setLogLevel(Level.ERROR).recordNoData().recordNoEvents().initialize();
+        Strongback.configure().setLogLevel(Level.ERROR).recordNoData().recordNoEvents();
     }
 
     @AfterClass
@@ -74,7 +74,7 @@ public class ExecutableTimerTest {
             assertThat(ExecutableTimer.measureTimingAndPrint(Strongback.executor(),
                                                              " for " + millisecondExecutionPeriod + " ms",
                                                              sampleTimeInMilliseconds / millisecondExecutionPeriod)
-                                      .await(10, TimeUnit.SECONDS)
+                                      .await(4, TimeUnit.SECONDS)
                                       .isComplete());
         } catch (InterruptedException e) {
             Thread.interrupted();

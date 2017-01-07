@@ -28,7 +28,7 @@ Strongback is a new open source software library that makes your robot code ligh
 
 # Building locally
 
-If you want to build Strongback locally, you will need to have installed JDK 1.8, Eclipse Mars (version 4.5.0 or later), Ant 1.9.2 or later, and Git 2.2.1 or later. Then, use Git to clone this repository (or your GitHub fork). Before importing into Eclipse, build the code and run the unit tests using Ant:
+If you want to build Strongback locally, you will need to have installed JDK 1.8, Eclipse Mars (version 4.5.0 or later), Ant 1.10.0 or later, and Git 2.2.1 or later. Then, use Git to clone this repository (or your GitHub fork). Before importing into Eclipse, build the code and run the unit tests using Ant:
 
     $ ant test
 
@@ -41,8 +41,8 @@ If you have any problems getting this far, please check our [developers discussi
 To release a new version of Strongback:
 
 1. Change the `strongback.properties` file to reference the correct version number, and commit that to the repository. 
-1. Build the distribution by running `ant clean dist` and verifying it completed correctly.
-1. Go to the [Strongback releases page](https://github.com/strongback/strongback-java/releases) and draft a new release, filling in the correct release candidate version number as the tag (e.g., `v1.0.0.RC1` for "release candidate 1") and giving an appropriate release title (e.g., `1.0.0 Release Candidate 1`) and description, and uploading the ZIP and compressed TAR file in the `build` directory. Then check "This is a pre-release" and press "Publish Release".
+1. Build the distribution by running `ant release` and verifying it completed correctly.
+1. Go to the [Strongback releases page](https://github.com/strongback/strongback-java/releases) and draft a new release, filling in the correct release candidate version number as the tag (e.g., `v2017.1.0.RC1` for "release candidate 1") and giving an appropriate release title (e.g., `2017.1.0.RC1`) and description, and uploading the ZIP and compressed TAR file in the `build` directory. Then check "This is a pre-release" and press "Publish Release".
 1. Notify the developer forum so that other community members can test the release candidate by downloading and unpacking the pre-release distribution into their local home directory, using it in one or more robot codebases, and verifying the robots behave as expected. Each community member that tests it locally should respond to your forum post with their results.
-1. If the pre-release distribution has problems that need to be fixed, they should be reported, fixed, and merged into the correct branch, and then go to Step 3 using a new pre-release tag (e.g., `v1.0.0.RC2`) and title (e.g., `1.0.0 Release Candidate 1`).
-1. When enough community members have verified the pre-release distribution is acceptable, go to the [Strongback releases page](https://github.com/strongback/strongback-java/releases) and create a new release with the same tag as the pre-release, but with the appropriate release title (e.g., `1.0.0`) and description. Do not check "This is a pre-release" and press "Publish Release".
+1. If the pre-release distribution has problems that need to be fixed, they should be reported, fixed, and merged into the correct branch, and then go to Step 3 using a new pre-release tag (e.g., `v2017.1.0.RC2`) and title (e.g., `2017.1.0.RC2`).
+1. When enough community members have verified the pre-release distribution is acceptable, go to the [Strongback releases page](https://github.com/strongback/strongback-java/releases) and create a new release with the same tag as the pre-release, but with the appropriate release tag (e.g., `v2017.1.0`), title (e.g., `2017.1.0`) and description. Do not check "This is a pre-release" and press "Publish Release".

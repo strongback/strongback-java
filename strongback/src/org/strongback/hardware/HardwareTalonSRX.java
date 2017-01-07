@@ -27,8 +27,8 @@ import org.strongback.components.TalonSRX;
 import org.strongback.components.TemperatureSensor;
 import org.strongback.components.VoltageSensor;
 
-import edu.wpi.first.wpilibj.CANTalon;
-import edu.wpi.first.wpilibj.CANTalon.TalonControlMode;
+import com.ctre.CANTalon;
+import com.ctre.CANTalon.TalonControlMode;
 
 /**
  * Talon speed controller with position and current sensor
@@ -355,14 +355,14 @@ class HardwareTalonSRX implements TalonSRX {
 
     @Override
     public TalonSRX setFeedbackDevice(FeedbackDevice device) {
-        talon.setFeedbackDevice(edu.wpi.first.wpilibj.CANTalon.FeedbackDevice.valueOf(device.value()));
+        talon.setFeedbackDevice(CANTalon.FeedbackDevice.valueOf(device.value()));
         switch(device) {
             case ANALOG_POTENTIOMETER:
             case ANALOG_ENCODER:
                 if ( selectedAnalogInput != null ) {
                     selectedInput = selectedAnalogInput;
                 } else {
-                    Strongback.logger(getClass()).error("Unable to use the analog input for feedback, since the Talon SRX (device " + getDeviceID() + ") was not instantiated with an analog input. Check how this device was created using Strongback's Hardware class.");
+                    Strongback.logger().error("Unable to use the analog input for feedback, since the Talon SRX (device " + getDeviceID() + ") was not instantiated with an analog input. Check how this device was created using Strongback's Hardware class.");
                     selectedInput = NO_OP_SENSOR;
                 }
                 break;
@@ -371,12 +371,21 @@ class HardwareTalonSRX implements TalonSRX {
                 if ( selectedEncoderInput != null ) {
                     selectedInput = selectedEncoderInput;
                 } else {
-                    Strongback.logger(getClass()).error("Unable to use the quadrature encoder input for feedback, since the Talon SRX (device " + getDeviceID() + ") was not instantiated with an encoder input. Check how this device was created using Strongback's Hardware class.");
+                    Strongback.logger().error("Unable to use the quadrature encoder input for feedback, since the Talon SRX (device " + getDeviceID() + ") was not instantiated with an encoder input. Check how this device was created using Strongback's Hardware class.");
                     selectedInput = NO_OP_SENSOR;
                 }
                 break;
             case ENCODER_FALLING:
                 // for 2015 the Talon SRX firmware did not support the falling or rising mode ...
+                selectedInput = NO_OP_SENSOR;
+                break;
+            case MAGNETIC_ENCODER_ABSOLUTE:
+                selectedInput = NO_OP_SENSOR;
+                break;
+            case MAGNETIC_ENCODER_RELATIVE:
+                selectedInput = NO_OP_SENSOR;
+                break;
+            case PULSE_WIDTH:
                 selectedInput = NO_OP_SENSOR;
                 break;
         }
@@ -385,7 +394,7 @@ class HardwareTalonSRX implements TalonSRX {
 
     @Override
     public TalonSRX setStatusFrameRate(StatusFrameRate frameRate, int periodMillis) {
-        talon.setStatusFrameRateMs(edu.wpi.first.wpilibj.CANTalon.StatusFrameRate.valueOf(frameRate.value()), periodMillis);
+        talon.setStatusFrameRateMs(CANTalon.StatusFrameRate.valueOf(frameRate.value()), periodMillis);
         double periodInSeconds = periodMillis / 1000.0;
         switch(frameRate) {
             case FEEDBACK:

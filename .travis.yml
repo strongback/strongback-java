@@ -1,5 +1,13 @@
 sudo: false
 language: java
+before_install:
+  - ant -version
+  - wget http://apache.mirrors.pair.com//ant/binaries/apache-ant-1.10.0-bin.tar.gz
+  - tar -xf apache-ant-1.10.0-bin.tar.gz
+  - export ANT_HOME=$PWD/apache-ant-1.10.0
+  - export PATH=$ANT_HOME/bin:$PATH
+  - ant -version
+
 install: ant deps
 script: ant test
 jdk:

@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
+import org.strongback.Executor.Priority;
 import org.strongback.Strongback.Configurator;
 import org.strongback.annotation.ThreadSafe;
 
@@ -82,7 +83,7 @@ public final class ExecutableTimer implements Executable {
             if (atCompletion != null) atCompletion.accept(theTimer.getResults());
         });
         // Register the timer with the executor ...
-        executor.register(timer);
+        executor.register(timer, Priority.HIGH);
         return timer;
     }
 

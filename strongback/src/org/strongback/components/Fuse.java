@@ -94,7 +94,7 @@ public interface Fuse extends Switch {
                     try {
                         whenTriggered.run();
                     } catch (Throwable t) {
-                        Strongback.logger(Fuse.class).error(t, "Error when calling fuse trigger function");
+                        Strongback.logger().error(t, "Error when calling fuse trigger function");
                     }
                 }
                 return this;
@@ -155,7 +155,7 @@ public interface Fuse extends Switch {
                     try {
                         whenTriggered.run();
                     } catch (Throwable t) {
-                        Strongback.logger(Fuse.class).error(t, "Error when calling fuse trigger function");
+                        Strongback.logger().error(t, "Error when calling fuse trigger function");
                     }
                 }
                 return this;

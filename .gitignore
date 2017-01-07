@@ -12,8 +12,10 @@ deploy/
 target/
 *.class
 
-# The wpilib directory should never be committed
+# The 3rd party dependencies should never be committed
 libs/wpilib
+libs/ctre
+libs/navx-mxp
 downloads/
 
 .DS_Store/
