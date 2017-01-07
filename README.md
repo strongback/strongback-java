@@ -20,7 +20,7 @@ Strongback is a new open source software library that makes your robot code ligh
 
 # Building locally
 
-If you want to build Strongback locally, you will need to have installed JDK 1.8, Eclipse Mars (version 4.5.0 or later), Ant 1.9.2 or later, and Git 2.2.1 or later. Then, use Git to clone this repository (or your GitHub fork). Before importing into Eclipse, build the code and run the unit tests using Ant:
+If you want to build Strongback locally, you will need to have installed JDK 1.8, Eclipse Mars (version 4.5.0 or later), Ant 1.10.0 or later, and Git 2.2.1 or later. Then, use Git to clone this repository (or your GitHub fork). Before importing into Eclipse, build the code and run the unit tests using Ant:
 
     $ ant test
 
