@@ -570,7 +570,7 @@ public class Hardware {
          * @return a motor on the specified channel
          */
         public static Motor victorSP(int channel, DoubleToDoubleFunction speedLimiter) {
-            return new HardwareMotor(new VictorSP(channel), SPEED_LIMITER);
+            return new HardwareMotor(new VictorSP(channel), speedLimiter);
         }
 
         /**
