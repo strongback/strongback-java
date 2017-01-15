@@ -58,6 +58,7 @@ import edu.wpi.first.wpilibj.Jaguar;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PowerDistributionPanel;
 import edu.wpi.first.wpilibj.SPI;
+import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.Ultrasonic;
 import edu.wpi.first.wpilibj.Victor;
@@ -691,6 +692,29 @@ public class Hardware {
             talon.set(leader.getDeviceID());
             talon.reverseOutput(reverse);
             return talonSRX(talon, 0.0d, 0.0d);
+        }
+
+        /**
+         * Create a motor driven by a <a href="http://www.revrobotics.com/SPARK">RevRobotics Spark Motor Controller</a> on the
+         * specified channel. The speed output is limited to [-1.0,1.0] inclusive.
+         *
+         * @param channel the channel the controller is connected to
+         * @return a motor on the specified channel
+         */
+        public static Motor spark(int channel) {
+            return spark(channel, SPEED_LIMITER);
+        }
+
+        /**
+         * Create a motor driven by a <a href="http://www.revrobotics.com/SPARK">RevRobotics Spark Motor Controller</a> on the
+         * specified channel, with a custom speed limiting function.
+         *
+         * @param channel the channel the controller is connected to
+         * @param speedLimiter function that will be used to limit the speed (input voltage); may not be null
+         * @return a motor on the specified channel
+         */
+        public static Motor spark(int channel, DoubleToDoubleFunction speedLimiter) {
+            return new HardwareSpark(new Spark(channel), SPEED_LIMITER);
         }
     }
 

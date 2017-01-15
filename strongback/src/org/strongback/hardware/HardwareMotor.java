@@ -30,7 +30,7 @@ import edu.wpi.first.wpilibj.SpeedController;
  * @see Hardware
  * @see edu.wpi.first.wpilibj.SpeedController
  */
-final class HardwareMotor implements Motor {
+class HardwareMotor implements Motor {
 
     private final SpeedController controller;
     private final DoubleToDoubleFunction speedValidator;
