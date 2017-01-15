@@ -268,10 +268,10 @@ public class TankDrive implements Requirable {
      * <p>
      * This method supports two different algorithms for cheesy drive:
      * <ul>
-     * <li><i>simple<i> - an improved and simplified algorithm from
+     * <li><b>simple</b> - an improved and simplified algorithm from
      * <a href="https://github.com/Team254/FRC-2016-Public/blob/master/src/com/team254/frc2016/CheesyDriveHelper.java">Team 254
      * Cheesy Drive logic from 2016</a>; and</li>
-     * <li><i>inertia<i> - an earlier algorithm that uses inertia terms to non-linearly smooth the outputs, from
+     * <li><b>inertia</b> - an earlier algorithm that uses inertia terms to non-linearly smooth the outputs, from
      * <a href="https://github.com/Team254/FRC-2016-Public/blob/master/src/com/team254/frc2016/CheesyDriveHelper.java">Team 254
      * Cheesy Drive logic from 2014</a></li>
      * </ul>
