@@ -35,6 +35,10 @@ import org.strongback.util.Values;
  */
 public class TankDrive implements Requirable {
 
+    public static enum CheesyAlgorithm {
+        SIMPLE, INERTIA
+    }
+
     public static final double DEFAULT_MINIMUM_SPEED = 0.02;
     public static final double DEFAULT_MAXIMUM_SPEED = 1.0;
     public static final DoubleToDoubleFunction DEFAULT_SPEED_LIMITER = Values.symmetricLimiter(DEFAULT_MINIMUM_SPEED,
@@ -43,6 +47,7 @@ public class TankDrive implements Requirable {
     private static final double SENSITIVITY_HIGH = 0.75;
     private static final double SENSITIVITY_LOW = 0.75;
     private static final double HALF_PI = Math.PI / 2.0;
+    private static final double SENSITIVITY_TURN = 1.0;
 
     private final Motor left;
     private final Motor right;
@@ -54,7 +59,7 @@ public class TankDrive implements Requirable {
 
     /**
      * Creates a new DriveSystem subsystem that uses the supplied drive train and no shifter. The voltage send to the drive
-     * train is limited to [-1.0,1.0].
+     * train is limited to [-1.0,1.0] with the exception of the (-0.02,0.02) deadband around the zero point.
      *
      * @param left the left motor on the drive train for the robot; may not be null
      * @param right the right motor on the drive train for the robot; may not be null
@@ -65,7 +70,7 @@ public class TankDrive implements Requirable {
 
     /**
      * Creates a new DriveSystem subsystem that uses the supplied drive train and optional shifter. The voltage send to the
-     * drive train is limited to [-1.0,1.0].
+     * drive train is limited to [-1.0,1.0] with the exception of the (-0.02,0.02) deadband around the zero point.
      *
      * @param left the left motor on the drive train for the robot; may not be null
      * @param right the right motor on the drive train for the robot; may not be null
@@ -83,7 +88,7 @@ public class TankDrive implements Requirable {
      * @param right the right motor on the drive train for the robot; may not be null
      * @param shifter the optional shifter used to put the transmission into high gear; may be null
      * @param speedLimiter the function that limits the speed sent to the drive train; if null, then a default clamping function
-     *        is used to limit to the range [-1.0,1.0]
+     *        is used to limit to the range [-1.0,1.0] with the exception of the (-0.02,0.02) deadband around the zero point
      */
     public TankDrive(Motor left, Motor right, Relay shifter, DoubleToDoubleFunction speedLimiter) {
         this.left = left;
@@ -234,15 +239,75 @@ public class TankDrive implements Requirable {
     /**
      * Provide "cheesy drive" steering using a steering wheel and throttle. This function lets you directly provide joystick
      * values from any source.
+     * <p>
+     * "Cheesy Drive" simply means that the "turning" stick controls the curvature of the robot's path rather than its rate of
+     * heading change. This helps make the robot more controllable at high speeds. Also handles the robot's quick turn
+     * functionality - "quick turn" overrides constant-curvature turning for turn-in-place maneuvers.
+     * <p>
+     * This is equivalent to calling {@code cheesy(throttle, wheel, isQuickTurn, CheesyAlgorithm.SIMPLE)}.
+     *
+     * @param throttle the value of the throttle, which is generally in the range -1 to 1 inclusive but limited by the speed
+     *        limiter provided in the constructor
+     * @param wheel the value of the steering wheel, which is generally in the range -1 to 1 inclusive but limited by the speed
+     *        limiter provided in the constructor and where negative values turn right and positive values turn left
+     * @param isQuickTurn true if the quick-turn button is pressed
+     * @see <a href="https://github.com/Team254/FRC-2016-Public/blob/master/src/com/team254/frc2016/CheesyDriveHelper.java">Team
+     *      254 Cheesy Drive logic from 2016</a>
+     */
+    public void cheesy(double throttle, double wheel, boolean isQuickTurn) {
+        cheesy2016(throttle, wheel, isQuickTurn);
+    }
+
+    /**
+     * Provide "cheesy drive" steering using a steering wheel and throttle. This function lets you directly provide joystick
+     * values from any source.
+     * <p>
+     * "Cheesy Drive" simply means that the "turning" stick controls the curvature of the robot's path rather than its rate of
+     * heading change. This helps make the robot more controllable at high speeds. Also handles the robot's quick turn
+     * functionality - "quick turn" overrides constant-curvature turning for turn-in-place maneuvers.
+     * <p>
+     * This method supports two different algorithms for cheesy drive:
+     * <ul>
+     * <li><i>simple<i> - an improved and simplified algorithm from
+     * <a href="https://github.com/Team254/FRC-2016-Public/blob/master/src/com/team254/frc2016/CheesyDriveHelper.java">Team 254
+     * Cheesy Drive logic from 2016</a>; and</li>
+     * <li><i>inertia<i> - an earlier algorithm that uses inertia terms to non-linearly smooth the outputs, from
+     * <a href="https://github.com/Team254/FRC-2016-Public/blob/master/src/com/team254/frc2016/CheesyDriveHelper.java">Team 254
+     * Cheesy Drive logic from 2014</a></li>
+     * </ul>
+     *
+     * @param throttle the value of the throttle, which is generally in the range -1 to 1 inclusive but limited by the speed
+     *        limiter provided in the constructor
+     * @param wheel the value of the steering wheel, which is generally in the range -1 to 1 inclusive but limited by the speed
+     *        limiter provided in the constructor and where negative values turn right and positive values turn left
+     * @param isQuickTurn true if the quick-turn button is pressed
+     * @param algorithm the algorithm to use; may not be null
+     * @see <a href="https://github.com/Team254/FRC-2016-Public/blob/master/src/com/team254/frc2016/CheesyDriveHelper.java">Team
+     *      254 Cheesy Drive logic from 2016</a>
+     */
+    public void cheesy(double throttle, double wheel, boolean isQuickTurn, CheesyAlgorithm algorithm) {
+        switch (algorithm) {
+            case INERTIA:
+                cheesy2014(throttle, wheel, isQuickTurn);
+                break;
+            case SIMPLE:
+                cheesy2016(throttle, wheel, isQuickTurn);
+                break;
+        }
+    }
+
+    /**
+     * Provide "cheesy drive" steering using a steering wheel and throttle. This function lets you directly provide joystick
+     * values from any source.
      *
      * @param throttle the value of the throttle; must be -1 to 1, inclusive
      * @param wheel the value of the steering wheel; must be -1 to 1, inclusive Negative values turn right; positive values turn
      *        left.
      * @param isQuickTurn true if the quick-turn button is pressed
      * @see <a href="https://github.com/Team254/FRC-2014/blob/master/src/com/team254/frc2014/CheesyDriveHelper.java">Team 254
-     *      Cheesy Drive logic</a>
+     *      Cheesy Drive logic from 2014</a>
      */
-    public void cheesy(double throttle, double wheel, boolean isQuickTurn) {
+    private void cheesy2014(double throttle, double wheel, boolean isQuickTurn) {
 
         wheel = speedLimiter.applyAsDouble(wheel);
         throttle = speedLimiter.applyAsDouble(throttle);
@@ -331,6 +396,67 @@ public class TankDrive implements Requirable {
         leftPwm += angularPower;
         rightPwm -= angularPower;
 
+        if (leftPwm > 1.0) {
+            rightPwm -= overPower * (leftPwm - 1.0);
+            leftPwm = 1.0;
+        } else if (rightPwm > 1.0) {
+            leftPwm -= overPower * (rightPwm - 1.0);
+            rightPwm = 1.0;
+        } else if (leftPwm < -1.0) {
+            rightPwm += overPower * (-1.0 - leftPwm);
+            leftPwm = -1.0;
+        } else if (rightPwm < -1.0) {
+            leftPwm += overPower * (-1.0 - rightPwm);
+            rightPwm = -1.0;
+        }
+        left.setSpeed(leftPwm);
+        right.setSpeed(rightPwm);
+    }
+
+    /**
+     * Provide a simpler "cheesy drive" steering using a steering wheel and throttle. This function lets you directly provide
+     * joystick values from any source.
+     * <p>
+     * "Cheesy Drive" simply means that the "turning" stick controls the curvature of the robot's path rather than its rate of
+     * heading change. This helps make the robot more controllable at high speeds. Also handles the robot's quick turn
+     * functionality - "quick turn" overrides constant-curvature turning for turn-in-place maneuvers.
+     *
+     * @param throttle the value of the throttle, which is generally in the range -1 to 1 inclusive but limited by the speed
+     *        limiter provided in the constructor
+     * @param wheel the value of the steering wheel, which is generally in the range -1 to 1 inclusive but limited by the speed
+     *        limiter provided in the constructor and where negative values turn right and positive values turn left
+     * @param isQuickTurn true if the quick-turn button is pressed
+     * @see <a href="https://github.com/Team254/FRC-2016-Public/blob/master/src/com/team254/frc2016/CheesyDriveHelper.java">Team
+     *      254 Cheesy Drive logic from 2016</a>
+     */
+    private void cheesy2016(double throttle, double wheel, boolean isQuickTurn) {
+        wheel = speedLimiter.applyAsDouble(wheel);
+        throttle = speedLimiter.applyAsDouble(throttle);
+
+        double overPower;
+        double angularPower;
+
+        if (isQuickTurn) {
+            if (Math.abs(throttle) < DEFAULT_MINIMUM_SPEED) {
+                double alpha = 0.1;
+                quickStopAccumulator = (1 - alpha) * quickStopAccumulator + alpha * Values.symmetricLimit(0.0, wheel, 1.0) * 2;
+            }
+            overPower = 1.0;
+            angularPower = wheel;
+        } else {
+            overPower = 0.0;
+            angularPower = Math.abs(throttle) * wheel * SENSITIVITY_TURN - quickStopAccumulator;
+            if (quickStopAccumulator > 1) {
+                quickStopAccumulator -= 1;
+            } else if (quickStopAccumulator < -1) {
+                quickStopAccumulator += 1;
+            } else {
+                quickStopAccumulator = 0.0;
+            }
+        }
+
+        double rightPwm = throttle - angularPower;
+        double leftPwm = throttle + angularPower;
         if (leftPwm > 1.0) {
             rightPwm -= overPower * (leftPwm - 1.0);
             leftPwm = 1.0;
