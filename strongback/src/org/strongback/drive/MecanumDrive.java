@@ -27,7 +27,7 @@ import org.strongback.util.Values;
 
 /**
  * Control logic for a {@link MecanumDrive mecanum drive system}. This controller provides
- * {@link #cartesian(double, double, double) cartesian} and {@link #polar(double, double, double) polar} inputs.
+ * {@link #absoluteCartesian(double, double, double) cartesian} and {@link #relativePolar(double, double, double) polar} inputs.
  * <p>
  * This drive train will work for these configurations:
  * <ul>
@@ -117,32 +117,76 @@ public class MecanumDrive implements Stoppable, Requirable {
     }
 
     /**
+     * Does the same as {@link #absoluteCartesian(double, double, double)}.
+     *
+     * @deprecated in favor of {@link #absoluteCartesian(double, double, double)}. Kept for backwards compatibility.
+     */
+    @Deprecated
+    public void cartesian(double x, double y, double rotation) {
+        absoluteCartesian(x, y, rotation);
+    }
+
+    /**
+     * Does the same as {@link #relativePolar(double, double, double)}.
+     *
+     * @deprecated in favor of {@link #relativePolar(double, double, double)}. Kept for backwards compatibility.
+     */
+    @Deprecated
+    public void polar(double magnitude, double direction, double rotation) {
+        relativePolar(magnitude, direction, rotation);
+    }
+
+    /**
      * Cartesian drive method that specifies speeds in terms of the field longitudinal and lateral directions, using the drive's
      * angle sensor to automatically determine the robot's orientation relative to the field.
      * <p>
      * Using this method, the robot will move away from the drivers when the joystick is pushed forwards, and towards the
      * drivers when it is pulled towards them - regardless of what direction the robot is facing.
      *
-     * @param x The speed that the robot should drive in the X direction. [-1.0..1.0]
-     * @param y The speed that the robot should drive in the Y direction. This input is inverted to match the forward == -1.0
-     *        that joysticks produce. [-1.0..1.0]
-     * @param rotation The rate of rotation for the robot that is completely independent of the translation. [-1.0..1.0]
+     * @param x The speed that the robot should drive in the X (horizontal) direction. Positive is right. [-1.0..1.0]
+     * @param y The speed that the robot should drive in the Y (vertical) direction. Positive is forward. [-1.0..1.0]
+     * @param rotation The rate of rotation for the robot that is completely independent of the translation. Positive is
+     *                 counter-clockwise. [-1.0..1.0]
      */
-    public void cartesian(double x, double y, double rotation) {
-        double xIn = x;
-        double yIn = y;
-        // Negate y for the joystick.
-        yIn = -yIn;
+    public void absoluteCartesian(double x, double y, double rotation) {
         // Compensate for gyro angle.
-        double rotated[] = rotateVector(xIn, yIn, gyro.getAngle());
-        xIn = rotated[0];
-        yIn = rotated[1];
+        double rotated[] = rotateVector(x, y, -gyro.getAngle());
 
+        relativeCartesian(rotated[0], rotated[1], rotation);
+    }
+
+    /**
+     * Polar drive method that specifies speeds in terms of magnitude and direction, using the drive's
+     * angle sensor so calculations compensate for the robot's orientation.
+     *
+     * @param magnitude The speed that the robot should drive in a given direction.
+     * @param direction The direction the robot should drive in degrees. The direction and magnitude are independent of the
+     *        rotation rate. Zero is away from the drivers; positive is counterclockwise.
+     * @param rotation The rate of rotation for the robot that is completely independent of the magnitude or direction.
+     *        Positive is counter-clockwise. [-1.0..1.0]
+     */
+    public void absolutePolar(double magnitude, double direction, double rotation) {
+        relativePolar(magnitude, direction - gyro.getAngle(), rotation);
+    }
+
+
+    /**
+     * Cartesian drive method that specifies speeds in terms of the robot's relative coordinate system.
+     * <p>
+     * Using this method, the robot will drive similar to conventional driving. Pushing the stick forward will make the
+     * robot drive front-first, backward causes it to drive rear-first.
+     *
+     * @param x The speed that the robot should drive in the X (horizontal) direction. Positive is right. [-1.0..1.0]
+     * @param y The speed that the robot should drive in the Y (vertical) direction. Positive is forward. [-1.0..1.0]
+     * @param rotation The rate of rotation for the robot that is completely independent of the translation. Positive is
+     *                 counter-clockwise. [-1.0..1.0]
+     */
+    public void relativeCartesian(double x, double y, double rotation) {
         double wheelSpeeds[] = new double[NUMBER_OF_MOTORS];
-        wheelSpeeds[LEFT_FRONT] = xIn + yIn + rotation;
-        wheelSpeeds[RIGHT_FRONT] = -xIn + yIn - rotation;
-        wheelSpeeds[LEFT_REAR] = -xIn + yIn + rotation;
-        wheelSpeeds[RIGHT_REAR] = xIn + yIn - rotation;
+        wheelSpeeds[LEFT_FRONT] = -x + y + rotation;
+        wheelSpeeds[RIGHT_FRONT] = x + y - rotation;
+        wheelSpeeds[LEFT_REAR] = x + y + rotation;
+        wheelSpeeds[RIGHT_REAR] = -x + y - rotation;
 
         normalize(wheelSpeeds);
         scale(wheelSpeeds, OUTPUT_SCALE_FACTOR);
@@ -158,15 +202,15 @@ public class MecanumDrive implements Stoppable, Requirable {
      *
      * @param magnitude The speed that the robot should drive in a given direction.
      * @param direction The direction the robot should drive in degrees. The direction and magnitude are independent of the
-     *        rotation rate.
+     *        rotation rate. Zero degrees is forward; positive is counterclockwise.
      * @param rotation The rate of rotation for the robot that is completely independent of the magnitude or direction.
-     *        [-1.0..1.0]
+     *        Positive is counter-clockwise. [-1.0..1.0]
      */
-    public void polar(double magnitude, double direction, double rotation) {
+    public void relativePolar(double magnitude, double direction, double rotation) {
         // Normalized for full power along the Cartesian axes.
         magnitude = speedLimiter.applyAsDouble(magnitude) * SQRT_OF_TWO;
         // The rollers are at 45 degree angles.
-        double dirInRad = (direction + 45.0) * Math.PI / 180.0;
+        double dirInRad = Math.toRadians(direction + 45.0);
         double cosD = Math.cos(dirInRad);
         double sinD = Math.sin(dirInRad);
 
