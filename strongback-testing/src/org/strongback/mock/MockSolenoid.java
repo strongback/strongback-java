@@ -45,7 +45,7 @@ public class MockSolenoid implements Solenoid {
 
     @Override
     public MockSolenoid retract() {
-        direction = Direction.EXTENDING;
+        direction = Direction.RETRACTING;
         if ( completeImmediately ) direction = Direction.STOPPED;
         return this;
     }
