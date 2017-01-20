@@ -104,7 +104,6 @@ public class Hardware {
 
     /**
      * Gets the {@link PneumaticsModule} of the robot with the supplied CAN ID. Multiple pneumatics modules can be used by
-     * specifying the correct CAN ID of each module.
      *
      * @param canID the CAN ID of the module
      * @return the {@link PneumaticsModule} of the robot; never null
@@ -864,8 +863,8 @@ public class Hardware {
                                       joystick::getTwist, // yaw
                                       joystick::getX, // roll
                                       joystick::getThrottle, // throttle
-                                      () -> joystick.getRawButton(0), // trigger
-                                      () -> joystick.getRawButton(1)); // thumb
+                                      () -> joystick.getRawButton(1), // trigger
+                                      () -> joystick.getRawButton(2)); // thumb
         }
 
         /**
