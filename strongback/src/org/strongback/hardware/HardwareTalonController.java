@@ -16,18 +16,16 @@
 
 package org.strongback.hardware;
 
+import com.ctre.CANTalon;
+import com.ctre.CANTalon.TalonControlMode;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
 import org.strongback.Executable;
 import org.strongback.annotation.ThreadSafe;
 import org.strongback.control.Controller;
 import org.strongback.control.PIDController;
 import org.strongback.control.TalonController;
-
-import com.ctre.CANTalon;
-import com.ctre.CANTalon.TalonControlMode;
 
 /**
  * A hardware-based Talon SRX PID controller.
@@ -88,8 +86,8 @@ class HardwareTalonController extends HardwareTalonSRX implements TalonControlle
     private volatile int currentProfile = 0;
     private final Set<Integer> profiles = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    HardwareTalonController(CANTalon talon, double pulsesPerDegree, double analogTurnsOverVoltageRange) {
-        super(talon, pulsesPerDegree, analogTurnsOverVoltageRange);
+    HardwareTalonController(CANTalon talon) {
+        super(talon);
         profiles.add(currentProfile);
     }
 
@@ -117,13 +115,12 @@ class HardwareTalonController extends HardwareTalonSRX implements TalonControlle
 
     @Override
     public double getTarget() {
-        double targetPosition = talon.getSetpoint();
-        return this.selectedInput.angleInDegreesFromRawPosition(targetPosition);
+        return talon.getSetpoint();
     }
 
     @Override
-    public TalonController withTarget(double angleInDegrees) {
-        talon.set(this.selectedInput.rawPositionForAngleInDegrees(angleInDegrees));
+    public TalonController withTarget(double target) {
+        talon.setSetpoint(target);
         return this;
     }
 

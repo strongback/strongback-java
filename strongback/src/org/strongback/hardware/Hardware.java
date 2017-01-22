@@ -16,30 +16,8 @@
 
 package org.strongback.hardware;
 
-import org.strongback.annotation.Experimental;
-import org.strongback.components.Accelerometer;
-import org.strongback.components.AngleSensor;
-import org.strongback.components.DistanceSensor;
-import org.strongback.components.Gyroscope;
-import org.strongback.components.Motor;
-import org.strongback.components.PneumaticsModule;
-import org.strongback.components.PowerPanel;
-import org.strongback.components.Relay;
-import org.strongback.components.Solenoid;
-import org.strongback.components.Switch;
-import org.strongback.components.TalonSRX;
-import org.strongback.components.ThreeAxisAccelerometer;
-import org.strongback.components.TwoAxisAccelerometer;
-import org.strongback.components.ui.FlightStick;
-import org.strongback.components.ui.Gamepad;
-import org.strongback.components.ui.InputDevice;
-import org.strongback.control.TalonController;
-import org.strongback.function.DoubleToDoubleFunction;
-import org.strongback.util.Values;
-
 import com.ctre.CANTalon;
 import com.ctre.CANTalon.TalonControlMode;
-
 import edu.wpi.first.wpilibj.ADXL345_I2C;
 import edu.wpi.first.wpilibj.ADXL345_SPI;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
@@ -65,6 +43,26 @@ import edu.wpi.first.wpilibj.Victor;
 import edu.wpi.first.wpilibj.VictorSP;
 import edu.wpi.first.wpilibj.interfaces.Accelerometer.Range;
 import edu.wpi.first.wpilibj.interfaces.Gyro;
+import org.strongback.annotation.Experimental;
+import org.strongback.components.Accelerometer;
+import org.strongback.components.AngleSensor;
+import org.strongback.components.DistanceSensor;
+import org.strongback.components.Gyroscope;
+import org.strongback.components.Motor;
+import org.strongback.components.PneumaticsModule;
+import org.strongback.components.PowerPanel;
+import org.strongback.components.Relay;
+import org.strongback.components.Solenoid;
+import org.strongback.components.Switch;
+import org.strongback.components.TalonSRX;
+import org.strongback.components.ThreeAxisAccelerometer;
+import org.strongback.components.TwoAxisAccelerometer;
+import org.strongback.components.ui.FlightStick;
+import org.strongback.components.ui.Gamepad;
+import org.strongback.components.ui.InputDevice;
+import org.strongback.control.TalonController;
+import org.strongback.function.DoubleToDoubleFunction;
+import org.strongback.util.Values;
 
 /**
  * The factory methods that will create component implementations corresponding to physical hardware on the robot. Nested
@@ -672,7 +670,7 @@ public class Hardware {
         @Experimental
         public static TalonSRX talonSRX(CANTalon talon, double pulsesPerDegree, double analogTurnsOverVoltageRange) {
             if (talon == null) throw new IllegalArgumentException("The CANTalon reference may not be null");
-            return new HardwareTalonSRX(talon, pulsesPerDegree, analogTurnsOverVoltageRange);
+            return new HardwareTalonSRX(talon);
         }
 
         /**
@@ -690,7 +688,7 @@ public class Hardware {
             talon.changeControlMode(TalonControlMode.Follower);
             talon.set(leader.getDeviceID());
             talon.reverseOutput(reverse);
-            return talonSRX(talon, 0.0d, 0.0d);
+            return talonSRX(talon);
         }
 
         /**
@@ -737,10 +735,9 @@ public class Hardware {
          * @return the interface for managing and using the Talon SRX hardware-based PID controller; never null
          */
         @Experimental
-        public static TalonController talonController(int deviceNumber, double pulsesPerDegree,
-                double analogTurnsOverVoltageRange) {
+        public static TalonController talonController(int deviceNumber) {
             CANTalon talon = new CANTalon(deviceNumber);
-            HardwareTalonController c = new HardwareTalonController(talon, pulsesPerDegree, analogTurnsOverVoltageRange);
+            HardwareTalonController c = new HardwareTalonController(talon);
             return c;
         }
 
@@ -759,9 +756,8 @@ public class Hardware {
          * @return the interface for managing and using the Talon SRX hardware-based PID controller; never null
          */
         @Experimental
-        public static TalonController talonController(CANTalon talon, double pulsesPerDegree,
-                double analogTurnsOverVoltageRange) {
-            return new HardwareTalonController(talon, pulsesPerDegree, analogTurnsOverVoltageRange);
+        public static TalonController talonController(CANTalon talon) {
+            return new HardwareTalonController(talon);
         }
     }
 

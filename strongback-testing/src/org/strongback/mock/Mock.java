@@ -17,7 +17,6 @@
 package org.strongback.mock;
 
 import java.util.concurrent.atomic.AtomicLong;
-
 import org.strongback.components.Fuse;
 import org.strongback.components.TalonSRX;
 import org.strongback.control.Controller;
@@ -94,6 +93,15 @@ public class Mock {
      */
     public static MockAngleSensor angleSensor() {
         return new MockAngleSensor();
+    }
+
+    /**
+     * Create a mock revolution sensor.
+     *
+     * @return the mock rev sensor, never null
+     */
+    public static MockRevSensor revSensor() {
+        return new MockRevSensor();
     }
 
     /**
