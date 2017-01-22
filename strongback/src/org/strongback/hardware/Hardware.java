@@ -743,6 +743,26 @@ public class Hardware {
             HardwareTalonController c = new HardwareTalonController(talon, pulsesPerDegree, analogTurnsOverVoltageRange);
             return c;
         }
+
+        /**
+         * Create a component that manages and uses the hardware-based PID controller on the Talon SRX with a quadrature encoder
+         * and/or an analog 3.3V input sensor wired into the Talon.
+         * <p>
+         * The resulting {@link TalonSRX} will have a non-null {@link TalonSRX#getEncoderInput()} when the
+         * <code>pulsesPerDegree</code> is non-zero. Likewise, the resulting {@link TalonSRX} will have a non-null
+         * {@link TalonSRX#getAnalogInput()} when the <code>analogTurnsOverVoltageRange</code> is non-zero.
+         *
+         * @param talon the already configured {@link CANTalon} instance; may not be null
+         * @param pulsesPerDegree the number of encoder pulses per degree of revolution of the final shaft
+         * @param analogTurnsOverVoltageRange the number of turns of an analog pot or analog encoder over the 0-3.3V range; may
+         *        be 0 if unused
+         * @return the interface for managing and using the Talon SRX hardware-based PID controller; never null
+         */
+        @Experimental
+        public static TalonController talonController(CANTalon talon, double pulsesPerDegree,
+                double analogTurnsOverVoltageRange) {
+            return new HardwareTalonController(talon, pulsesPerDegree, analogTurnsOverVoltageRange);
+        }
     }
 
     /**
