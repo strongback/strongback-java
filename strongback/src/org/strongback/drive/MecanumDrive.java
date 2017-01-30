@@ -37,7 +37,7 @@ import org.strongback.util.Values;
  * </ul>
  * <p>
  * This drive implements {@link Requirable} so that {@link Command}s can use it directly when {@link Command#execute()
- * executing}. It is also designed to be driven by joystick axes.
+ * executing}.
  *
  * <p>
  * <em>NOTE: This class is experimental and needs to be thoroughly tested and debugged using actual hardware.</em>
@@ -183,10 +183,10 @@ public class MecanumDrive implements Stoppable, Requirable {
      */
     public void relativeCartesian(double x, double y, double rotation) {
         double wheelSpeeds[] = new double[NUMBER_OF_MOTORS];
-        wheelSpeeds[LEFT_FRONT] = -x + y + rotation;
-        wheelSpeeds[RIGHT_FRONT] = x + y - rotation;
-        wheelSpeeds[LEFT_REAR] = x + y + rotation;
-        wheelSpeeds[RIGHT_REAR] = -x + y - rotation;
+        wheelSpeeds[LEFT_FRONT] = x + y - rotation;
+        wheelSpeeds[RIGHT_FRONT] = -x + y + rotation;
+        wheelSpeeds[LEFT_REAR] = -x + y - rotation;
+        wheelSpeeds[RIGHT_REAR] = x + y + rotation;
 
         normalize(wheelSpeeds);
         scale(wheelSpeeds, OUTPUT_SCALE_FACTOR);
@@ -215,10 +215,10 @@ public class MecanumDrive implements Stoppable, Requirable {
         double sinD = Math.sin(dirInRad);
 
         double wheelSpeeds[] = new double[NUMBER_OF_MOTORS];
-        wheelSpeeds[LEFT_FRONT] = (sinD * magnitude + rotation);
-        wheelSpeeds[RIGHT_FRONT] = (cosD * magnitude - rotation);
-        wheelSpeeds[LEFT_REAR] = (cosD * magnitude + rotation);
-        wheelSpeeds[RIGHT_REAR] = (sinD * magnitude - rotation);
+        wheelSpeeds[LEFT_FRONT] = (cosD * magnitude - rotation);
+        wheelSpeeds[RIGHT_FRONT] = (sinD * magnitude + rotation);
+        wheelSpeeds[LEFT_REAR] = (sinD * magnitude - rotation);
+        wheelSpeeds[RIGHT_REAR] = (cosD * magnitude + rotation);
 
         normalize(wheelSpeeds);
         scale(wheelSpeeds, OUTPUT_SCALE_FACTOR);
