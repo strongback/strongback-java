@@ -256,6 +256,34 @@ public class SoftwarePIDControllerTest {
         assertThat(model.getActualValue() - 0.5 < 0.02).isTrue();
     }
 
+    @Test
+    public void shouldCorrectlyOutputWithinTolerance() {
+        final double target = 0.5;
+        final double tolerance = 0.02;
+
+        // Not within tolerance should return false
+        model = simple();
+        model.setValue(0);
+        controller = new SoftwarePIDController(model::sourceType, model::getActualValue, model::setValue)
+                .withGains(0.9, 0.0, 0.0)
+                .withInputRange(-1.0, 1.0)
+                .withOutputRange(-1.0, 1.0)
+                .withTolerance(tolerance)
+                .withTarget(target);
+        assertThat(controller.isWithinTolerance()).isFalse();
+
+        // Within tolerance should return true
+        model = simple();
+        model.setValue(target - tolerance + 0.001);
+        controller = new SoftwarePIDController(model::sourceType, model::getActualValue, model::setValue)
+                .withGains(0.9, 0.0, 0.0)
+                .withInputRange(-1.0, 1.0)
+                .withOutputRange(-1.0, 1.0)
+                .withTolerance(tolerance)
+                .withTarget(target);
+        assertThat(controller.isWithinTolerance()).isTrue();
+    }
+
     protected int runController(int maxNumSteps) {
         int counter = 0;
         while (!controller.computeOutput() && counter < maxNumSteps) {

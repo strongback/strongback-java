@@ -98,7 +98,7 @@ public interface Controller extends Requirable {
      * @return <code>true</code> if the proposed value is within the tolerance of the target, or <code>false</code> otherwise
      */
     public default boolean checkTolerance(double value) {
-        return Math.abs(value) <= (getTarget() - getTolerance());
+        return Math.abs(getTarget() - value) < getTolerance();
     }
 
     /**
