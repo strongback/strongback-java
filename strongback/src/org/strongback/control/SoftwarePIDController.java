@@ -656,7 +656,7 @@ public class SoftwarePIDController implements LiveWindowSendable, PIDController 
         }
 
         public boolean isWithinTolerance(double value) {
-            return Math.abs(value) <= (setpoint - tolerance);
+            return calculateError(value) < tolerance;
         }
 
         public double calculateError(double input) {
@@ -721,7 +721,7 @@ public class SoftwarePIDController implements LiveWindowSendable, PIDController 
         if (this.table != null) {
             this.table.removeTableListener(listener);
         }
-        this.table = table;
+        this.table = subtable;
         if (table != null) {
             Gains gains = this.gains;
             Target target = this.target;
