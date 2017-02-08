@@ -2,7 +2,7 @@ sudo: false
 language: java
 before_install:
   - ant -version
-  - wget http://www-us.apache.org/dist//ant/binaries/apache-ant-1.10.1-bin.zip
+  - wget http://www-us.apache.org/dist//ant/binaries/apache-ant-1.10.1-bin.tar.gz
   - tar -xf apache-ant-1.10.1-bin.tar.gz
   - export ANT_HOME=$PWD/apache-ant-1.10.1
   - export PATH=$ANT_HOME/bin:$PATH
