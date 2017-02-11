@@ -119,6 +119,10 @@ public class MecanumDrive implements Stoppable, Requirable {
     /**
      * Does the same as {@link #absoluteCartesian(double, double, double)}.
      *
+     * @param x The speed that the robot should drive in the X (horizontal) direction. Positive is right. [-1.0..1.0]
+     * @param y The speed that the robot should drive in the Y (vertical) direction. Positive is forward. [-1.0..1.0]
+     * @param rotation The rate of rotation for the robot that is completely independent of the translation. Positive is
+     *                 counter-clockwise. [-1.0..1.0]
      * @deprecated in favor of {@link #absoluteCartesian(double, double, double)}. Kept for backwards compatibility.
      */
     @Deprecated
@@ -129,6 +133,11 @@ public class MecanumDrive implements Stoppable, Requirable {
     /**
      * Does the same as {@link #relativePolar(double, double, double)}.
      *
+     * @param magnitude The speed that the robot should drive in a given direction.
+     * @param direction The direction the robot should drive in degrees. The direction and magnitude are independent of the
+     *        rotation rate. Zero degrees is forward; positive is counterclockwise.
+     * @param rotation The rate of rotation for the robot that is completely independent of the magnitude or direction.
+     *        Positive is counter-clockwise. [-1.0..1.0]
      * @deprecated in favor of {@link #relativePolar(double, double, double)}. Kept for backwards compatibility.
      */
     @Deprecated
