@@ -92,10 +92,10 @@
                 <pathelement path="${classpath}" />
             </classpath>
             <sourcefiles>
-                <fileset dir="strongback/src"/>
+                <fileset dir="strongback/src/main/java"/>
                 <!--fileset dir="strongback-testing/src"/-->
             </sourcefiles>
-            <packageset dir="strongback/src" defaultexcludes="yes">
+            <packageset dir="strongback/src/main/java" defaultexcludes="yes">
               <include name="org.strongback/**"/>
             </packageset>
 

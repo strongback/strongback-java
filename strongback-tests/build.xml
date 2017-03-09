@@ -9,13 +9,13 @@
     </path>
 
     <!-- Run the JUnit Tests -->
-    <target name="test" depends="compile" description="Run the unit tests">
+    <target name="test" depends="compile-tests" description="Run the unit tests">
         <!-- Creates the directories used in the tests -->
         <mkdir dir="${project.test.report.dir}" />
         <echo>[run-tests] Running all unit tests...</echo>
         <junit printsummary="off" showOutput="false" fork="false" haltonfailure="no" failureproperty="test.failed" >
             <classpath> 
-                <pathelement location="${project.output.dir}"/>
+                <pathelement location="${project.test.output.dir}"/>
             </classpath>
         	<classpath refid="compile.class.path"/>
         	<classpath>
@@ -23,7 +23,7 @@
         	</classpath>
             <formatter type="plain" usefile="false" /> <!-- to screen -->
             <batchtest todir="${project.test.report.dir}">
-                <fileset dir="${project.source.dir}">
+                <fileset dir="${project.test.source.dir}">
                     <include name="**/*Test.java" />
                     <exclude name="**/Abstract*Test.java" />
                 </fileset>
