@@ -1,0 +1,13 @@
+plugins {
+  id "maven"
+}
+
+dependencies {
+  compile fileTree(dir: "${project.baseDir}/libs/ctre", include: '**/*.jar')
+  compile fileTree(dir: "${project.baseDir}/libs/nvax-mxp", include: '**/*.jar')
+  compile fileTree(dir: "${project.baseDir}/libs/wpilib", include: '**/*.jar')
+  compile('io.dropwizard.metrics:metrics-core:3.1.0')
+
+  testCompile('org.easytesting:fest-assert:1.4')
+  compile('junit:junit:4.11')
+}
