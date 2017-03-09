@@ -66,13 +66,9 @@ To build the source code locally, checkout and update the `master` branch:
     $ git checkout master
     $ git pull upstream master
 
-Then use Ant to compile everything, run all unit tests, and build all artifacts:
+Then use Ant to compile everything and run all the tests:
 
-    $ ant clean dist
-
-If you want to just compile, use:
-
-    $ mvn clean compileinstall -Passembly -DskipITs -DskipTests
+    $ ant test
 
 ### Making changes
 
@@ -82,7 +78,7 @@ Before you make any changes, be sure to switch to the `master` branch and pull t
 
     $ git checkout master
     $ git pull upstream master
-    $ mvn clean install
+    $ ant test
 
 Once everything builds, create a *topic branch* named appropriately (we recommend using the issue number, such as `DBZ-1234`):
 
@@ -92,7 +88,7 @@ This branch exists locally and it is there you should make all of your proposed 
 
 Your changes should include changes to existing tests or additional unit and/or integration tests that verify your changes work. We recommend frequently running related unit tests (in your IDE or using Ant) to make sure your changes didn't break anything else, and that you also periodically run a complete build using Ant to make sure that everything still works:
 
-    $ mvn clean dist
+    $ ant test release
 
 Feel free to commit your changes locally as often as you'd like, though we generally prefer that each commit represent a complete and atomic change to the code. Often, this means that most issues will be addressed with a single commit in a single pull-request, but other more complex issues might be better served with a few commits that each make separate but atomic changes. (Some developers prefer to commit frequently and to ammend their first commit with additional changes. Other developers like to make multiple commits and to then squash them. How you do this is up to you. However, *never* change, squash, or ammend a commit that appears in the history of the upstream repository.) When in doubt, use a few separate atomic commits; if the Strongback reviewers think they should be squashed, they'll let you know when they review your pull request.
 
