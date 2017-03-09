@@ -9,6 +9,8 @@ before_install:
   - ant -version
 
 install: ant deps
-script: ant test
+script: 
+  - "ant test"
+  - "./gradlew build"
 jdk:
   - oraclejdk8
