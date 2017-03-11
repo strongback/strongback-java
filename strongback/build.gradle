@@ -1,6 +1,17 @@
+buildscript {
+  repositories {
+    mavenCentral()
+  }
+  dependencies {
+    classpath 'org.codehaus.groovy.modules.http-builder:http-builder:0.7.1'
+  }
+}
+
 plugins {
   id "maven"
 }
+
+apply plugin: DownloadPlugin
 
 dependencies {
   compile fileTree(dir: "${project.baseDir}/libs/ctre", include: '**/*.jar')
@@ -10,4 +21,97 @@ dependencies {
 
   testCompile('org.easytesting:fest-assert:1.4')
   compile('junit:junit:4.11')
+}
+
+
+import groovyx.net.http.*
+import groovy.xml.*
+
+//plugins/<plugin.@id>_<plugin.@version>.jar
+//plugins/edu.wpi.first.wpilib.plugins.java_2017.3.1.jar
+
+class DownloadPlugin implements Plugin<Project> {
+    def rootUrl = 'http://first.wpi.edu/FRC/roborio/release/eclipse/'
+    void apply(Project project) {
+
+        project.task('hello') {
+            doLast {
+            }
+        }
+
+        def wpiLibFile = new File(project.getBuildDir().getAbsolutePath() + "/wpilib/lib/WPILib.jar");
+        
+        if (wpiLibFile.exists()) {
+          println "Already downloaded wpilib"
+        } else {
+          def client = new HTTPBuilder(rootUrl)
+          client.headers = [Accept : 'application/xml']
+
+          def javaUrl = client.get( path : 'site.xml') {resp, xml ->
+             xml.feature
+              .find { it.@id == 'edu.wpi.first.wpilib.plugins.java.feature'}
+              .@url.text()
+          }
+
+          client.parser.'application/java-archive' = client.parser.defaultParser
+          client.headers = [Accept : 'application/java-archive']
+
+          def jar = client.get( path: javaUrl)
+          def outputFile = new File(project.getBuildDir(), 'wpilib-plugin.jar')
+          outputFile.parentFile.mkdirs()
+          outputFile.createNewFile()
+          outputFile.append jar
+
+          def zipFile = new java.util.zip.ZipFile(outputFile)
+          def zipEntry = zipFile.entries().find { it.name == "feature.xml"}
+          def featureText = zipFile.getInputStream(zipEntry).text
+          def featureXml = new XmlParser().parseText(featureText)
+
+          def id = featureXml.plugin.get(0).@id
+          def version = featureXml.plugin.get(0).@version
+          outputFile.delete()
+
+          def javaDep = client.get( path: "plugins/${id}_${version}.jar")
+          def pluginFile = new File(project.getBuildDir(), 'wpi-java-plugin.jar')
+          pluginFile.createNewFile()
+          pluginFile.append javaDep
+
+          def pluginZip = new java.util.zip.ZipFile(pluginFile)
+          def javaZip = pluginZip.entries().find {it.name == "resources/java.zip" }
+          def javaZipBytes = pluginZip.getInputStream(javaZip).bytes
+          def zipOutput = new File(project.getBuildDir(), 'zipOut/')
+          def javaZipFile = new File(zipOutput, 'java.zip')
+          javaZipFile.parentFile.mkdirs()
+          javaZipFile.createNewFile()
+          javaZipFile.append javaZipBytes
+
+          pluginFile.delete()
+
+          def outputDir = new File(project.getBuildDir(), 'wpilib/')
+          outputDir.mkdirs()
+          def zip = new java.util.zip.ZipFile(javaZipFile)
+          zip.entries().each{  
+            if (!it.isDirectory()){
+              def fOut = new File(outputDir.getAbsolutePath()+ File.separator + it.name)
+              //create output dir if not exists
+              new File(fOut.parent).mkdirs()
+              fOut.createNewFile()
+              //println "name:${it.name}, size:${it.size}"
+              def bytes = zip.getInputStream(it).bytes //println zip.getInputStream(it).text
+              fOut.append bytes
+            }
+          }
+          zip.close()
+
+          zipOutput.delete()
+        }
+        project.dependencies.add 'compile', project.fileTree(dir: 'build/wpilib/lib', include: '**/*.jar', exclude: '**/*-sources.jar')
+
+        // def id = featureXml.plugin[0].@id
+        // def version = featureXml.plugin[0].@version
+        // println id + " " + version 
+        // Add the 'greeting' extension object
+        // project.extensions.create("greeting", DownloadPluginExtension)
+        // Add a task that uses the configuration
+    }
 }

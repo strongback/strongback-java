@@ -1,9 +1,14 @@
+plugins {
+	id 'java'
+}
+
 ext {
 	baseDir = project.projectDir
 }
 
 allprojects {
-	apply plugin: "java"
+
+	apply plugin: 'java'
 
 	sourceCompatibility = 1.8
 	targetCompatibility = 1.8
@@ -16,6 +21,7 @@ allprojects {
 	version = "2017.2.1-SNAPSHOT"
 
 }
+
 task wrapper(type: Wrapper) {
 	gradleVersion = '2.10'
 }
