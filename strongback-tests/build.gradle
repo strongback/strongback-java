@@ -1,4 +1,4 @@
 dependencies {
-  compile project(":strongback")
-  compile project(":strongback-testing")
+  testCompile project(":strongback")
+  testCompile project(":strongback-testing")
 }

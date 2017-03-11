@@ -1,12 +1,8 @@
-plugins {
-	id 'java'
-}
-
 ext {
 	baseDir = project.projectDir
 }
 
-allprojects {
+subprojects {
 
 	apply plugin: 'java'
 
@@ -19,6 +15,17 @@ allprojects {
 
 	group = "org.strongback"
 	version = "2017.2.1-SNAPSHOT"
+
+	repositories {
+		maven {
+			url 'http://first.wpi.edu/FRC/roborio/maven/release'
+		}
+	}
+
+	dependencies {
+		testCompile('junit:junit:4.12')
+	  testCompile('org.easytesting:fest-assert:1.4')  		
+	}
 
 }
 
