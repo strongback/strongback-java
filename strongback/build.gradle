@@ -10,7 +10,10 @@ wpi {
 dependencies {
   compile wpilib()
   compile fileTree(dir: "${project.baseDir}/libs/ctre", include: '**/*.jar')
-  compile fileTree(dir: "${project.baseDir}/libs/nvax-mxp", include: '**/*.jar')
+  compile fileTree(dir: "${project.baseDir}/libs/navx-mxp", include: '**/*.jar')
   compile('io.dropwizard.metrics:metrics-core:3.1.0')
   compile('junit:junit:4.11')
 }
+
+compileJava.dependsOn(':download-navx')
+compileJava.dependsOn(':download-ctre')
