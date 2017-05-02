@@ -65,7 +65,7 @@
         <condition property="tests-exists">
             <available file="${project.test.source.dir}" type="dir"/>
         </condition>
-    </target>    
+    </target>
 
     <target name="compile" depends="if-source" description="Compile the code" if="source-exists">
         <echo>Compiling against WPILib ${wpilib.version} installed at ${wpilib.dir}</echo>
