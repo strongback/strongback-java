@@ -1,0 +1,5 @@
+include ':strongback'
+include ':strongback-testing'
+include ':strongback-tests'
+include ':strongback-tools'
+include ':strongback-examples'

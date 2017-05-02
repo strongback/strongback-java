@@ -13,12 +13,12 @@
         <format property="current.date" pattern="yyyy-MM-dd" locale="en"/>
     </tstamp>
     <property file="build.properties"/>
+    <import file="third-party.xml" />
+
     <property name="wpilib.dir" value="libs/wpilib"/>
     <property name="wpi.libs.dir" value="${wpilib.dir}/java/current/lib"/>
     <property file="${wpilib.dir}/wpilib.properties"/>
-    <property name="ctre.dir" value="libs/ctre"/>
     <property name="ctre.libs.dir" value="${ctre.dir}/java/lib"/>
-    <property name="navx.dir" value="libs/navx-mxp"/>
     <property name="navx.libs.dir" value="${navx.dir}/roborio/java/lib"/>
     <property name="build.dir" value="build"/>
 
@@ -92,10 +92,10 @@
                 <pathelement path="${classpath}" />
             </classpath>
             <sourcefiles>
-                <fileset dir="strongback/src"/>
+                <fileset dir="strongback/src/main/java"/>
                 <!--fileset dir="strongback-testing/src"/-->
             </sourcefiles>
-            <packageset dir="strongback/src" defaultexcludes="yes">
+            <packageset dir="strongback/src/main/java" defaultexcludes="yes">
               <include name="org.strongback/**"/>
             </packageset>
 
@@ -254,64 +254,6 @@
         <propertyfile file="${wpilib.dir}/wpilib.properties" comment="Downloaded and installed by Strongback build system">
             <entry  key="version" value="current"/>
             <entry  key="wpilib.version" value="${wpilib.version}"/>
-        </propertyfile>
-    </target>
-
-    <!-- Download and install the CTRE library -->
-    <target name="check-for-ctre">
-        <condition property="ctre-missing">
-            <not>
-                <available file="${ctre.dir}" type="dir"/>
-            </not>
-        </condition>
-    </target>
-    <target name="download-ctre" depends="check-for-ctre" if="ctre-missing" >
-        <echo>Downloading the CTRE library and installing into '${ctre.dir}'.</echo>
-        <!-- Get and extra the ZIP file -->
-        <get src="${ctre.download.url}" dest="downloads/ctre.zip"/>
-        <!--copy file="/Users/rhauch/Downloads/CTRE_FRCLibs_NON-WINDOWS.zip" tofile="downloads/ctre.zip"/-->
-        <mkdir dir="${ctre.dir}"/>
-        <unzip src="downloads/ctre.zip" dest="${ctre.dir}">
-        </unzip>
-        <!-- Load the version info into a properties file -->
-        <loadfile property="ctre.version.properties" srcfile="${ctre.dir}/VERSION_NOTES">
-            <filterchain>
-                <!-- skip the first line -->
-                <headfilter lines="-1" skip="1"/>
-                <trim/>
-                <replacestring from=": " to="="/>
-                <replacestring from=" " to="."/>
-            </filterchain>
-        </loadfile>
-        <!-- Write out a property file in the CTRE directory -->
-        <echo file="${ctre.dir}/ctre.properties" append="false"># Downloaded and installed by Strongback build system${line.separator}</echo>
-        <echo file="${ctre.dir}/ctre.properties" append="true">${ctre.version.properties}</echo>
-    </target>
-
-    <!-- Download and extract the navX-MXP 3rd party library -->
-    <target name="check-for-navx">
-        <condition property="navx-missing">
-            <not>
-                <available file="${navx.dir}" type="dir"/>
-            </not>
-        </condition>
-    </target>
-    <target name="download-navx" depends="check-for-navx" if="navx-missing" >
-        <echo>Downloading the navX-MXP library and installing into '${navx.dir}'.</echo>
-        <get src="${navx.download.url}" dest="downloads/navx.zip"/>
-        <mkdir dir="${navx.dir}"/>
-        <unzip src="downloads/navx.zip" dest="${navx.dir}">
-        </unzip>
-        <!-- Load the version info into a property -->
-        <loadfile property="navx.version" srcFile="${navx.dir}/version.txt">
-            <filterchain>
-                <striplinebreaks/>
-                <trim/>
-            </filterchain>
-        </loadfile>
-        <!-- Write out a property file in the navX directory -->
-        <propertyfile file="${navx.dir}/navx.properties" comment="Downloaded and installed by Strongback build system">
-            <entry  key="version" value="${navx.version}"/>
         </propertyfile>
     </target>
 </project>

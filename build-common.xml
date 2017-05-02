@@ -11,11 +11,11 @@
     <property name="java.source.version" value="1.8"/>
     <property name="java.target.version" value="1.8"/>
     <property name="project.build.dir" value="build"/>
-    <property name="project.source.dir" value="src"/>
-    <property name="project.resources.dir" value="resources"/>
+    <property name="project.source.dir" value="src/main/java"/>
+    <property name="project.resources.dir" value="src/main/resources"/>
     <property name="project.output.dir" value="${project.build.dir}/classes"/>
-    <property name="project.test.source.dir" value="test"/>
-    <property name="project.test.resources.dir" value="testresources"/>
+    <property name="project.test.source.dir" value="src/test/java"/>
+    <property name="project.test.resources.dir" value="src/test/resources"/>
     <property name="project.test.output.dir" value="${project.build.dir}/test-classes"/>
     <property name="project.test.report.dir" value="${project.build.dir}/test-reports"/>
     <property name="wpi.libs.dir" value="${wpilib.dir}/java/current/lib"/>
@@ -54,6 +54,12 @@
         <delete dir="${project.build.dir}" />
     </target>
 
+    <target name="if-source">
+        <condition property="source-exists">
+            <available file="${project.source.dir}" type="dir"/>
+        </condition>
+    </target>
+
     <!-- Check if there are any JUnit Tests -->
     <target name="if-tests">
         <condition property="tests-exists">
@@ -61,7 +67,7 @@
         </condition>
     </target>
 
-    <target name="compile" description="Compile the code">
+    <target name="compile" depends="if-source" description="Compile the code" if="source-exists">
         <echo>Compiling against WPILib ${wpilib.version} installed at ${wpilib.dir}</echo>
         <mkdir dir="${project.output.dir}"/>
         <javac srcdir="${project.source.dir}" 
@@ -126,7 +132,7 @@
     </target>
 
     <!-- Override the several targets that will need to use the extra library JARs. -->
-    <target name="jar" depends="compile, test" description="Build and collect the JARs necessary for the robot">
+    <target name="jar" depends="compile, test" if="source-exists" description="Build and collect the JARs necessary for the robot">
         <mkdir dir="${project.build.dir}" />
         <jar destfile="${project.build.dir}/${project.jar.name}" basedir="${project.output.dir}"/>
         <jar destfile="${project.build.dir}/${project.source.jar.name}" basedir="${project.source.dir}"/>

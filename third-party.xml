@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="strongback.thirdparty" default="download-navx">
+    <!-- Download and extract the navX-MXP 3rd party library -->
+    <property file="thirdparty.properties"/>
+    <property name="navx.dir" value="libs/navx-mxp"/>
+    <property name="ctre.dir" value="libs/ctre"/>
+
+    <target name="make-downloads-dir">
+        <mkdir dir="downloads" />
+    </target>
+    <!-- Download and install the CTRE library -->
+    <target name="check-for-ctre">
+        <condition property="ctre-missing">
+            <not>
+                <available file="${ctre.dir}" type="dir"/>
+            </not>
+        </condition>
+    </target>
+    <target name="download-ctre" depends="check-for-ctre,make-downloads-dir" if="ctre-missing" >
+        <echo>Downloading the CTRE library and installing into '${ctre.dir}'.</echo>
+        <!-- Get and extra the ZIP file -->
+        <get src="${ctre.download.url}" dest="downloads/ctre.zip"/>
+        <!--copy file="/Users/rhauch/Downloads/CTRE_FRCLibs_NON-WINDOWS.zip" tofile="downloads/ctre.zip"/-->
+        <mkdir dir="${ctre.dir}"/>
+        <unzip src="downloads/ctre.zip" dest="${ctre.dir}">
+        </unzip>
+        <!-- Load the version info into a properties file -->
+        <loadfile property="ctre.version.properties" srcfile="${ctre.dir}/VERSION_NOTES">
+            <filterchain>
+                <!-- skip the first line -->
+                <headfilter lines="-1" skip="1"/>
+                <trim/>
+                <replacestring from=": " to="="/>
+                <replacestring from=" " to="."/>
+            </filterchain>
+        </loadfile>
+        <!-- Write out a property file in the CTRE directory -->
+        <echo file="${ctre.dir}/ctre.properties" append="false"># Downloaded and installed by Strongback build system${line.separator}</echo>
+        <echo file="${ctre.dir}/ctre.properties" append="true">${ctre.version.properties}</echo>
+    </target>
+
+    <target name="check-for-navx">
+        <condition property="navx-missing">
+            <not>
+                <available file="${navx.dir}" type="dir"/>
+            </not>
+        </condition>
+    </target>
+    <target name="download-navx" depends="check-for-navx,make-downloads-dir" if="navx-missing" >
+        <echo>Downloading the navX-MXP library and installing into '${navx.dir}'.</echo>
+        <get src="${navx.download.url}" dest="downloads/navx.zip"/>
+        <mkdir dir="${navx.dir}"/>
+        <unzip src="downloads/navx.zip" dest="${navx.dir}">
+        </unzip>
+        <!-- Load the version info into a property -->
+        <loadfile property="navx.version" srcFile="${navx.dir}/version.txt">
+            <filterchain>
+                <striplinebreaks/>
+                <trim/>
+            </filterchain>
+        </loadfile>
+        <!-- Write out a property file in the navX directory -->
+        <propertyfile file="${navx.dir}/navx.properties" comment="Downloaded and installed by Strongback build system">
+            <entry  key="version" value="${navx.version}"/>
+        </propertyfile>
+    </target>
+</project>
