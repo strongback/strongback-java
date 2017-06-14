@@ -57,7 +57,7 @@ public interface SwitchReactor {
      * @param commandSupplier the supplier of the command to submit; may not be null but may return a null command
      */
     default public void onUntriggeredSubmit(Switch swtch, Supplier<Command> commandSupplier) {
-        onTriggered(swtch,()->Strongback.submit(commandSupplier.get()));
+        onUntriggered(swtch,()->Strongback.submit(commandSupplier.get()));
     }
 
     /**
