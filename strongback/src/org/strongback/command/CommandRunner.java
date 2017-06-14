@@ -62,17 +62,41 @@ final class CommandRunner {
     private CommandState state = CommandState.UNINITIALIZED;
     private final Context context;
 
-    CommandRunner(Command command) {
-        // Just a command and no next is a leaf
-        this(DEFAULT_CONTEXT, command);
+    static CommandRunner create(Command command) {
+        return create(DEFAULT_CONTEXT, command);
     }
 
-    CommandRunner(Context context, Command command) {
-        // Just a command and no next is a leaf
-        this(context, null, command);
+    static CommandRunner create(Context context, Command command) {
+        return buildRunner(context, command, null);
     }
 
-    CommandRunner(Context context, CommandRunner next, Command command) {
+    private static CommandRunner buildRunner(Context context, Command command, CommandRunner last) {
+        if (command instanceof CommandGroup) {
+            CommandGroup cg = (CommandGroup) command;
+            Command[] commands = cg.getCommands();
+            switch (cg.getType()) {
+                case SEQUENTIAL:
+                    for (int i = commands.length - 1; i >= 0; i--) {
+                        last = buildRunner(context, commands[i], last);
+                    }
+                    return last;
+                case PARRALLEL:
+                    CommandRunner[] crs = new CommandRunner[commands.length];
+                    for (int i = 0; i < crs.length; i++) {
+                        crs[i] = buildRunner(context, commands[i], null);
+                    }
+                    return new CommandRunner(context, last, crs);
+                case FORK:
+                    assert commands.length == 1;
+                    return new CommandRunner(context, last, new CommandRunner(context, buildRunner(context, commands[0], null)));
+            }
+            // This line should never happen, the switch will throw an exception first
+            throw new IllegalStateException("Unexpected command type: " + cg.getType());
+        }
+        return new CommandRunner(context, last, command);
+    }
+
+    private CommandRunner(Context context, CommandRunner next, Command command) {
         // A command and a next is a node
         this.command = command;
         this.next = next;
@@ -80,7 +104,7 @@ final class CommandRunner {
         this.context = context != null ? context : DEFAULT_CONTEXT;
     }
 
-    CommandRunner(Context context, CommandRunner next, CommandRunner... commands) {
+    private CommandRunner(Context context, CommandRunner next, CommandRunner... commands) {
         // A next and several children is a branch
         if (commands.length != 0) this.children = commands;
         this.next = next;

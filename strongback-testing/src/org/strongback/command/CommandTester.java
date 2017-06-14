@@ -24,7 +24,7 @@ public class CommandTester {
     private final CommandRunner runner;
 
     public CommandTester(Command command) {
-        runner = new CommandRunner(command);
+        runner = CommandRunner.create(command);
     }
 
     /**
