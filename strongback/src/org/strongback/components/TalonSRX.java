@@ -16,6 +16,7 @@
 
 package org.strongback.components;
 
+import com.ctre.CANTalon;
 import org.strongback.annotation.Experimental;
 
 /**
@@ -54,32 +55,34 @@ public interface TalonSRX extends LimitedMotor {
     }
 
     /**
-     * Get the current encoder angle and rate, regardless of whether it is the current feedback device.
+     * Get the current encoder position and rate, regardless of whether it is the current feedback device.
      *
      * @return the gyroscope that reads the encoder sensor; or null if the motor was created with no quadrature encoder input
      * @see org.strongback.hardware.Hardware.Motors#talonSRX(int)
      * @see org.strongback.hardware.Hardware.Motors#talonSRX(int, double)
      * @see org.strongback.hardware.Hardware.Motors#talonSRX(int, double, double)
      */
-    public Gyroscope getEncoderInput();
+    public RevSensor getEncoderInput();
 
     /**
-     * Get the current analog angle and rate, regardless of whether it is the current feedback device.
+     * Get the current analog position and rate, regardless of whether it is the current feedback device.
      *
      * @return the gyroscope that reads the 3.3V analog sensor; or null if the motor was created with no analog input
      * @see org.strongback.hardware.Hardware.Motors#talonSRX(int)
      * @see org.strongback.hardware.Hardware.Motors#talonSRX(int, double)
      * @see org.strongback.hardware.Hardware.Motors#talonSRX(int, double, double)
      */
-    public Gyroscope getAnalogInput();
+    public RevSensor getAnalogInput();
+
+    public RevSensor getPwmInput();
 
     /**
-     * Get the input angle and rate of the current {@link #setFeedbackDevice(FeedbackDevice) feedback device}.
+     * Get the input position and rate of the current {@link #setFeedbackDevice(FeedbackDevice) feedback device}.
      *
      * @return the selected input device sensor; never null, but it may return a meaningless value if a sensor is not physically
      *         wired as an input to the Talon device
      */
-    public Gyroscope getSelectedSensor();
+    public RevSensor getSelectedSensor();
 
     /**
      * Get the Talon SRX's output current sensor.
@@ -108,6 +111,10 @@ public interface TalonSRX extends LimitedMotor {
      * @return the temperature sensor; never null
      */
     public TemperatureSensor getTemperatureSensor();
+
+    void setEncoderCodesPerRevolution(int codesPerRev);
+
+    void setPotentiometerTurns(int turns);
 
     /**
      * Set the feedback device for this controller.
@@ -140,7 +147,7 @@ public interface TalonSRX extends LimitedMotor {
     public TalonSRX reverseSensor(boolean flip);
 
     /**
-     * Set the soft limit for the forward throttle, in terms of the angle as measured by the {@link #getSelectedSensor()
+     * Set the soft limit for the forward throttle, in terms of the position as measured by the {@link #getSelectedSensor()
      * selected input sensor}. Soft limits can be used to disable motor drive when the "Sensor Position" is outside of a
      * specified range: forward throttle will be disabled if the "Sensor Position" is greater than the forward soft limit.
      * This takes effect only when the forward soft limit is {@link #enableForwardSoftLimit(boolean)}.
@@ -150,15 +157,15 @@ public interface TalonSRX extends LimitedMotor {
      * disabled if the 'Sensor Position' is less than the Reverse Soft Limit. The respective Soft Limit Enable must be enabled
      * for this feature to take effect.
      *
-     * @param forwardLimitInDegrees the angle at which the forward throttle should be disabled, where the angle in terms of the
+     * @param forwardLimit the position at which the forward throttle should be disabled, in terms of the
      *        {@link #getSelectedSensor()}
      * @return this object so that methods can be chained; never null
      * @see #enableForwardSoftLimit(boolean)
      */
-    public TalonSRX setForwardSoftLimit(int forwardLimitInDegrees);
+    public TalonSRX setForwardSoftLimit(int forwardLimit);
 
     /**
-     * Set the soft limit for the reverse throttle, in terms of the angle as measured by the {@link #getSelectedSensor()
+     * Set the soft limit for the reverse throttle, in terms of the position as measured by the {@link #getSelectedSensor()
      * selected input sensor}. Soft limits can be used to disable motor drive when the "Sensor Position" it outside of a
      * specified range: reverse throttle will be disabled if the "Sensor Position" is less than the reverse soft limit.
      * This takes effect only when the reverse soft limit is {@link #enableReverseSoftLimit(boolean)}.
@@ -168,12 +175,12 @@ public interface TalonSRX extends LimitedMotor {
      * disabled if the 'Sensor Position' is less than the Reverse Soft Limit. The respective Soft Limit Enable must be enabled
      * for this feature to take effect.
      *
-     * @param reverseLimitInDegrees the angle at which the reverse throttle should be disabled, where the angle in terms of the
+     * @param reverseLimit the position at which the reverse throttle should be disabled, in terms of the
      *        {@link #getSelectedSensor()}
      * @return this object so that methods can be chained; never null
      * @see #enableForwardSoftLimit(boolean)
      */
-    public TalonSRX setReverseSoftLimit(int reverseLimitInDegrees);
+    public TalonSRX setReverseSoftLimit(int reverseLimit);
 
     /**
      * Enable the soft limit for forward throttle, which is set via the {@link #setForwardSoftLimit(int)}.
@@ -326,22 +333,22 @@ public interface TalonSRX extends LimitedMotor {
         /**
          * Use Quadrature Encoder.
          */
-        QUADRATURE_ENCODER(0),
+        QUADRATURE_ENCODER(CANTalon.FeedbackDevice.QuadEncoder.value),
 
         /**
          * Analog potentiometer or any other analog device, 0-3.3V
          */
-        ANALOG_POTENTIOMETER(2),
+        ANALOG_POTENTIOMETER(CANTalon.FeedbackDevice.AnalogPot.value),
 
         /**
          * Analog encoder or any other analog device, 0-3.3V
          */
-        ANALOG_ENCODER(3),
+        ANALOG_ENCODER(CANTalon.FeedbackDevice.AnalogEncoder.value),
 
         /**
          * Encoder that increments position per rising edge (and never decrements) on Quadrature-A.
          */
-        ENCODER_RISING(4),
+        ENCODER_RISING(CANTalon.FeedbackDevice.EncRising.value),
 
         /**
          * Encoder that increments position per falling edge (and never decrements) on Quadrature-A. Note: Was not supported in
@@ -349,22 +356,22 @@ public interface TalonSRX extends LimitedMotor {
          * <a href="https://www.ctr-electronics.com/Talon%20SRX%20Software%20Reference%20Manual.pdf">Talon SRX Software
          * Reference Manual</a>, section 21.3
          */
-        ENCODER_FALLING(5),
+        ENCODER_FALLING(CANTalon.FeedbackDevice.EncFalling.value),
 
         /**
          * CTRE magnetic encoder with relative position
          */
-        MAGNETIC_ENCODER_RELATIVE(6),
+        MAGNETIC_ENCODER_RELATIVE(CANTalon.FeedbackDevice.CtreMagEncoder_Relative.value),
 
         /**
          * CTRE magnetic encoder with absolute position
          */
-        MAGNETIC_ENCODER_ABSOLUTE(7),
+        MAGNETIC_ENCODER_ABSOLUTE(CANTalon.FeedbackDevice.CtreMagEncoder_Absolute.value),
 
         /**
          * Pulse width
          */
-        PULSE_WIDTH(8);
+        PULSE_WIDTH(CANTalon.FeedbackDevice.PulseWidth.value);
 
         public int value;
 

@@ -16,19 +16,15 @@
 
 package org.strongback.hardware;
 
-import java.util.function.DoubleSupplier;
-
-import org.strongback.Strongback;
+import com.ctre.CANTalon;
+import com.ctre.CANTalon.TalonControlMode;
 import org.strongback.annotation.Immutable;
 import org.strongback.components.CurrentSensor;
-import org.strongback.components.Gyroscope;
+import org.strongback.components.RevSensor;
 import org.strongback.components.Switch;
 import org.strongback.components.TalonSRX;
 import org.strongback.components.TemperatureSensor;
 import org.strongback.components.VoltageSensor;
-
-import com.ctre.CANTalon;
-import com.ctre.CANTalon.TalonControlMode;
 
 /**
  * Talon speed controller with position and current sensor
@@ -39,164 +35,19 @@ import com.ctre.CANTalon.TalonControlMode;
  */
 @Immutable
 class HardwareTalonSRX implements TalonSRX {
-
-    protected static interface InputSensor extends Gyroscope {
-        public double rawPositionForAngleInDegrees( double angle );
-        public double angleInDegreesFromRawPosition( double position );
-    }
-
-    protected static final InputSensor NO_OP_SENSOR = new InputSensor() {
-
-        @Override
-        public double getAngle() {
-            return 0;
-        }
-
-        @Override
-        public double getRate() {
-            return 0;
-        }
-        @Override
-        public InputSensor zero() {
-            return this; // do nothing
-        }
-
-        @Override
-        public double rawPositionForAngleInDegrees(double angleInDegrees) {
-            return 0.0;
-        }
-
-        @Override
-        public double angleInDegreesFromRawPosition(double position) {
-            return 0.0;
-        }
-    };
-
-    protected static final class EncoderInputSensor implements InputSensor {
-        private double zero = 0.0;
-        private final DoubleSupplier positionInEdges;
-        private final DoubleSupplier velocityInEdgesPerCycle;
-        private final DoubleSupplier cyclePeriodInSeconds;
-        private final double pulsesPerDegree;
-        private final double edgesPerPulse;
-
-        protected EncoderInputSensor( DoubleSupplier positionInEdges, DoubleSupplier velocityInEdgesPerCycle,
-            double pulsesPerDegree, int edgesPerPulse, DoubleSupplier cyclesPeriodInSeconds ) {
-            this.positionInEdges = positionInEdges;
-            this.velocityInEdgesPerCycle = velocityInEdgesPerCycle;
-            this.cyclePeriodInSeconds = cyclesPeriodInSeconds;
-            this.pulsesPerDegree = pulsesPerDegree;
-            this.edgesPerPulse = edgesPerPulse;
-        }
-
-        @Override
-        public double rawPositionForAngleInDegrees(double angle) {
-            // Units: (degrees) x (pulses/degrees) * (edges/pulses) = (edges)
-            double relativeInput = angle * pulsesPerDegree * edgesPerPulse;
-            return relativeInput + zero;
-        }
-
-        @Override
-        public double angleInDegreesFromRawPosition(double position) {
-            // Units: (edges) x (pulse/edges) x (degrees/pulse) = degrees
-            return (position - zero) / edgesPerPulse / pulsesPerDegree;
-        }
-
-        @Override
-        public double getAngle() {
-            return angleInDegreesFromRawPosition(positionInEdges.getAsDouble());
-        }
-
-        @Override
-        public double getRate() {
-            // Units: (edges/cycle) * (pulses/edge) x (degrees/pulse) x (cycles/second) = (degrees/second)
-            return velocityInEdgesPerCycle.getAsDouble() / edgesPerPulse / pulsesPerDegree / cyclePeriodInSeconds.getAsDouble();
-        }
-
-        @Override
-        public Gyroscope zero() {
-            zero = positionInEdges.getAsDouble();
-            return this;
-        }
-    }
-
-    protected static final class AnalogInputSensor implements InputSensor {
-        private double zero = 0.0;
-        private final DoubleSupplier analogPosition;
-        private final DoubleSupplier changeInVoltsPerCycle;
-        private final DoubleSupplier cyclePeriodInSeconds;
-        private final double analogRange;
-        private final double analogTurnsPerVolt;
-        private final double voltageRange;
-
-        protected AnalogInputSensor( DoubleSupplier analogPosition, DoubleSupplier changeInVoltsPerCycle,
-                double analogRange, double analogTurnsPerVolt, double voltageRange, DoubleSupplier cyclePeriodInSeconds ) {
-            this.analogPosition = analogPosition;
-            this.changeInVoltsPerCycle = changeInVoltsPerCycle;
-            this.cyclePeriodInSeconds = cyclePeriodInSeconds;
-            this.analogRange = analogRange;
-            this.analogTurnsPerVolt = analogTurnsPerVolt;
-            this.voltageRange = voltageRange;
-        }
-
-        @Override
-        public double rawPositionForAngleInDegrees(double angle) {
-            // Units: (0-1023) / 1023 x (turns/volt) x (volts) x (degrees/turn) = degrees
-            // Units: (degrees) x (turns/degrees) x (1/volts) x (volts/turn) * 1023  = (0-1023)
-            double relativeInput = angle / 360.0 / voltageRange / analogTurnsPerVolt * analogRange;
-            return relativeInput + zero;
-        }
-
-        @Override
-        public double angleInDegreesFromRawPosition(double position) {
-            // Units: (0-1023) / 1023 x (turns/volt) x (volts) x (degrees/turn) = degrees
-            return (position - zero) / analogRange * analogTurnsPerVolt * voltageRange * 360.0;
-        }
-        @Override
-        public double getAngle() {
-            return angleInDegreesFromRawPosition(analogPosition.getAsDouble());
-        }
-
-        @Override
-        public double getRate() {
-            // Units: (0-1023)/cycle / 1023 x (turns/volt) x (volts) x (degrees/turn) x (cycles/second) = (degrees/second)
-            return changeInVoltsPerCycle.getAsDouble() / analogRange * analogTurnsPerVolt * voltageRange * 360.0
-                    / cyclePeriodInSeconds.getAsDouble();
-        }
-
-        @Override
-        public Gyroscope zero() {
-            zero = analogPosition.getAsDouble();
-            return this;
-        }
-    }
-
-    protected static EncoderInputSensor encoderInput(DoubleSupplier positionInPulses, DoubleSupplier velocityInPulsesPerCycle,
-            double pulsesPerDegree, int risesPerPulse, DoubleSupplier cyclePeriodInSeconds) {
-        if ( pulsesPerDegree <= 0.0000001d && pulsesPerDegree >= 0.0000001d ) return null;
-        return new EncoderInputSensor(positionInPulses, velocityInPulsesPerCycle, pulsesPerDegree, risesPerPulse, cyclePeriodInSeconds);
-    }
-
-    protected static AnalogInputSensor analogInput(DoubleSupplier analogPosition, DoubleSupplier changeInVoltsPerCycle,
-            double analogRange, double analogTurnsPerVolt, double voltageRange, DoubleSupplier cyclesPeriodInSeconds) {
-        if ( analogTurnsPerVolt <= 0.0000001d && analogTurnsPerVolt >= 0.0000001d ) return null;
-        return new AnalogInputSensor(analogPosition, changeInVoltsPerCycle, analogRange, analogTurnsPerVolt, voltageRange, cyclesPeriodInSeconds);
-    }
-
     private static final double DEFAULT_ANALOG_RATE = 0.100;
     private static final double DEFAULT_QUADRATURE_RATE = 0.100;
     private static final double DEFAULT_FEEDBACK_RATE = 0.020;
 
     private static final int RISES_PER_PULSE = 4; // 4x mode
     private static final double MAX_ANALOG_VOLTAGE = 3.3; // 0-3.3V
-    private static final double MAX_ANALOG_RANGE = 1023; // 10 bits non-continuous
+    private static final RevSensor NO_OP_SENSOR = RevSensor.create(() -> 0.0, () -> 0.0);
 
     protected final CANTalon talon;
-    protected final InputSensor encoderInput;
-    protected final InputSensor analogInput;
-    protected final InputSensor selectedEncoderInput;
-    protected final InputSensor selectedAnalogInput;
-    protected volatile InputSensor selectedInput = NO_OP_SENSOR;
+    protected final RevSensor encoderInput;
+    protected final RevSensor analogInput;
+    protected final RevSensor pwmInput;
+    protected final RevSensor selectedInput;
     protected volatile double quadratureRateInSeconds = DEFAULT_QUADRATURE_RATE;
     protected volatile double analogRateInSeconds = DEFAULT_ANALOG_RATE;
     protected volatile double feedbackRateInSeconds = DEFAULT_FEEDBACK_RATE;
@@ -209,7 +60,7 @@ class HardwareTalonSRX implements TalonSRX {
     protected final Faults instantaneousFaults;
     protected final Faults stickyFaults;
 
-    HardwareTalonSRX(CANTalon talon, double pulsesPerDegree, double analogTurnsOverVoltageRange) {
+    HardwareTalonSRX(CANTalon talon) {
         this.talon = talon;
 
         this.forwardLimitSwitch = talon::isFwdLimitSwitchClosed;
@@ -218,28 +69,10 @@ class HardwareTalonSRX implements TalonSRX {
         this.outputVoltage = talon::getOutputVoltage;
         this.busVoltage = talon::getBusVoltage;
         this.temperature = talon::getTemperature;
-        this.encoderInput = encoderInput(talon::getEncPosition,
-                                             talon::getEncVelocity,
-                                             pulsesPerDegree,
-                                             RISES_PER_PULSE,
-                                             () -> quadratureRateInSeconds);
-        this.analogInput = analogInput(talon::getAnalogInPosition,
-                                           talon::getAnalogInVelocity,
-                                           MAX_ANALOG_RANGE,
-                                           analogTurnsOverVoltageRange / MAX_ANALOG_VOLTAGE,
-                                           MAX_ANALOG_VOLTAGE,
-                                           () -> analogRateInSeconds);
-        this.selectedEncoderInput = encoderInput(talon::getPosition,
-                                             talon::getSpeed,
-                                             pulsesPerDegree,
-                                             RISES_PER_PULSE,
-                                             () -> feedbackRateInSeconds);
-        this.selectedAnalogInput = analogInput(talon::getPosition,
-                                           talon::getSpeed,
-                                           MAX_ANALOG_RANGE,
-                                           analogTurnsOverVoltageRange / MAX_ANALOG_VOLTAGE,
-                                           MAX_ANALOG_VOLTAGE,
-                                           () -> feedbackRateInSeconds);
+        this.encoderInput = RevSensor.create(talon::getEncPosition, talon::getEncVelocity);
+        this.analogInput = RevSensor.create(talon::getAnalogInPosition, talon::getAnalogInVelocity);
+        this.pwmInput = RevSensor.create(talon::getPulseWidthPosition, talon::getPulseWidthVelocity);
+        this.selectedInput = RevSensor.create(talon::getPosition, talon::getSpeed);
         this.instantaneousFaults = new Faults() {
             @Override
             public Switch forwardLimitSwitch() {
@@ -339,56 +172,38 @@ class HardwareTalonSRX implements TalonSRX {
     }
 
     @Override
-    public Gyroscope getEncoderInput() {
+    public RevSensor getEncoderInput() {
         return encoderInput;
     }
 
     @Override
-    public Gyroscope getAnalogInput() {
+    public RevSensor getAnalogInput() {
         return analogInput;
     }
 
     @Override
-    public Gyroscope getSelectedSensor() {
+    public RevSensor getPwmInput() {
+        return pwmInput;
+    }
+
+    @Override
+    public RevSensor getSelectedSensor() {
         return selectedInput;
+    }
+
+    @Override
+    public void setEncoderCodesPerRevolution(int codesPerRev) {
+        talon.configEncoderCodesPerRev(codesPerRev);
+    }
+
+    @Override
+    public void setPotentiometerTurns(int turns) {
+        talon.configPotentiometerTurns(turns);
     }
 
     @Override
     public TalonSRX setFeedbackDevice(FeedbackDevice device) {
         talon.setFeedbackDevice(CANTalon.FeedbackDevice.valueOf(device.value()));
-        switch(device) {
-            case ANALOG_POTENTIOMETER:
-            case ANALOG_ENCODER:
-                if ( selectedAnalogInput != null ) {
-                    selectedInput = selectedAnalogInput;
-                } else {
-                    Strongback.logger().error("Unable to use the analog input for feedback, since the Talon SRX (device " + getDeviceID() + ") was not instantiated with an analog input. Check how this device was created using Strongback's Hardware class.");
-                    selectedInput = NO_OP_SENSOR;
-                }
-                break;
-            case QUADRATURE_ENCODER:
-            case ENCODER_RISING:
-                if ( selectedEncoderInput != null ) {
-                    selectedInput = selectedEncoderInput;
-                } else {
-                    Strongback.logger().error("Unable to use the quadrature encoder input for feedback, since the Talon SRX (device " + getDeviceID() + ") was not instantiated with an encoder input. Check how this device was created using Strongback's Hardware class.");
-                    selectedInput = NO_OP_SENSOR;
-                }
-                break;
-            case ENCODER_FALLING:
-                // for 2015 the Talon SRX firmware did not support the falling or rising mode ...
-                selectedInput = NO_OP_SENSOR;
-                break;
-            case MAGNETIC_ENCODER_ABSOLUTE:
-                selectedInput = NO_OP_SENSOR;
-                break;
-            case MAGNETIC_ENCODER_RELATIVE:
-                selectedInput = NO_OP_SENSOR;
-                break;
-            case PULSE_WIDTH:
-                selectedInput = NO_OP_SENSOR;
-                break;
-        }
         return this;
     }
 
@@ -450,12 +265,8 @@ class HardwareTalonSRX implements TalonSRX {
     }
 
     @Override
-    public TalonSRX setForwardSoftLimit(int forwardLimitDegrees) {
-        // Compute the desired forward limit in terms of the current selected input sensor ...
-        if ( this.selectedInput != null ) {
-            double rawPosition = this.selectedInput.rawPositionForAngleInDegrees(forwardLimitDegrees);
-            talon.setForwardSoftLimit(rawPosition);
-        }
+    public TalonSRX setForwardSoftLimit(int forwardLimit) {
+        talon.setForwardSoftLimit(forwardLimit);
         return this;
     }
 
@@ -466,12 +277,8 @@ class HardwareTalonSRX implements TalonSRX {
     }
 
     @Override
-    public HardwareTalonSRX setReverseSoftLimit(int reverseLimitDegrees) {
-        // Compute the desired reverse limit in terms of the current selected input sensor ...
-        if ( this.selectedInput != null ) {
-            double rawPosition = this.selectedInput.rawPositionForAngleInDegrees(reverseLimitDegrees);
-            talon.setReverseSoftLimit(rawPosition);
-        }
+    public HardwareTalonSRX setReverseSoftLimit(int reverseLimit) {
+        talon.setReverseSoftLimit(reverseLimit);
         return this;
     }
 

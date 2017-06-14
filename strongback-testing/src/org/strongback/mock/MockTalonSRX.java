@@ -17,7 +17,7 @@
 package org.strongback.mock;
 
 import org.strongback.components.Fuse;
-import org.strongback.components.Gyroscope;
+import org.strongback.components.RevSensor;
 import org.strongback.components.Switch;
 import org.strongback.components.TalonSRX;
 import org.strongback.components.TemperatureSensor;
@@ -25,12 +25,13 @@ import org.strongback.components.VoltageSensor;
 
 public class MockTalonSRX extends MockMotor implements TalonSRX {
 
-    private static final Gyroscope NO_OP_GYRO = new MockGyroscope();
+    private static final RevSensor NO_OP_REV = new MockRevSensor();
 
     private final int deviceId;
-    private final MockGyroscope encoderInput = new MockGyroscope();
-    private final MockGyroscope analogInput = new MockGyroscope();
-    private Gyroscope selectedInput = NO_OP_GYRO;
+    private final MockRevSensor encoderInput = new MockRevSensor();
+    private final MockRevSensor analogInput = new MockRevSensor();
+    private final MockRevSensor pwmInput = new MockRevSensor();
+    private RevSensor selectedInput = NO_OP_REV;
     private final MockCurrentSensor current = new MockCurrentSensor();
     private final MockVoltageSensor voltage = new MockVoltageSensor();
     private final MockVoltageSensor busVoltage = new MockVoltageSensor();
@@ -60,17 +61,22 @@ public class MockTalonSRX extends MockMotor implements TalonSRX {
     }
 
     @Override
-    public MockGyroscope getAnalogInput() {
+    public MockRevSensor getAnalogInput() {
         return analogInput;
     }
 
     @Override
-    public MockGyroscope getEncoderInput() {
+    public RevSensor getPwmInput() {
+        return pwmInput;
+    }
+
+    @Override
+    public MockRevSensor getEncoderInput() {
         return encoderInput;
     }
 
     @Override
-    public Gyroscope getSelectedSensor() {
+    public RevSensor getSelectedSensor() {
         return selectedInput;
     }
 
@@ -89,9 +95,11 @@ public class MockTalonSRX extends MockMotor implements TalonSRX {
             case QUADRATURE_ENCODER:
                 this.selectedInput = encoderInput;
                 break;
+            case PULSE_WIDTH:
+                this.selectedInput = pwmInput;
             case ENCODER_FALLING:
             case ENCODER_RISING:
-                selectedInput = NO_OP_GYRO;
+                selectedInput = NO_OP_REV;
                 break;
         }
         return this;
@@ -125,6 +133,16 @@ public class MockTalonSRX extends MockMotor implements TalonSRX {
     @Override
     public TemperatureSensor getTemperatureSensor() {
         return temperature;
+    }
+
+    @Override
+    public void setEncoderCodesPerRevolution(int codesPerRev) {
+
+    }
+
+    @Override
+    public void setPotentiometerTurns(int turns) {
+
     }
 
     @Override
