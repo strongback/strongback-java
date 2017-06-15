@@ -65,35 +65,9 @@ public class Scheduler implements Executable {
      */
     public void submit(Command command) {
         if (command != null) {
-            CommandRunner runner = buildRunner(command, null);
+            CommandRunner runner = CommandRunner.create(context, command);
             commands.add(runner);
         }
-    }
-
-    private CommandRunner buildRunner(Command command, CommandRunner last) {
-        if (command instanceof CommandGroup) {
-            CommandGroup cg = (CommandGroup) command;
-            Command[] commands = cg.getCommands();
-            switch (cg.getType()) {
-                case SEQUENTIAL:
-                    for (int i = commands.length - 1; i >= 0; i--) {
-                        last = buildRunner(commands[i], last);
-                    }
-                    return last;
-                case PARRALLEL:
-                    CommandRunner[] crs = new CommandRunner[commands.length];
-                    for (int i = 0; i < crs.length; i++) {
-                        crs[i] = buildRunner(commands[i], null);
-                    }
-                    return new CommandRunner(context, last, crs);
-                case FORK:
-                    assert commands.length == 1;
-                    return new CommandRunner(context, last, new CommandRunner(context, buildRunner(commands[0], null)));
-            }
-            // This line should never happen, the switch will throw an exception first
-            throw new IllegalStateException("Unexpected command type: " + cg.getType());
-        }
-        return new CommandRunner(context, last, command);
     }
 
     /**

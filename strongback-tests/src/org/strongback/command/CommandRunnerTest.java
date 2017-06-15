@@ -44,7 +44,7 @@ public class CommandRunnerTest {
     @Test
     public void shouldRunCommandWithTimeout() {
         WatchedCommand watched = WatchedCommand.watch(Command.pause(1000,TimeUnit.MILLISECONDS));
-        CommandRunner runner = new CommandRunner(watched);
+        CommandRunner runner = CommandRunner.create(watched);
         assertThat(runner.step(INITIAL_TIME)).isFalse();
         assertThat(runner.state()).isEqualTo(CommandState.RUNNING);
         assertIncomplete(watched);
@@ -68,7 +68,7 @@ public class CommandRunnerTest {
                 return false;
             }
         });
-        CommandRunner runner = new CommandRunner(CONTEXT,watched);
+        CommandRunner runner = CommandRunner.create(CONTEXT,watched);
         assertThat(runner.step(INITIAL_TIME)).isTrue(); // completes because it is interrupted
         assertInterrupted(watched);
     }
@@ -76,7 +76,7 @@ public class CommandRunnerTest {
     @Test
     public void shouldInterruptCommandThatThrowsExceptionDuringFirstExecute() {
         WatchedCommand watched = WatchedCommand.watch(Command.create((Runnable)()->{throw new IllegalStateException();}));
-        CommandRunner runner = new CommandRunner(CONTEXT,watched);
+        CommandRunner runner = CommandRunner.create(CONTEXT,watched);
         assertThat(runner.step(INITIAL_TIME)).isTrue(); // completes because it is interrupted
         assertExecutedAtLeast(watched,1);
         assertInterrupted(watched);
@@ -93,12 +93,25 @@ public class CommandRunnerTest {
                 return false;
             }
         });
-        CommandRunner runner = new CommandRunner(CONTEXT,watched);
+        CommandRunner runner = CommandRunner.create(CONTEXT,watched);
         assertThat(runner.step(INITIAL_TIME)).isFalse(); // executed correctly the first time
         assertExecutedAtLeast(watched,1);
         assertThat(runner.step(INITIAL_TIME)).isTrue(); // completes because it is interrupted
         assertExecutedAtLeast(watched,2);
         assertInterrupted(watched);
+    }
+
+    @Test
+    public void shouldSupportCommandGroups() {
+        Command command = Command.pause(100, TimeUnit.MILLISECONDS);
+        WatchedCommand watched = WatchedCommand.watch(command); // CommandGroups don't call end(), so watch Command
+        CommandRunner tester = CommandRunner.create(CONTEXT, CommandGroup.runSequentially(watched));
+
+        tester.step(1);
+        assertIncomplete(watched);
+
+        tester.step(101);
+        assertComplete(watched);
     }
 
     protected void assertIncomplete( WatchedCommand watched ) {
