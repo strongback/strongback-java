@@ -37,8 +37,7 @@ import org.strongback.control.TalonController;
 import org.strongback.function.DoubleToDoubleFunction;
 import org.strongback.util.Values;
 
-import com.ctre.CANTalon;
-import com.ctre.CANTalon.TalonControlMode;
+import com.ctre.MotorControl.CANTalon;
 
 import edu.wpi.first.wpilibj.ADXL345_I2C;
 import edu.wpi.first.wpilibj.ADXL345_SPI;
@@ -65,6 +64,8 @@ import edu.wpi.first.wpilibj.Victor;
 import edu.wpi.first.wpilibj.VictorSP;
 import edu.wpi.first.wpilibj.interfaces.Accelerometer.Range;
 import edu.wpi.first.wpilibj.interfaces.Gyro;
+
+import static com.ctre.MotorControl.SmartMotorController.TalonControlMode;
 
 /**
  * The factory methods that will create component implementations corresponding to physical hardware on the robot. Nested
