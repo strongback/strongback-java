@@ -16,9 +16,7 @@
 
 package org.strongback.hardware;
 
-import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import com.ctre.MotorControl.CANTalon;
 
 import org.strongback.Executable;
 import org.strongback.annotation.ThreadSafe;
@@ -26,8 +24,11 @@ import org.strongback.control.Controller;
 import org.strongback.control.PIDController;
 import org.strongback.control.TalonController;
 
-import com.ctre.CANTalon;
-import com.ctre.CANTalon.TalonControlMode;
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static com.ctre.MotorControl.SmartMotorController.TalonControlMode;
 
 /**
  * A hardware-based Talon SRX PID controller.

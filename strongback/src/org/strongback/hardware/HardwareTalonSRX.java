@@ -27,8 +27,9 @@ import org.strongback.components.TalonSRX;
 import org.strongback.components.TemperatureSensor;
 import org.strongback.components.VoltageSensor;
 
-import com.ctre.CANTalon;
-import com.ctre.CANTalon.TalonControlMode;
+import com.ctre.MotorControl.CANTalon;
+
+import static com.ctre.MotorControl.SmartMotorController.TalonControlMode;
 
 /**
  * Talon speed controller with position and current sensor
@@ -454,7 +455,7 @@ class HardwareTalonSRX implements TalonSRX {
         // Compute the desired forward limit in terms of the current selected input sensor ...
         if ( this.selectedInput != null ) {
             double rawPosition = this.selectedInput.rawPositionForAngleInDegrees(forwardLimitDegrees);
-            talon.setForwardSoftLimit(rawPosition);
+            talon.setForwardSoftLimit((int) rawPosition);
         }
         return this;
     }
@@ -470,7 +471,7 @@ class HardwareTalonSRX implements TalonSRX {
         // Compute the desired reverse limit in terms of the current selected input sensor ...
         if ( this.selectedInput != null ) {
             double rawPosition = this.selectedInput.rawPositionForAngleInDegrees(reverseLimitDegrees);
-            talon.setReverseSoftLimit(rawPosition);
+            talon.setReverseSoftLimit((int) rawPosition);
         }
         return this;
     }
