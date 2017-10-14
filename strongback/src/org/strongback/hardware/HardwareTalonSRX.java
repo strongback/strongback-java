@@ -451,8 +451,7 @@ class HardwareTalonSRX implements TalonSRX {
     }
 
     @Override
-    public TalonSRX 
-        (int forwardLimitDegrees) {
+    public TalonSRX setForwardSoftLimit(int forwardLimitDegrees) {
         // Compute the desired forward limit in terms of the current selected input sensor ...
         if ( this.selectedInput != null ) {
             double rawPosition = this.selectedInput.rawPositionForAngleInDegrees(forwardLimitDegrees);
