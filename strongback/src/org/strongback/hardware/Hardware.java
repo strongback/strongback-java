@@ -16,6 +16,7 @@
 
 package org.strongback.hardware;
 
+import com.ctre.phoenix.motorcontrol.ControlMode;
 import org.strongback.annotation.Experimental;
 import org.strongback.components.Accelerometer;
 import org.strongback.components.AngleSensor;
@@ -617,7 +618,7 @@ public class Hardware {
          */
         @Experimental
         public static TalonSRX talonSRX(int deviceNumber, double pulsesPerDegree, double analogTurnsOverVoltageRange) {
-            TalonSRX alon = new TalonSRX(deviceNumber);
+            TalonSRX talon = new TalonSRX(deviceNumber);
             return talonSRX(talon, pulsesPerDegree, analogTurnsOverVoltageRange);
         }
 
@@ -685,9 +686,10 @@ public class Hardware {
          */
         public static TalonSRX talonSRX(int deviceNumber, TalonSRX leader, boolean reverse) {
             TalonSRX talon = new TalonSRX(deviceNumber);
-            talon.changeControlMode(TalonControlMode.Follower);
-            talon.set(leader.getDeviceID());
-            talon.reverseOutput(reverse);
+            //talon.changeControlMode(TalonControlMode.Follower);
+            talon.set(com.ctre.phoenix.motorcontrol.ControlMode.Follower,leader.getDeviceID());
+            //talon.set(leader.getDeviceID());
+            talon.setInverted(reverse);
             return talonSRX(talon, 0.0d, 0.0d);
         }
 
