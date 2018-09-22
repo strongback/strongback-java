@@ -26,8 +26,9 @@ import org.strongback.control.Controller;
 import org.strongback.control.ITalonController;
 import org.strongback.control.PIDController;
 
-import com.ctre.CANTalon;
-import com.ctre.CANTalon.TalonControlMode;
+//import com.ctre.CANTalon;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+//import com.ctre.CANTalon.TalonControlMode;
 
 /**
  * A hardware-based Talon SRX PID controller.
@@ -88,7 +89,7 @@ class HardwareITalonController extends HardwareITalonSRX implements ITalonContro
     private volatile int currentProfile = 0;
     private final Set<Integer> profiles = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    HardwareITalonController(CANTalon talon, double pulsesPerDegree, double analogTurnsOverVoltageRange) {
+    HardwareITalonController(TalonSRX talon, double pulsesPerDegree, double analogTurnsOverVoltageRange) {
         super(talon, pulsesPerDegree, analogTurnsOverVoltageRange);
         profiles.add(currentProfile);
     }
