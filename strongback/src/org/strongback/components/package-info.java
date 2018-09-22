@@ -52,7 +52,7 @@
  * <li>{@link org.strongback.components.Motor} - A device that is both a {@link org.strongback.components.SpeedSensor} and {@link org.strongback.components.SpeedController}. Quite obviously, it can
  * represent a combination of an electric motor (e.g., CIM) and electronic speed controller (e.g., Talon).</li>
  * <li>{@link org.strongback.components.LimitedMotor} - A {@link org.strongback.components.Motor} that is constrained to move between a maximum position and minimum position.</li>
- * <li>{@link org.strongback.components.TalonSRX} - A motor controlled by a Talon SRX with a current sensor and position (angle) sensor, and that is
+ * <li>{@link org.strongback.components.ITalonSRX} - A motor controlled by a Talon SRX with a current sensor and position (angle) sensor, and that is
  * optionally constrained to move between a maximum position and minimum position.</li>
  * <li>{@link org.strongback.components.Compass} - An {@link org.strongback.components.AngleSensor angle sensor} that provides heading information in addition to angle.</li>
  * <li>{@link org.strongback.components.Gyroscope} - A gyroscope is a device that measures angular velocity (in degrees per second) about a single axis.

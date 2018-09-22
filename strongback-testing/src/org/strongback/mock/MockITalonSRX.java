@@ -16,14 +16,10 @@
 
 package org.strongback.mock;
 
-import org.strongback.components.Fuse;
-import org.strongback.components.Gyroscope;
-import org.strongback.components.Switch;
-import org.strongback.components.TalonSRX;
-import org.strongback.components.TemperatureSensor;
-import org.strongback.components.VoltageSensor;
+import org.strongback.components.*;
+import org.strongback.components.ITalonSRX;
 
-public class MockTalonSRX extends MockMotor implements TalonSRX {
+public class MockITalonSRX extends MockMotor implements ITalonSRX {
 
     private static final Gyroscope NO_OP_GYRO = new MockGyroscope();
 
@@ -43,7 +39,7 @@ public class MockTalonSRX extends MockMotor implements TalonSRX {
     private double expiration = 0.1d;
     private boolean alive = true;
 
-    protected MockTalonSRX(int deviceId, double speed) {
+    protected MockITalonSRX(int deviceId, double speed) {
         super(speed);
         this.deviceId = deviceId;
     }
@@ -54,7 +50,7 @@ public class MockTalonSRX extends MockMotor implements TalonSRX {
     }
 
     @Override
-    public MockTalonSRX setSpeed(double speed) {
+    public MockITalonSRX setSpeed(double speed) {
         super.setSpeed(speed);
         return this;
     }
@@ -75,12 +71,12 @@ public class MockTalonSRX extends MockMotor implements TalonSRX {
     }
 
     @Override
-    public MockTalonSRX reverseSensor(boolean flip) {
+    public MockITalonSRX reverseSensor(boolean flip) {
         return this;
     }
 
     @Override
-    public MockTalonSRX setFeedbackDevice(FeedbackDevice device) {
+    public MockITalonSRX setFeedbackDevice(FeedbackDevice device) {
         switch(device) {
             case ANALOG_POTENTIOMETER:
             case ANALOG_ENCODER:
@@ -98,12 +94,12 @@ public class MockTalonSRX extends MockMotor implements TalonSRX {
     }
 
     @Override
-    public MockTalonSRX setStatusFrameRate(StatusFrameRate frameRate, int periodMillis) {
+    public MockITalonSRX setStatusFrameRate(StatusFrameRate frameRate, int periodMillis) {
         return this;
     }
 
     @Override
-    public MockTalonSRX setVoltageRampRate(double rampRate) {
+    public MockITalonSRX setVoltageRampRate(double rampRate) {
         return this;
     }
 
@@ -138,42 +134,42 @@ public class MockTalonSRX extends MockMotor implements TalonSRX {
     }
 
     @Override
-    public TalonSRX setForwardSoftLimit(int forwardLimit) {
+    public ITalonSRX setForwardSoftLimit(int forwardLimit) {
         return this;
     }
 
     @Override
-    public TalonSRX enableForwardSoftLimit(boolean enable) {
+    public ITalonSRX enableForwardSoftLimit(boolean enable) {
         return this;
     }
 
     @Override
-    public TalonSRX setReverseSoftLimit(int reverseLimit) {
+    public ITalonSRX setReverseSoftLimit(int reverseLimit) {
         return this;
     }
 
     @Override
-    public TalonSRX enableReverseSoftLimit(boolean enable) {
+    public ITalonSRX enableReverseSoftLimit(boolean enable) {
         return this;
     }
 
     @Override
-    public TalonSRX enableLimitSwitch(boolean forward, boolean reverse) {
+    public ITalonSRX enableLimitSwitch(boolean forward, boolean reverse) {
         return this;
     }
 
     @Override
-    public TalonSRX setForwardLimitSwitchNormallyOpen(boolean normallyOpen) {
+    public ITalonSRX setForwardLimitSwitchNormallyOpen(boolean normallyOpen) {
         return this;
     }
 
     @Override
-    public TalonSRX setReverseLimitSwitchNormallyOpen(boolean normallyOpen) {
+    public ITalonSRX setReverseLimitSwitchNormallyOpen(boolean normallyOpen) {
         return this;
     }
 
     @Override
-    public TalonSRX enableBrakeMode(boolean brake) {
+    public ITalonSRX enableBrakeMode(boolean brake) {
         return this;
     }
 
@@ -188,7 +184,7 @@ public class MockTalonSRX extends MockMotor implements TalonSRX {
     }
 
     @Override
-    public MockTalonSRX clearStickyFaults() {
+    public MockITalonSRX clearStickyFaults() {
         stickyFaults.reset();
         return this;
     }
@@ -204,13 +200,13 @@ public class MockTalonSRX extends MockMotor implements TalonSRX {
     }
 
     @Override
-    public TalonSRX setSafetyEnabled(boolean enabled) {
+    public ITalonSRX setSafetyEnabled(boolean enabled) {
         safetyEnabled = enabled;
         return this;
     }
 
     @Override
-    public TalonSRX setExpiration(double timeout) {
+    public ITalonSRX setExpiration(double timeout) {
         expiration = timeout;
         return this;
     }
@@ -225,7 +221,7 @@ public class MockTalonSRX extends MockMotor implements TalonSRX {
         return alive;
     }
 
-    public MockTalonSRX setAlive( boolean alive ) {
+    public MockITalonSRX setAlive(boolean alive ) {
         this.alive = alive;
         if ( !alive ) stop();
         return this;

@@ -19,7 +19,7 @@ package org.strongback.mock;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.strongback.components.Fuse;
-import org.strongback.components.TalonSRX;
+import org.strongback.components.ITalonSRX;
 import org.strongback.control.Controller;
 import org.strongback.control.PIDController;
 
@@ -237,42 +237,42 @@ public class Mock {
     }
 
     /**
-     * Create a stopped mock {@link TalonSRX} motor.
+     * Create a stopped mock {@link ITalonSRX} motor.
      *
      * @param deviceId the CAN device ID
-     * @return the mock TalonSRX motor; never null
+     * @return the mock ITalonSRX motor; never null
      */
-    public static MockTalonSRX stoppedTalonSRX(int deviceId) {
+    public static MockITalonSRX stoppedTalonSRX(int deviceId) {
         return runningTalonSRX(deviceId, 0.0);
     }
 
     /**
-     * Create a running mock {@link TalonSRX} motor.
+     * Create a running mock {@link ITalonSRX} motor.
      *
      * @param deviceId the CAN device ID
      * @param speed the initial speed
-     * @return the mock TalonSRX motor; never null
+     * @return the mock ITalonSRX motor; never null
      */
-    public static MockTalonSRX runningTalonSRX(int deviceId, double speed) {
-        return new MockTalonSRX(deviceId, speed);
+    public static MockITalonSRX runningTalonSRX(int deviceId, double speed) {
+        return new MockITalonSRX(deviceId, speed);
     }
 
     /**
-     * Create a stopped mock {@link TalonSRX} motor.
+     * Create a stopped mock {@link ITalonSRX} motor.
      *
-     * @return the mock TalonSRX motor; never null
+     * @return the mock ITalonSRX motor; never null
      */
-    public static MockTalonSRX stoppedTalonSRX() {
+    public static MockITalonSRX stoppedTalonSRX() {
         return stoppedTalonSRX(nextDeviceId());
     }
 
     /**
-     * Create a running mock {@link TalonSRX} motor.
+     * Create a running mock {@link ITalonSRX} motor.
      *
      * @param speed the initial speed
-     * @return the mock TalonSRX motor; never null
+     * @return the mock ITalonSRX motor; never null
      */
-    public static MockTalonSRX runningTalonSRX(double speed) {
+    public static MockITalonSRX runningTalonSRX(double speed) {
         return runningTalonSRX(nextDeviceId(), speed);
     }
 

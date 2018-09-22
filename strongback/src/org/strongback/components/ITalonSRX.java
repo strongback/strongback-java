@@ -28,10 +28,10 @@ import org.strongback.annotation.Experimental;
  * tested.
  */
 @Experimental
-public interface TalonSRX extends LimitedMotor {
+public interface ITalonSRX extends LimitedMotor {
 
     @Override
-    public TalonSRX setSpeed(double speed);
+    public ITalonSRX setSpeed(double speed);
 
     /**
      * Get the CAN device ID.
@@ -116,7 +116,7 @@ public interface TalonSRX extends LimitedMotor {
      * @return this object so that methods can be chained; never null
      * @see #reverseSensor(boolean)
      */
-    public TalonSRX setFeedbackDevice(FeedbackDevice device);
+    public ITalonSRX setFeedbackDevice(FeedbackDevice device);
 
     /**
      * Set the status frame rate for this controller.
@@ -125,7 +125,7 @@ public interface TalonSRX extends LimitedMotor {
      * @param periodMillis frame rate period in milliseconds
      * @return this object so that methods can be chained; never null
      */
-    public TalonSRX setStatusFrameRate(StatusFrameRate frameRate, int periodMillis);
+    public ITalonSRX setStatusFrameRate(StatusFrameRate frameRate, int periodMillis);
 
     /**
      * Flips the sign (multiplies by negative one) the {@link #setFeedbackDevice(FeedbackDevice) feedback device} values read by
@@ -137,7 +137,7 @@ public interface TalonSRX extends LimitedMotor {
      * @param flip <code>true</code> if sensor input should be flipped, or <code>false</code> if not.
      * @return this object so that methods can be chained; never null
      */
-    public TalonSRX reverseSensor(boolean flip);
+    public ITalonSRX reverseSensor(boolean flip);
 
     /**
      * Set the soft limit for the forward throttle, in terms of the angle as measured by the {@link #getSelectedSensor()
@@ -155,7 +155,7 @@ public interface TalonSRX extends LimitedMotor {
      * @return this object so that methods can be chained; never null
      * @see #enableForwardSoftLimit(boolean)
      */
-    public TalonSRX setForwardSoftLimit(int forwardLimitInDegrees);
+    public ITalonSRX setForwardSoftLimit(int forwardLimitInDegrees);
 
     /**
      * Set the soft limit for the reverse throttle, in terms of the angle as measured by the {@link #getSelectedSensor()
@@ -173,7 +173,7 @@ public interface TalonSRX extends LimitedMotor {
      * @return this object so that methods can be chained; never null
      * @see #enableForwardSoftLimit(boolean)
      */
-    public TalonSRX setReverseSoftLimit(int reverseLimitInDegrees);
+    public ITalonSRX setReverseSoftLimit(int reverseLimitInDegrees);
 
     /**
      * Enable the soft limit for forward throttle, which is set via the {@link #setForwardSoftLimit(int)}.
@@ -182,7 +182,7 @@ public interface TalonSRX extends LimitedMotor {
      * @return this object so that methods can be chained; never null
      * @see #setForwardLimitSwitchNormallyOpen(boolean)
      */
-    public TalonSRX enableForwardSoftLimit(boolean enable);
+    public ITalonSRX enableForwardSoftLimit(boolean enable);
 
     /**
      * Enable the soft limit for reverse throttle, which is set via the {@link #setReverseSoftLimit(int)}.
@@ -191,7 +191,7 @@ public interface TalonSRX extends LimitedMotor {
      * @return this object so that methods can be chained; never null
      * @see #setReverseLimitSwitchNormallyOpen(boolean)
      */
-    public TalonSRX enableReverseSoftLimit(boolean enable);
+    public ITalonSRX enableReverseSoftLimit(boolean enable);
 
     /**
      * Enable the forward and reverse limit switches.
@@ -200,7 +200,7 @@ public interface TalonSRX extends LimitedMotor {
      * @param reverse <code>true</code> if the reverse limit is to be enabled, or <code>false</code> otherwise
      * @return this object so that methods can be chained; never null
      */
-    public TalonSRX enableLimitSwitch(boolean forward, boolean reverse);
+    public ITalonSRX enableLimitSwitch(boolean forward, boolean reverse);
 
     /**
      * Configure the forward limit switch to be normally open or normally closed. Talon will disable momentarily if the Talon's
@@ -211,7 +211,7 @@ public interface TalonSRX extends LimitedMotor {
      * @param normallyOpen <code>true</code> for normally open, or <code>false</code> for normally closed.
      * @return this object so that methods can be chained; never null
      */
-    public TalonSRX setForwardLimitSwitchNormallyOpen(boolean normallyOpen);
+    public ITalonSRX setForwardLimitSwitchNormallyOpen(boolean normallyOpen);
 
     /**
      * Configure the reverse limit switch to be normally open or normally closed. Talon will disable momentarily if the Talon's
@@ -222,7 +222,7 @@ public interface TalonSRX extends LimitedMotor {
      * @param normallyOpen <code>true</code> for normally open, or <code>false</code> for normally closed.
      * @return this object so that methods can be chained; never null
      */
-    public TalonSRX setReverseLimitSwitchNormallyOpen(boolean normallyOpen);
+    public ITalonSRX setReverseLimitSwitchNormallyOpen(boolean normallyOpen);
 
     /**
      * Enable the brake mode.
@@ -230,7 +230,7 @@ public interface TalonSRX extends LimitedMotor {
      * @param brake <code>true</code> if the brake mode is to be enabled, or <code>false</code> otherwise
      * @return this object so that methods can be chained; never null
      */
-    public TalonSRX enableBrakeMode(boolean brake);
+    public ITalonSRX enableBrakeMode(boolean brake);
 
     /**
      * The Talon SRX can be set to honor a ramp rate to prevent instantaneous changes in throttle. This ramp rate is in effect
@@ -240,7 +240,7 @@ public interface TalonSRX extends LimitedMotor {
      * @param rampRate maximum change in voltage per second, in volts / second
      * @return this object so that methods can be chained; never null
      */
-    public TalonSRX setVoltageRampRate(double rampRate);
+    public ITalonSRX setVoltageRampRate(double rampRate);
 
     /**
      * Get the faults currently associated with the Talon controller. These state of these faults may change at any time based
@@ -266,7 +266,7 @@ public interface TalonSRX extends LimitedMotor {
      *
      * @return this instance so that methods can be chained; never null
      */
-    public TalonSRX clearStickyFaults();
+    public ITalonSRX clearStickyFaults();
 
     /**
      * Get the firmware version.
@@ -290,7 +290,7 @@ public interface TalonSRX extends LimitedMotor {
      *        time, or <code>false</code> otherwise
      * @return this instance so that methods can be chained; never null
      */
-    public TalonSRX setSafetyEnabled(boolean enabled);
+    public ITalonSRX setSafetyEnabled(boolean enabled);
 
     /**
      * Get the motor safety expiration time in milliseconds. When {@link #isSafetyEnabled() safety is enabled}, then the motor
@@ -309,7 +309,7 @@ public interface TalonSRX extends LimitedMotor {
      * @param timeout the safety expiration time in milliseconds
      * @return this instance so that methods can be chained; never null
      */
-    public TalonSRX setExpiration(double timeout);
+    public ITalonSRX setExpiration(double timeout);
 
     /**
      * Determine if this motor controller is alive or has been disabled because it has not been used within the

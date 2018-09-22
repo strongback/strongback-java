@@ -21,7 +21,7 @@ import static org.fest.assertions.Assertions.assertThat;
 import org.fest.assertions.Delta;
 import org.junit.Before;
 import org.junit.Test;
-import org.strongback.hardware.HardwareTalonSRX.AnalogInputSensor;
+import org.strongback.hardware.HardwareITalonSRX.AnalogInputSensor;
 
 public class HardwareTalonSRX_AnalogInputSensorTest {
 

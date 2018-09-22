@@ -27,18 +27,16 @@ import org.strongback.components.PowerPanel;
 import org.strongback.components.Relay;
 import org.strongback.components.Solenoid;
 import org.strongback.components.Switch;
-import org.strongback.components.TalonSRX;
 import org.strongback.components.ThreeAxisAccelerometer;
 import org.strongback.components.TwoAxisAccelerometer;
 import org.strongback.components.ui.FlightStick;
 import org.strongback.components.ui.Gamepad;
 import org.strongback.components.ui.InputDevice;
-import org.strongback.control.TalonController;
+import org.strongback.control.ITalonController;
 import org.strongback.function.DoubleToDoubleFunction;
 import org.strongback.util.Values;
-
-import com.ctre.CANTalon;
-import com.ctre.CANTalon.TalonControlMode;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+//import edu.wpi.first.wpilibj.CANTalon.TalonControlMode;
 
 import edu.wpi.first.wpilibj.ADXL345_I2C;
 import edu.wpi.first.wpilibj.ADXL345_SPI;
@@ -672,11 +670,11 @@ public class Hardware {
         @Experimental
         public static TalonSRX talonSRX(CANTalon talon, double pulsesPerDegree, double analogTurnsOverVoltageRange) {
             if (talon == null) throw new IllegalArgumentException("The CANTalon reference may not be null");
-            return new HardwareTalonSRX(talon, pulsesPerDegree, analogTurnsOverVoltageRange);
+            return new HardwareITalonSRX(talon, pulsesPerDegree, analogTurnsOverVoltageRange);
         }
 
         /**
-         * Creates a {@link TalonSRX} motor controller that follows another Talon SRX. The resulting TalonSRX will have neither
+         * Creates a {@link TalonSRX} motor controller that follows another Talon SRX. The resulting ITalonSRX will have neither
          * a {@link TalonSRX#getAnalogInput()} or a {@link TalonSRX#getEncoderInput()}.
          *
          * @param deviceNumber the CAN device number for the Talon SRX; may not be null
@@ -737,10 +735,10 @@ public class Hardware {
          * @return the interface for managing and using the Talon SRX hardware-based PID controller; never null
          */
         @Experimental
-        public static TalonController talonController(int deviceNumber, double pulsesPerDegree,
-                double analogTurnsOverVoltageRange) {
+        public static ITalonController talonController(int deviceNumber, double pulsesPerDegree,
+                                                       double analogTurnsOverVoltageRange) {
             CANTalon talon = new CANTalon(deviceNumber);
-            HardwareTalonController c = new HardwareTalonController(talon, pulsesPerDegree, analogTurnsOverVoltageRange);
+            HardwareITalonController c = new HardwareITalonController(talon, pulsesPerDegree, analogTurnsOverVoltageRange);
             return c;
         }
 
@@ -759,9 +757,9 @@ public class Hardware {
          * @return the interface for managing and using the Talon SRX hardware-based PID controller; never null
          */
         @Experimental
-        public static TalonController talonController(CANTalon talon, double pulsesPerDegree,
-                double analogTurnsOverVoltageRange) {
-            return new HardwareTalonController(talon, pulsesPerDegree, analogTurnsOverVoltageRange);
+        public static ITalonController talonController(CANTalon talon, double pulsesPerDegree,
+                                                       double analogTurnsOverVoltageRange) {
+            return new HardwareITalonController(talon, pulsesPerDegree, analogTurnsOverVoltageRange);
         }
     }
 
