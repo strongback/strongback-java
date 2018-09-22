@@ -617,7 +617,7 @@ public class Hardware {
          */
         @Experimental
         public static TalonSRX talonSRX(int deviceNumber, double pulsesPerDegree, double analogTurnsOverVoltageRange) {
-            CANTalon talon = new CANTalon(deviceNumber);
+            TalonSRX alon = new TalonSRX(deviceNumber);
             return talonSRX(talon, pulsesPerDegree, analogTurnsOverVoltageRange);
         }
 
@@ -631,7 +631,7 @@ public class Hardware {
          * @param talon the already configured {@link CANTalon} instance; may not be null
          * @return a {@link TalonSRX} motor; never null
          */
-        public static TalonSRX talonSRX(CANTalon talon) {
+        public static TalonSRX talonSRX(TalonSRX talon) {
             return talonSRX(talon, 0.0, 0.0d);
         }
 
@@ -648,7 +648,7 @@ public class Hardware {
          * @return a {@link TalonSRX} motor; never null
          */
         @Experimental
-        public static TalonSRX talonSRX(CANTalon talon, double pulsesPerDegree) {
+        public static TalonSRX talonSRX(TalonSRX talon, double pulsesPerDegree) {
             return talonSRX(talon, pulsesPerDegree, 0.0d);
         }
 
@@ -668,7 +668,7 @@ public class Hardware {
          * @return a {@link TalonSRX} motor; never null
          */
         @Experimental
-        public static TalonSRX talonSRX(CANTalon talon, double pulsesPerDegree, double analogTurnsOverVoltageRange) {
+        public static TalonSRX talonSRX(TalonSRX talon, double pulsesPerDegree, double analogTurnsOverVoltageRange) {
             if (talon == null) throw new IllegalArgumentException("The CANTalon reference may not be null");
             return new HardwareITalonSRX(talon, pulsesPerDegree, analogTurnsOverVoltageRange);
         }
@@ -684,7 +684,7 @@ public class Hardware {
          * @return a {@link TalonSRX} motor controller that follows the leader; never null
          */
         public static TalonSRX talonSRX(int deviceNumber, TalonSRX leader, boolean reverse) {
-            CANTalon talon = new CANTalon(deviceNumber);
+            TalonSRX talon = new TalonSRX(deviceNumber);
             talon.changeControlMode(TalonControlMode.Follower);
             talon.set(leader.getDeviceID());
             talon.reverseOutput(reverse);
@@ -737,7 +737,7 @@ public class Hardware {
         @Experimental
         public static ITalonController talonController(int deviceNumber, double pulsesPerDegree,
                                                        double analogTurnsOverVoltageRange) {
-            CANTalon talon = new CANTalon(deviceNumber);
+            TalonSRX talon = new TalonSRX(deviceNumber);
             HardwareITalonController c = new HardwareITalonController(talon, pulsesPerDegree, analogTurnsOverVoltageRange);
             return c;
         }
@@ -757,7 +757,7 @@ public class Hardware {
          * @return the interface for managing and using the Talon SRX hardware-based PID controller; never null
          */
         @Experimental
-        public static ITalonController talonController(CANTalon talon, double pulsesPerDegree,
+        public static ITalonController talonController(TalonSRX talon, double pulsesPerDegree,
                                                        double analogTurnsOverVoltageRange) {
             return new HardwareITalonController(talon, pulsesPerDegree, analogTurnsOverVoltageRange);
         }
