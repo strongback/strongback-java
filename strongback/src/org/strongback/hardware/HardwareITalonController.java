@@ -169,7 +169,8 @@ class HardwareITalonController extends HardwareITalonSRX implements ITalonContro
 
     @Override
     public ITalonController setControlMode(ControlMode mode) {
-        talon.changeControlMode(TalonControlMode.valueOf(mode.value()));
+        //talon.changeControlMode(TalonControlMode.valueOf(mode.value()));
+        talon.changeControlMode(mode);
         return this;
     }
 
@@ -181,7 +182,7 @@ class HardwareITalonController extends HardwareITalonSRX implements ITalonContro
 
     @Override
     public ITalonController setStatusFrameRate(StatusFrameRate frameRate, int periodMillis) {
-        talon.setStatusFrameRateMs(CANTalon.StatusFrameRate.valueOf(frameRate.value()), periodMillis);
+        talon.setStatusFrameRateMs(frameRate, periodMillis);
         return this;
     }
 

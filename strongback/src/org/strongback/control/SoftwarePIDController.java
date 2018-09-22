@@ -716,7 +716,9 @@ public class SoftwarePIDController implements LiveWindowSendable, PIDController 
         }
     }
 
+    /* deprecate from super class
     @Override
+     */
     public synchronized void initTable(ITable subtable) {
         if (this.table != null) {
             this.table.removeTableListener(listener);
@@ -736,12 +738,17 @@ public class SoftwarePIDController implements LiveWindowSendable, PIDController 
         }
     }
 
-    @Override
+    /**
+     *
+     * @return
+     *@Override
+     * */
     public String getSmartDashboardType() {
         return "PIDController";
     }
-
+    /**
     @Override
+    */
     public ITable getTable() {
         return table;
     }

@@ -32,7 +32,7 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX;
  *
  * @author Nathan Brown
  * @see ITalonSRX
- * @see CANTalon
+ * @see TalonSRX
  */
 @Immutable
 class HardwareITalonSRX implements ITalonSRX {
@@ -320,14 +320,14 @@ class HardwareITalonSRX implements ITalonSRX {
 
     @Override
     public double getSpeed() {
-        talon.changeControlMode(TalonControlMode.PercentVbus);
-        return talon.get();
+       // talon.changeControlMode(TalonControlMode.PercentVbus);
+        return talon.getSpeed();
     }
 
     @Override
     public ITalonSRX setSpeed(double speed) {
-        talon.changeControlMode(TalonControlMode.PercentVbus);
-        talon.set(speed);
+        //talon.changeControlMode(TalonControlMode.PercentVbus);
+        talon.setSpeed(speed);
         return this;
     }
 
@@ -354,7 +354,7 @@ class HardwareITalonSRX implements ITalonSRX {
 
     @Override
     public ITalonSRX setFeedbackDevice(FeedbackDevice device) {
-        talon.setFeedbackDevice(CANTalon.FeedbackDevice.valueOf(device.value()));
+        talon.setFeedbackDevice(device);
         switch(device) {
             case ANALOG_POTENTIOMETER:
             case ANALOG_ENCODER:
@@ -393,7 +393,7 @@ class HardwareITalonSRX implements ITalonSRX {
 
     @Override
     public ITalonSRX setStatusFrameRate(StatusFrameRate frameRate, int periodMillis) {
-        talon.setStatusFrameRateMs(CANTalon.StatusFrameRate.valueOf(frameRate.value()), periodMillis);
+        talon.setStatusFrameRateMs(frameRate, periodMillis);
         double periodInSeconds = periodMillis / 1000.0;
         switch(frameRate) {
             case FEEDBACK:

@@ -3,6 +3,8 @@ package org.strongback.hardware;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
+import org.strongback.components.ITalonSRX;
+import org.strongback.control.ITalonController;
 
 public class PhoenixTalonAdapter implements LegacyCANTalon {
 
@@ -143,7 +145,7 @@ public class PhoenixTalonAdapter implements LegacyCANTalon {
     }
 
     @Override
-    public void changeControlMode(ControlMode mode) {
+    public void changeControlMode(ControlMode mode, double value) {
 
     }
 
@@ -153,12 +155,17 @@ public class PhoenixTalonAdapter implements LegacyCANTalon {
     }
 
     @Override
+    public void reverseSensor(boolean flip) {
+
+    }
+
+    @Override
     public void setFeedbackDevice(FeedbackDevice feedbackDevice) {
 
     }
 
     @Override
-    public void setStatusFrameRateMs(double rate) {
+    public void setStatusFrameRateMs(ITalonSRX.StatusFrameRate frameRate, double rate) {
 
     }
 
@@ -236,4 +243,127 @@ public class PhoenixTalonAdapter implements LegacyCANTalon {
     public boolean isAlive() {
         return false;
     }
+
+    @Override
+    public void setFeedbackDevice(ITalonSRX.FeedbackDevice device) {
+
+    }
+
+    @Override
+    public void clearStickyFaults() {
+
+    }
+
+    @Override
+    public void disable() {
+
+    }
+
+    @Override
+    public void enableControl() {
+
+    }
+    public  boolean isControlEnabled() {return false;}
+
+    /*
+
+     */
+    public void setSpeed(double speed) {
+
+    }
+
+    public  double get() {
+        return 0;
+    }
+
+    @Override
+    public void set(double value) {
+
+    }
+
+    public double getSetpoint() {
+        return 0;
+    }
+
+    @Override
+    public void ClearIaccum() {
+
+    }
+
+    @Override
+    public void reverseOutput(boolean flip) {
+
+    }
+
+    @Override
+    public void setPID(double p, double i, double d) {
+
+    }
+
+    @Override
+    public void setPID(double p, double i, double d, double feedForward, double izone, double closeLoopRampRate, double profile) {
+
+    }
+
+    @Override
+    public double getP() {
+        return 0;
+    }
+
+    @Override
+    public double getI() {
+        return 0;
+    }
+
+    @Override
+    public double getD() {
+        return 0;
+    }
+
+    @Override
+    public double getF() {
+        return 0;
+    }
+
+    @Override
+    public int getIZone() {
+        return 0;
+    }
+
+    @Override
+    public double getCloseLoopRampRate() {
+        return 0;
+    }
+
+    @Override
+    public void setProfile(int profile) {
+
+    }
+
+    @Override
+    public ControlMode getControlMode() {
+        return null;
+    }
+
+    @Override
+    public void changeControlMode(ITalonController.ControlMode controlMode) {
+
+    }
+
+    @Override
+    public void setF(double f) {
+
+    }
+
+    @Override
+    public void setIZone(int zone) {
+
+    }
+
+    @Override
+    public void setCloseLoopRampRate(double closeLoopRampRate) {
+
+    }
+
+
 }
