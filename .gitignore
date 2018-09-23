@@ -16,6 +16,7 @@ target/
 libs/wpilib
 libs/ctre
 libs/navx-mxp
+libs/test
 downloads/
 
 .DS_Store/

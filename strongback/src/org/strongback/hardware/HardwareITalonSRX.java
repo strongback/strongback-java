@@ -20,25 +20,22 @@ import java.util.function.DoubleSupplier;
 
 import org.strongback.Strongback;
 import org.strongback.annotation.Immutable;
-import org.strongback.components.CurrentSensor;
-import org.strongback.components.Gyroscope;
-import org.strongback.components.Switch;
-import org.strongback.components.TalonSRX;
-import org.strongback.components.TemperatureSensor;
-import org.strongback.components.VoltageSensor;
+import org.strongback.components.*;
+import org.strongback.components.ITalonSRX;
 
-import com.ctre.CANTalon;
-import com.ctre.CANTalon.TalonControlMode;
+//import com.ctre.CANTalon;
+//import com.ctre.CANTalon.TalonControlMode;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 /**
  * Talon speed controller with position and current sensor
  *
  * @author Nathan Brown
+ * @see ITalonSRX
  * @see TalonSRX
- * @see CANTalon
  */
 @Immutable
-class HardwareTalonSRX implements TalonSRX {
+class HardwareITalonSRX implements ITalonSRX {
 
     protected static interface InputSensor extends Gyroscope {
         public double rawPositionForAngleInDegrees( double angle );
@@ -191,7 +188,8 @@ class HardwareTalonSRX implements TalonSRX {
     private static final double MAX_ANALOG_VOLTAGE = 3.3; // 0-3.3V
     private static final double MAX_ANALOG_RANGE = 1023; // 10 bits non-continuous
 
-    protected final CANTalon talon;
+    //protected final TalonSRX talon;
+    protected  final PhoenixTalonAdapter talon;
     protected final InputSensor encoderInput;
     protected final InputSensor analogInput;
     protected final InputSensor selectedEncoderInput;
@@ -209,8 +207,9 @@ class HardwareTalonSRX implements TalonSRX {
     protected final Faults instantaneousFaults;
     protected final Faults stickyFaults;
 
-    HardwareTalonSRX(CANTalon talon, double pulsesPerDegree, double analogTurnsOverVoltageRange) {
-        this.talon = talon;
+    HardwareITalonSRX(TalonSRX talonSRX, double pulsesPerDegree, double analogTurnsOverVoltageRange) {
+        this.talon = new PhoenixTalonAdapter( talonSRX );
+
 
         this.forwardLimitSwitch = talon::isFwdLimitSwitchClosed;
         this.reverseLimitSwitch = talon::isRevLimitSwitchClosed;
@@ -243,73 +242,73 @@ class HardwareTalonSRX implements TalonSRX {
         this.instantaneousFaults = new Faults() {
             @Override
             public Switch forwardLimitSwitch() {
-                return () -> talon.getFaultForLim() != 0;
+                return () -> talon.getFaultForLim() ;
             }
 
             @Override
             public Switch reverseLimitSwitch() {
-                return () -> talon.getFaultRevLim() != 0;
+                return () -> talon.getFaultRevLim() ;
             }
 
             @Override
             public Switch forwardSoftLimit() {
-                return () -> talon.getFaultForSoftLim() != 0;
+                return () -> talon.getFaultForSoftLim() ;
             }
 
             @Override
             public Switch reverseSoftLimit() {
-                return () -> talon.getFaultRevSoftLim() != 0;
+                return () -> talon.getFaultRevSoftLim() ;
             }
 
             @Override
             public Switch hardwareFailure() {
-                return () -> talon.getFaultHardwareFailure() != 0;
+                return () -> talon.getFaultHardwareFailure() ;
             }
 
             @Override
             public Switch overTemperature() {
-                return () -> talon.getFaultOverTemp() != 0;
+                return () -> talon.getFaultOverTemp() ;
             }
 
             @Override
             public Switch underVoltage() {
-                return () -> talon.getFaultUnderVoltage() != 0;
+                return () -> talon.getFaultUnderVoltage() ;
             }
         };
         this.stickyFaults = new Faults() {
             @Override
             public Switch forwardLimitSwitch() {
-                return () -> talon.getStickyFaultForLim() != 0;
+                return () -> talon.getStickyFaultForLim() ;
             }
 
             @Override
             public Switch reverseLimitSwitch() {
-                return () -> talon.getStickyFaultRevLim() != 0;
+                return () -> talon.getStickyFaultRevLim() ;
             }
 
             @Override
             public Switch forwardSoftLimit() {
-                return () -> talon.getStickyFaultForSoftLim() != 0;
+                return () -> talon.getStickyFaultForSoftLim() ;
             }
 
             @Override
             public Switch reverseSoftLimit() {
-                return () -> talon.getStickyFaultRevSoftLim() != 0;
+                return () -> talon.getStickyFaultRevSoftLim() ;
             }
 
             @Override
             public Switch hardwareFailure() {
-                return () -> talon.getFaultHardwareFailure() != 0; // no sticky version!
+                return () -> talon.getFaultHardwareFailure() ; // no sticky version!
             }
 
             @Override
             public Switch overTemperature() {
-                return () -> talon.getStickyFaultOverTemp() != 0;
+                return () -> talon.getStickyFaultOverTemp() ;
             }
 
             @Override
             public Switch underVoltage() {
-                return () -> talon.getStickyFaultUnderVoltage() != 0;
+                return () -> talon.getStickyFaultUnderVoltage() ;
             }
         };
     }
@@ -321,21 +320,21 @@ class HardwareTalonSRX implements TalonSRX {
 
     @Override
     public double getSpeed() {
-        talon.changeControlMode(TalonControlMode.PercentVbus);
-        return talon.get();
+       // talon.changeControlMode(TalonControlMode.PercentVbus);
+        return talon.getSpeed();
     }
 
     @Override
-    public TalonSRX setSpeed(double speed) {
-        talon.changeControlMode(TalonControlMode.PercentVbus);
-        talon.set(speed);
+    public ITalonSRX setSpeed(double speed) {
+        //talon.changeControlMode(TalonControlMode.PercentVbus);
+        talon.setSpeed(speed);
         return this;
     }
 
     @Override
     public void stop() {
         talon.enableBrakeMode(true);
-        talon.set(0);
+        //talon.set(0);
     }
 
     @Override
@@ -354,8 +353,8 @@ class HardwareTalonSRX implements TalonSRX {
     }
 
     @Override
-    public TalonSRX setFeedbackDevice(FeedbackDevice device) {
-        talon.setFeedbackDevice(CANTalon.FeedbackDevice.valueOf(device.value()));
+    public ITalonSRX setFeedbackDevice(FeedbackDevice device) {
+        talon.setFeedbackDevice(device);
         switch(device) {
             case ANALOG_POTENTIOMETER:
             case ANALOG_ENCODER:
@@ -393,8 +392,8 @@ class HardwareTalonSRX implements TalonSRX {
     }
 
     @Override
-    public TalonSRX setStatusFrameRate(StatusFrameRate frameRate, int periodMillis) {
-        talon.setStatusFrameRateMs(CANTalon.StatusFrameRate.valueOf(frameRate.value()), periodMillis);
+    public ITalonSRX setStatusFrameRate(StatusFrameRate frameRate, int periodMillis) {
+        talon.setStatusFrameRateMs(frameRate, periodMillis);
         double periodInSeconds = periodMillis / 1000.0;
         switch(frameRate) {
             case FEEDBACK:
@@ -414,7 +413,7 @@ class HardwareTalonSRX implements TalonSRX {
     }
 
     @Override
-    public TalonSRX reverseSensor(boolean flip) {
+    public ITalonSRX reverseSensor(boolean flip) {
         talon.reverseSensor(flip);
         return this;
     }
@@ -450,7 +449,7 @@ class HardwareTalonSRX implements TalonSRX {
     }
 
     @Override
-    public TalonSRX setForwardSoftLimit(int forwardLimitDegrees) {
+    public ITalonSRX setForwardSoftLimit(int forwardLimitDegrees) {
         // Compute the desired forward limit in terms of the current selected input sensor ...
         if ( this.selectedInput != null ) {
             double rawPosition = this.selectedInput.rawPositionForAngleInDegrees(forwardLimitDegrees);
@@ -460,13 +459,13 @@ class HardwareTalonSRX implements TalonSRX {
     }
 
     @Override
-    public HardwareTalonSRX enableForwardSoftLimit(boolean enable) {
+    public HardwareITalonSRX enableForwardSoftLimit(boolean enable) {
         talon.enableForwardSoftLimit(enable);
         return this;
     }
 
     @Override
-    public HardwareTalonSRX setReverseSoftLimit(int reverseLimitDegrees) {
+    public HardwareITalonSRX setReverseSoftLimit(int reverseLimitDegrees) {
         // Compute the desired reverse limit in terms of the current selected input sensor ...
         if ( this.selectedInput != null ) {
             double rawPosition = this.selectedInput.rawPositionForAngleInDegrees(reverseLimitDegrees);
@@ -476,37 +475,37 @@ class HardwareTalonSRX implements TalonSRX {
     }
 
     @Override
-    public HardwareTalonSRX enableReverseSoftLimit(boolean enable) {
+    public HardwareITalonSRX enableReverseSoftLimit(boolean enable) {
         talon.enableReverseSoftLimit(enable);
         return this;
     }
 
     @Override
-    public TalonSRX enableLimitSwitch(boolean forward, boolean reverse) {
+    public ITalonSRX enableLimitSwitch(boolean forward, boolean reverse) {
         talon.enableLimitSwitch(forward, reverse);
         return this;
     }
 
     @Override
-    public TalonSRX enableBrakeMode(boolean brake) {
+    public ITalonSRX enableBrakeMode(boolean brake) {
         talon.enableBrakeMode(brake);
         return this;
     }
 
     @Override
-    public TalonSRX setForwardLimitSwitchNormallyOpen(boolean normallyOpen) {
+    public ITalonSRX setForwardLimitSwitchNormallyOpen(boolean normallyOpen) {
         talon.ConfigFwdLimitSwitchNormallyOpen(normallyOpen);
         return this;
     }
 
     @Override
-    public TalonSRX setReverseLimitSwitchNormallyOpen(boolean normallyOpen) {
+    public ITalonSRX setReverseLimitSwitchNormallyOpen(boolean normallyOpen) {
         talon.ConfigRevLimitSwitchNormallyOpen(normallyOpen);
         return this;
     }
 
     @Override
-    public TalonSRX setVoltageRampRate(double rampRate) {
+    public ITalonSRX setVoltageRampRate(double rampRate) {
         talon.setVoltageRampRate(rampRate);
         return this;
     }
@@ -522,7 +521,7 @@ class HardwareTalonSRX implements TalonSRX {
     }
 
     @Override
-    public TalonSRX clearStickyFaults() {
+    public ITalonSRX clearStickyFaults() {
         talon.clearStickyFaults();
         return this;
     }
@@ -538,7 +537,7 @@ class HardwareTalonSRX implements TalonSRX {
     }
 
     @Override
-    public TalonSRX setSafetyEnabled(boolean enabled) {
+    public ITalonSRX setSafetyEnabled(boolean enabled) {
         talon.setSafetyEnabled(enabled);
         return this;
     }
@@ -549,7 +548,7 @@ class HardwareTalonSRX implements TalonSRX {
     }
 
     @Override
-    public TalonSRX setExpiration(double timeout) {
+    public ITalonSRX setExpiration(double timeout) {
         talon.setExpiration(timeout);
         return this;
     }
