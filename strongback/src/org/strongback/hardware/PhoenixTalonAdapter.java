@@ -1,7 +1,7 @@
 package org.strongback.hardware;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.ErrorCode;
+import com.ctre.phoenix.motorcontrol.*;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import org.strongback.components.ITalonSRX;
 import org.strongback.control.ITalonController;
@@ -10,138 +10,167 @@ public class PhoenixTalonAdapter implements LegacyCANTalon {
 
     private final TalonSRX impl;
 
+    private SensorCollection sensors() {
+        return impl.getSensorCollection();
+    }
+
     public PhoenixTalonAdapter(TalonSRX impl) {
         this.impl = impl;
     }
 
     @Override
     public boolean isFwdLimitSwitchClosed() {
-        return false;
+        return sensors().isFwdLimitSwitchClosed();
     }
 
     @Override
     public boolean isRevLimitSwitchClosed() {
-        return false;
+        return sensors().isRevLimitSwitchClosed();
     }
 
     @Override
     public int getDeviceID() {
-        return 0;
+        return impl.getDeviceID();
     }
 
     @Override
     public double getOutputCurrent() {
-        return 0;
+        return impl.getOutputCurrent();
     }
 
     @Override
     public double getOutputVoltage() {
-        return 0;
+        return impl.getMotorOutputVoltage();
     }
 
     @Override
     public double getBusVoltage() {
-        return 0;
+        return impl.getBusVoltage();
     }
 
     @Override
     public double getTemperature() {
-        return 0;
+        return impl.getTemperature();
     }
 
     @Override
     public int getEncPosition() {
-        return 0;
+        return sensors().getQuadraturePosition();
     }
 
     @Override
     public int getEncVelocity() {
-        return 0;
+        return sensors().getQuadratureVelocity();
     }
 
     @Override
     public double getAnalogInPosition() {
-        return 0;
+        return sensors().getAnalogIn();
     }
 
     @Override
     public double getAnalogInVelocity() {
-        return 0;
+        return sensors().getAnalogInVel();
     }
 
     @Override
     public double getPosition() {
-        return 0;
+        return impl.getSelectedSensorPosition();
     }
 
     @Override
     public double getSpeed() {
-        return 0;
+        return impl.getSelectedSensorVelocity();
+    }
+
+    private Faults faults() {
+        Faults faults = new Faults();
+        /*
+        TODO, deal with error code
+         */
+        ErrorCode phxErrorCode = impl.getFaults(faults);
+
+        return faults;
     }
 
     @Override
     public boolean getFaultForLim() {
-        return false;
+        return faults().ForwardLimitSwitch;
     }
 
     @Override
     public boolean getFaultRevLim() {
-        return false;
+        return faults().ReverseLimitSwitch;
     }
 
     @Override
     public boolean getFaultForSoftLim() {
-        return false;
+        return faults().ForwardSoftLimit;
     }
 
     @Override
     public boolean getFaultRevSoftLim() {
-        return false;
+        return faults().ReverseSoftLimit;
     }
 
     @Override
     public boolean getFaultHardwareFailure() {
-        return false;
+        return faults().HardwareFailure;
     }
 
     @Override
     public boolean getFaultOverTemp() {
-        return false;
+        /*
+        TODO, nothing obvious for this one...
+         */
+        return faults().hasAnyFault();
     }
 
     @Override
     public boolean getFaultUnderVoltage() {
-        return false;
+        return faults().UnderVoltage;
+    }
+
+    private StickyFaults stickyFaults() {
+        StickyFaults stickyFaults = new StickyFaults();
+        /**
+         * TODO ... not sure what to do w/error code yet
+         */
+        ErrorCode phxErrorCode =  impl.getStickyFaults( stickyFaults );
+        return  stickyFaults;
     }
 
     @Override
     public boolean getStickyFaultForLim() {
-        return false;
+        return stickyFaults().ForwardLimitSwitch;
     }
 
     @Override
     public boolean getStickyFaultRevLim() {
-        return false;
+        return stickyFaults().ReverseLimitSwitch;
     }
 
     @Override
     public boolean getStickyFaultForSoftLim() {
-        return false;
+        return stickyFaults().ForwardSoftLimit;
     }
 
     @Override
     public boolean getStickyFaultRevSoftLim() {
-        return false;
+        return stickyFaults().ReverseSoftLimit;
     }
 
     @Override
     public boolean getStickyFaultOverTemp() {
-        return false;
+        /**
+         * TODO, no obvious way to get temp
+         */
+        return  false;
     }
 
     @Override
     public boolean getStickyFaultUnderVoltage() {
-        return false;
+        return  stickyFaults().UnderVoltage;
     }
 
     @Override
