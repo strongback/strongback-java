@@ -570,7 +570,7 @@ public class Hardware {
          * @param deviceNumber the CAN device number for the Talon SRX; may not be null
          * @return a {@link TalonSRX} motor; never null
          */
-        public static TalonSRX talonSRX(int deviceNumber) {
+        public static ITalonSRX talonSRX(int deviceNumber) {
             return talonSRX(deviceNumber, 0.0d, 0.0d);
         }
 
@@ -587,7 +587,7 @@ public class Hardware {
          * @return a {@link TalonSRX} motor; never null
          */
         @Experimental
-        public static TalonSRX talonSRX(int deviceNumber, double pulsesPerDegree) {
+        public static ITalonSRX talonSRX(int deviceNumber, double pulsesPerDegree) {
             return talonSRX(deviceNumber, pulsesPerDegree, 0.0d);
         }
 
@@ -621,7 +621,7 @@ public class Hardware {
          * @param talon the already configured {@link CANTalon} instance; may not be null
          * @return a {@link TalonSRX} motor; never null
          */
-        public static TalonSRX talonSRX(TalonSRX talon) {
+        public static ITalonSRX talonSRX(TalonSRX talon) {
             return talonSRX(talon, 0.0, 0.0d);
         }
 
@@ -638,7 +638,7 @@ public class Hardware {
          * @return a {@link TalonSRX} motor; never null
          */
         @Experimental
-        public static TalonSRX talonSRX(TalonSRX talon, double pulsesPerDegree) {
+        public static ITalonSRX talonSRX(TalonSRX talon, double pulsesPerDegree) {
             return talonSRX(talon, pulsesPerDegree, 0.0d);
         }
 
@@ -673,7 +673,7 @@ public class Hardware {
          *        <code>false</code> if the output should exactly match the leader
          * @return a {@link TalonSRX} motor controller that follows the leader; never null
          */
-        public static TalonSRX talonSRX(int deviceNumber, TalonSRX leader, boolean reverse) {
+        public static ITalonSRX talonSRX(int deviceNumber, TalonSRX leader, boolean reverse) {
             TalonSRX talon = new TalonSRX(deviceNumber);
             //talon.changeControlMode(TalonControlMode.Follower);
             talon.set(com.ctre.phoenix.motorcontrol.ControlMode.Follower,leader.getDeviceID());

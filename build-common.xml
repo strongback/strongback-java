@@ -110,7 +110,7 @@
         <!-- Creates the directories used in the tests -->
         <mkdir dir="${project.test.output.dir}" />
         <mkdir dir="${project.test.report.dir}" />
-        <junit printsummary="off" showOutput="false" fork="false" haltonfailure="no" failureproperty="test.failed" >
+        <junit printsummary="off" showOutput="false" fork="true" haltonfailure="no" failureproperty="test.failed" >
             <classpath refid="test.class.path" />
             <classpath> 
                 <pathelement location="${project.test.output.dir}"/>
